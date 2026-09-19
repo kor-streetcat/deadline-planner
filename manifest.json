@@ -1,0 +1,16 @@
+{
+  "name": "연구노트 — 마감일 정리기",
+  "short_name": "연구노트",
+  "description": "마감일과 일정을 정리하는 개인용 플래너",
+  "start_url": "./deadline-planner.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#faf9f7",
+  "theme_color": "#5b5fc7",
+  "lang": "ko",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
