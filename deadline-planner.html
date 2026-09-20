@@ -1138,7 +1138,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v21';
+const APP_VERSION = 'v22';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -3598,6 +3598,27 @@ window.plannerApp = {
     await window.plannerReadyPromise;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dueDate || ''))) return false;
     return addItemDirect(title, dueDate, TYPE_OPTIONS.includes(type) ? type : '기타');
+  },
+  // Mac 앱 빠른 추가 창에서 이미지를 붙였을 때: 기존 "AI 정리" 흐름(textInput + 첨부 이미지 → parseBtn)을 그대로 태운다.
+  // 키가 없으면 복사·붙여넣기 창이 뜨는데 그 창은 이 창에서 처리할 수 없으니, 창을 띄우지 않고 이유만 돌려준다.
+  async addQuickImage(text, mime, data) {
+    await window.plannerReadyPromise;
+    if (aiLockedDoc) return { ok: false, error: 'AI 키가 잠겨 있어. 앱에서 보호 암호를 먼저 입력해줘' };
+    if (!geminiKey) return { ok: false, error: '이미지는 AI 키가 있어야 읽을 수 있어. 앱 설정에서 키를 넣어줘' };
+    if (!/^image\/(png|jpeg|webp|gif)$/.test(String(mime)) || typeof data !== 'string' || !data) return { ok: false, error: '지원하지 않는 이미지야' };
+    const btn = document.getElementById('parseBtn'), statusEl = document.getElementById('status');
+    if (btn.disabled) return { ok: false, error: '앱에서 다른 정리가 진행 중이야. 잠시 뒤에 다시 해줘' };
+    pendingImageBase64 = data; pendingImageMediaType = mime;
+    document.getElementById('textInput').value = String(text || '').slice(0, 2000);
+    btn.click();                                      // 클릭 즉시 btn.disabled가 되고, 끝나면 풀린다
+    for (let i = 0; i < 600 && btn.disabled; i++) await new Promise(r => setTimeout(r, 200));
+    const msg = statusEl.textContent || '';
+    const m = /(\d+)건 등록 완료/.exec(msg);
+    // 실패해도 첨부가 남아서 다음에 앱에서 정리할 때 딸려 들어가지 않게 비운다
+    pendingImageBase64 = null; pendingImageMediaType = null;
+    document.getElementById('fileInput').value = ''; document.getElementById('thumb').style.display = 'none';
+    if (m) return { ok: true, count: Number(m[1]) };
+    return { ok: false, error: msg.replace(/^처리 중 오류가 발생했음:\s*/, '') || '정리하지 못했어' };
   },
   getState: () => ({ items, trashed: trashedItems, prefs: { keywordPresets, referenceMaterials } }),
 
