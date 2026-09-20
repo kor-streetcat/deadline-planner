@@ -151,6 +151,18 @@
   }
   .ic { width: 1.2em; height: 1.2em; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.24em; }
   .ic.sm { width: 1.05em; height: 1.05em; vertical-align: -0.18em; }
+  /* 데스크톱 사이드바 알약 줄 (노션 데스크톱 배열): 지금 화면만 이름이 펼쳐지고, 나머지는 아이콘만 */
+  .sb-pills { display: flex; gap: 2px; margin: 4px 0 2px; }
+  .sb-viewlist { display: none; }
+  .sb-pill { position: relative; flex-shrink: 0; height: 32px; min-width: 32px; padding: 0 7px; border-radius: 999px; border: none; background: transparent; color: var(--ink-dim); display: flex; align-items: center; justify-content: center; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background-color 0.12s ease, color 0.12s ease, padding 0.12s ease-out; }
+  .sb-pill .ic { width: 17px; height: 17px; vertical-align: 0; }
+  .sb-pill .sp-label { display: grid; grid-template-columns: 0fr; opacity: 0; margin-left: 0; transition: grid-template-columns 0.1s ease-out, opacity 0.06s ease-out, margin 0.1s ease-out; }
+  .sb-pill .sp-label > span { overflow: hidden; white-space: nowrap; min-width: 0; }
+  .sb-pill:not(.active):hover { background: var(--hover); color: var(--ink); }
+  .sb-pill.active { background: var(--hover); color: var(--ink); padding: 0 11px 0 9px; transition: background-color 0.1s ease, color 0.15s ease, padding 0.3s cubic-bezier(0.25, 0.6, 0.3, 1); }
+  .sb-pill.active .sp-label { grid-template-columns: 1fr; opacity: 1; margin-left: 6px; transition: grid-template-columns 0.3s cubic-bezier(0.25, 0.6, 0.3, 1), opacity 0.05s ease, margin 0.3s cubic-bezier(0.25, 0.6, 0.3, 1); }
+  .sb-pill .sp-badge { position: absolute; top: -2px; right: -2px; min-width: 15px; height: 15px; padding: 0 4px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 0.62rem; font-weight: 700; line-height: 15px; text-align: center; box-shadow: 0 0 0 2px var(--sidebar); }
+  @media (prefers-reduced-motion: reduce) { .sb-pill, .sb-pill .sp-label { transition: none; } }
   .sb-brand { display: flex; align-items: center; gap: 8px; padding: 6px 8px 10px; font-weight: 600; font-size: 0.95rem; }
   .sb-brand .ic { width: 1.35rem; height: 1.35rem; color: var(--accent); }
   .sb-label { font-size: 0.7rem; font-weight: 600; color: var(--ink-faint); padding: 14px 8px 4px; letter-spacing: 0.02em; }
@@ -208,6 +220,8 @@
   .page-sub { color: var(--ink-dim); font-size: 0.86rem; margin: 0 0 20px; }
 
   @media (max-width: 900px) {
+    .sb-pills { display: none; }
+    .sb-viewlist { display: contents; }
     .sidebar { transform: translateX(-100%); box-shadow: 8px 0 24px rgba(0,0,0,0.1); width: min(280px, 84vw); }
     .sidebar.open { transform: translateX(0); }
     .main { margin-left: 0; }
@@ -771,12 +785,21 @@
   <div class="sb-brand"><svg class="ic" aria-hidden="true"><use href="#i-notebook"/></svg><span>연구노트</span></div>
   <button class="sb-new" id="sbNewBtn">＋ 새 일정</button>
 
+  <nav class="sb-pills" aria-label="화면 선택">
+    <button class="sb-pill" data-view="today" aria-label="오늘" title="오늘"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg><span class="sp-label"><span>오늘</span></span><span class="sp-badge" id="sbPillTodayBadge" style="display:none;"></span></button>
+    <button class="sb-pill" data-view="month" aria-label="달력" title="달력"><svg class="ic" aria-hidden="true"><use href="#i-month"/></svg><span class="sp-label"><span>달력</span></span></button>
+    <button class="sb-pill" data-view="week" aria-label="이번 주" title="이번 주"><svg class="ic" aria-hidden="true"><use href="#i-week"/></svg><span class="sp-label"><span>이번 주</span></span></button>
+    <button class="sb-pill" data-view="list" aria-label="전체 표" title="전체 표"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg><span class="sp-label"><span>전체 표</span></span><span class="sp-badge" id="sbPillListBadge" style="display:none;"></span></button>
+    <button class="sb-pill" data-view="board" aria-label="보드" title="보드"><svg class="ic" aria-hidden="true"><use href="#i-board"/></svg><span class="sp-label"><span>보드</span></span></button>
+  </nav>
+  <div class="sb-viewlist">
   <div class="sb-label">보기</div>
   <button class="sb-item" data-view="today"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg><span>오늘</span><span class="sb-badge" id="sbTodayBadge" style="display:none;"></span></button>
   <button class="sb-item" data-view="month"><svg class="ic" aria-hidden="true"><use href="#i-month"/></svg><span>달력</span></button>
   <button class="sb-item" data-view="week"><svg class="ic" aria-hidden="true"><use href="#i-week"/></svg><span>이번 주</span></button>
   <button class="sb-item" data-view="list"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg><span>전체 표</span><span class="sb-badge" id="sbOverdueBadge" style="display:none;"></span></button>
   <button class="sb-item" data-view="board"><svg class="ic" aria-hidden="true"><use href="#i-board"/></svg><span>보드</span></button>
+  </div>
 
   <div class="sb-label">도구</div>
   <button class="sb-item" id="sbSearchBtn"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg><span>검색 · 명령</span><span class="sb-kbd">⌘K</span></button>
@@ -1115,7 +1138,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v20';
+const APP_VERSION = 'v21';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2029,6 +2052,9 @@ function renderSummaryBanner() {
   const todayBadge = document.getElementById('sbTodayBadge');
   todayBadge.style.display = urgentN ? 'inline-block' : 'none';
   todayBadge.textContent = urgentN;
+  const pillToday = document.getElementById('sbPillTodayBadge'), pillList = document.getElementById('sbPillListBadge');
+  pillToday.style.display = urgentN ? 'block' : 'none'; pillToday.textContent = urgentN;
+  pillList.style.display = overdueItems.length ? 'block' : 'none'; pillList.textContent = overdueItems.length;
   updateAppBadge(urgentN);
 
   if (!overdueItems.length && !todayItems.length && !tomorrowItems.length) {
@@ -2182,7 +2208,7 @@ function setViewMode(mode, animate) {
   document.querySelectorAll('[data-view]').forEach(b => {
     const on = b.dataset.view === mode;
     b.classList.toggle('active', on);
-    if (b.classList.contains('tb-pill')) b.setAttribute('aria-current', on ? 'page' : 'false');
+    if (b.classList.contains('tb-pill') || b.classList.contains('sb-pill')) b.setAttribute('aria-current', on ? 'page' : 'false');
   });
   closeSidebar();
   document.getElementById('monthView').style.display = mode === 'month' ? 'block' : 'none';
@@ -3567,6 +3593,12 @@ async function unlockAi(pass) {
 }
 
 window.plannerApp = {
+  // Mac 앱의 빠른 추가 창이 부르는 입구. 앱이 다 불러오기 전에 추가하면 불러오기가 덮어쓸 수 있어서 준비될 때까지 기다린다.
+  async addQuick(title, dueDate, type) {
+    await window.plannerReadyPromise;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dueDate || ''))) return false;
+    return addItemDirect(title, dueDate, TYPE_OPTIONS.includes(type) ? type : '기타');
+  },
   getState: () => ({ items, trashed: trashedItems, prefs: { keywordPresets, referenceMaterials } }),
 
   // 이 기기에서 처음 연결할 때: 클라우드와 기기 데이터를 합침 (같은 id는 클라우드가 우선)
