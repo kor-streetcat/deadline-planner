@@ -931,10 +931,6 @@
         </div>
       </div>
       <div class="today-progress"><div class="today-progress-bar" id="todayProgressBar"></div></div>
-      <div class="add-row">
-        <input type="text" id="todayAddInput" class="add-input" placeholder="＋ 오늘 할 일 추가 (Enter)" autocomplete="off">
-        <select id="todayAddType" class="add-type" aria-label="유형"></select>
-      </div>
       <div id="todaySections"></div>
     </div>
 
@@ -1119,7 +1115,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v19';
+const APP_VERSION = 'v20';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -3797,7 +3793,6 @@ document.getElementById('syncLogoutBtn').addEventListener('click', async () => {
   renderDetail();
   renderSummaryBanner();
   renderChatLog();
-  setupAddRow('todayAddInput', 'todayAddType', () => todayISO());
   setupAddRow('detailAddInput', 'detailAddType', () => selectedDate);
   let startView = 'today';
   try { const v = await store.get('view'); if (v && ['today', 'month', 'week', 'list', 'board'].includes(v.value)) startView = v.value; } catch (e) {}
