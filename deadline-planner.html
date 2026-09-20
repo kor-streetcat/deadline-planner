@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>연구노트 — 마감일 정리기</title>
+<title>Δuenoτe — 마감일 정리기</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#ffffff">
 <script>try{var __t=localStorage.getItem("planner:theme");if(__t)document.documentElement.setAttribute("data-theme",__t);}catch(e){}</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="연구노트">
+<meta name="apple-mobile-web-app-title" content="Δuenoτe">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
@@ -782,7 +782,7 @@
 <div id="sbOverlay" class="sb-overlay"></div>
 
 <aside id="sidebar" class="sidebar">
-  <div class="sb-brand"><svg class="ic" aria-hidden="true"><use href="#i-notebook"/></svg><span>연구노트</span></div>
+  <div class="sb-brand"><svg class="ic" aria-hidden="true"><use href="#i-notebook"/></svg><span>Δuenoτe</span></div>
   <button class="sb-new" id="sbNewBtn">＋ 새 일정</button>
 
   <nav class="sb-pills" aria-label="화면 선택">
@@ -823,7 +823,7 @@
   </div>
 
   <div class="page">
-    <h1 class="page-title"><span class="page-emoji"><svg class="ic" aria-hidden="true"><use href="#i-notebook"/></svg></span>연구노트</h1>
+    <h1 class="page-title"><span class="page-emoji"><svg class="ic" aria-hidden="true"><use href="#i-notebook"/></svg></span>Δuenoτe</h1>
     <p class="page-sub">마감일과 일정을 한곳에서 정리해.</p>
 
     <div id="summaryBanner" class="summary-banner" style="display:none;">
@@ -1138,7 +1138,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v22';
+const APP_VERSION = 'v23';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -3763,14 +3763,14 @@ function renderSyncUi(d) {
   const dot = document.getElementById('syncDot');
   const ver = document.getElementById('sbVersion');
   if (!loggedIn) {
-    ver.textContent = '연구노트 ' + APP_VERSION;
+    ver.textContent = 'Δuenoτe ' + APP_VERSION;
     return;
   }
   document.getElementById('syncAccount').textContent = d.email || '';
   const label = { connecting: '연결 중…', synced: '동기화됨', pending: '동기화 대기 중 (오프라인이거나 전송 중)', error: '동기화 오류' }[d.state] || '';
   dot.className = 'sync-dot ' + (d.state === 'synced' ? 'on' : 'wait');
   syncSetStatus(d.state === 'error' ? ('동기화 오류: ' + (d.message || '')) : label, d.state === 'error');
-  ver.textContent = '연구노트 ' + APP_VERSION + ' · ' + (d.state === 'synced' ? '동기화됨' : d.state === 'error' ? '오류' : '대기');
+  ver.textContent = 'Δuenoτe ' + APP_VERSION + ' · ' + (d.state === 'synced' ? '동기화됨' : d.state === 'error' ? '오류' : '대기');
 }
 window.addEventListener('cloud-status', (e) => renderSyncUi(e.detail));
 
@@ -3835,7 +3835,7 @@ document.getElementById('syncLogoutBtn').addEventListener('click', async () => {
   await loadAiSettings();
   try { const t = await store.get('theme'); theme = t && t.value ? t.value : ''; } catch (e) { theme = ''; }
   applyTheme();
-  document.getElementById('sbVersion').textContent = '연구노트 ' + APP_VERSION;
+  document.getElementById('sbVersion').textContent = 'Δuenoτe ' + APP_VERSION;
   document.getElementById('geminiKeyInput').value = geminiKey;
   updateAiSummary();
   document.getElementById('geminiModelInput').value = geminiModel === DEFAULT_GEMINI_MODEL ? '' : geminiModel;

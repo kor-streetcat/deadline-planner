@@ -1,6 +1,6 @@
 {
-  "name": "연구노트 — 마감일 정리기",
-  "short_name": "연구노트",
+  "name": "Δuenoτe — 마감일 정리기",
+  "short_name": "Δuenoτe",
   "description": "마감일과 일정을 정리하는 개인용 플래너",
   "start_url": "./deadline-planner.html",
   "scope": "./",
