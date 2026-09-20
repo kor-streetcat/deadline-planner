@@ -382,7 +382,8 @@
   .cal-cell .day-num { flex-shrink: 0; align-self: flex-start; min-width: 22px; height: 22px; line-height: 22px; text-align: center; border-radius: 11px; padding: 0 4px; }
   .cal-cell.today .day-num { background: var(--danger); color: #fff; font-weight: 600; }
   .cal-cell .item-label { font-size: 0.68rem; line-height: 1.35; padding: 1px 7px; border-radius: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .cal-cell .item-label.high { box-shadow: inset 2px 0 0 var(--danger); }
+  .cal-cell .item-label.high::before { content: ''; display: inline-block; width: 5px; height: 5px; margin-right: 4px; border-radius: 50%; background: var(--danger); vertical-align: middle; position: relative; top: -1px; }
+  .cal-cell .item-label.overdue { box-shadow: inset 0 0 0 1px var(--danger); }
   .cal-cell .item-label.done { text-decoration: line-through; opacity: 0.5; }
   .cal-cell .item-label.more { color: var(--ink-dim); background: none; padding-left: 2px; }
   .cal-cell .dots { display: none; }
@@ -979,7 +980,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v10';
+const APP_VERSION = 'v11';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -1710,8 +1711,8 @@ function renderCalendar() {
       shown.forEach(it => {
         const label = document.createElement('div');
         const overdue = it.dueDate < today && !it.done;
-        label.className = 'item-label pill t-' + (it.type || '기타') + (it.priority === 'high' || overdue ? ' high' : '') + (it.done ? ' done' : '');
-        label.textContent = (overdue ? '⚠️ ' : '') + getShortLabel(it);
+        label.className = 'item-label pill t-' + (it.type || '기타') + (it.priority === 'high' ? ' high' : '') + (overdue ? ' overdue' : '') + (it.done ? ' done' : '');
+        label.textContent = getShortLabel(it);   // 지난 마감은 이모지 대신 빨간 테두리로 표시(좁은 칸에서 글자 자리를 뺏지 않게)
         cell.appendChild(label);
       });
       if (dayItems.length > shown.length) {
@@ -2683,8 +2684,10 @@ function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sbOverlay').classList.remove('open');
 }
-// 모바일: 화면 왼쪽 가장자리에서 오른쪽으로 밀면 열리고, 열린 메뉴를 왼쪽으로 밀면 닫힘. 손가락을 따라 메뉴가 같이 움직임.
-// 가장자리 바로 끝(iOS의 '뒤로 가기' 제스처 영역)을 피하려고 시작 구역을 화면 폭의 22%(최소 40px)로 넉넉히 잡음.
+// 모바일: 오른쪽으로 밀면 메뉴가 열리고, 열린 메뉴를 왼쪽으로 밀면 닫힘. 손가락을 따라 메뉴가 같이 움직임.
+// - 왼쪽 가장자리(화면 폭의 22%, 최소 40px) 안에서 시작하면 관대하게 열림. iOS의 '뒤로 가기' 제스처 영역(맨 끝)을 피하려고 구역을 넉넉히 잡음.
+// - 그 밖의 아무 곳(빈 공간·글자·달력 칸 등)에서 시작해도 열리지만, 세로 스크롤과 헷갈리지 않게 더 뚜렷한 가로 방향(가로가 세로의 1.5배 이상)일 때만 열림.
+// - 입력칸, 채팅 패널, 가로로 스크롤되는 탭 줄에서 시작하면 동작하지 않음.
 (function setupSidebarSwipe() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sbOverlay');
@@ -2710,10 +2713,13 @@ function closeSidebar() {
     g = null;
     if (!mq.matches || e.touches.length !== 1 || otherLayerOpen()) return;
     if (e.target.closest && e.target.closest('input, textarea, select')) return;
+    if (e.target.closest && e.target.closest('.chat-panel')) return;
+    const tabs = e.target.closest && e.target.closest('.view-tabs');
+    if (tabs && tabs.scrollWidth > tabs.clientWidth + 1) return;          // 가로로 스크롤되는 탭 줄은 스크롤이 우선
     const t = e.touches[0];
     const open = sidebar.classList.contains('open');
-    if (!open && t.clientX > Math.max(40, Math.round(window.innerWidth * 0.22))) return;
-    g = { mode: open ? 'close' : 'open', x0: t.clientX, y0: t.clientY, t0: Date.now(), locked: false, progress: open ? 1 : 0, last: t.clientX, w: sidebar.getBoundingClientRect().width || 280 };
+    const inEdge = t.clientX <= Math.max(40, Math.round(window.innerWidth * 0.22));
+    g = { mode: open ? 'close' : 'open', strict: !open && !inEdge, x0: t.clientX, y0: t.clientY, t0: Date.now(), locked: false, progress: open ? 1 : 0, last: t.clientX, w: sidebar.getBoundingClientRect().width || 280 };
   }, { passive: true });
 
   document.addEventListener('touchmove', (e) => {
@@ -2724,6 +2730,7 @@ function closeSidebar() {
       if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;          // 아직 방향을 알 수 없음
       if (Math.abs(dy) > Math.abs(dx)) { g = null; return; }        // 세로 스크롤이면 무시
       if ((g.mode === 'open' && dx <= 0) || (g.mode === 'close' && dx >= 0)) { g = null; return; }
+      if (g.strict && Math.abs(dx) < Math.abs(dy) * 1.5) { g = null; return; }   // 가장자리 밖에서는 뚜렷한 가로 방향만 인정
       g.locked = true;
     }
     e.preventDefault();                                             // 가로로 밀 때는 화면이 같이 스크롤되지 않게
