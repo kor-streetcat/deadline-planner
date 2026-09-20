@@ -209,20 +209,29 @@
     .topbar {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       position: sticky;
       top: 0;
       z-index: 30;
       background: var(--topbar-bg);
-      -webkit-backdrop-filter: blur(8px);
-      backdrop-filter: blur(8px);
-      border-bottom: 1px solid var(--border);
-      padding: calc(8px + env(safe-area-inset-top)) 12px 8px calc(12px + env(safe-area-inset-left));
-      font-weight: 600;
-      font-size: 0.92rem;
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s ease;
+      padding: calc(8px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) 8px calc(12px + env(safe-area-inset-left));
     }
-    .sb-toggle { background: none; border: none; font-size: 1.15rem; color: var(--ink-dim); padding: 6px 8px; border-radius: var(--radius); cursor: pointer; }
-    .sb-toggle:hover { background: var(--hover); }
+    .topbar.scrolled { border-bottom-color: var(--border); }
+    /* 노션식: 왼쪽 동그란 프로필 버튼 + 화면 선택 알약들(지금 화면만 이름이 펼쳐지고 나머지는 아이콘만) */
+    .tb-avatar { flex-shrink: 0; width: 40px; height: 40px; padding: 0; border-radius: 50%; border: 1px solid var(--border); background: var(--hover); color: var(--ink-dim); font-size: 1rem; font-weight: 600; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .tb-avatar:active { transform: scale(0.94); }
+    .tb-nav { flex: 1; min-width: 0; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+    .tb-nav::-webkit-scrollbar { display: none; }
+    .tb-pill { flex-shrink: 0; height: 40px; min-width: 40px; padding: 0 9px; border-radius: 999px; border: none; background: var(--sidebar); color: var(--ink-dim); display: flex; align-items: center; justify-content: center; font-size: 0.92rem; font-weight: 600; transition: background-color 0.15s ease, color 0.15s ease, padding 0.2s ease; }
+    .tb-pill svg { width: 22px; height: 22px; flex-shrink: 0; }
+    .tb-pill .tb-label { max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap; margin-left: 0; transition: max-width 0.25s ease, opacity 0.2s ease, margin 0.25s ease; }
+    .tb-pill.active { background: var(--hover); color: var(--ink); padding: 0 15px 0 12px; }
+    .tb-pill.active .tb-label { max-width: 90px; opacity: 1; margin-left: 7px; }
+    .tb-pill:not(.active):active { background: var(--hover); }
     .page { padding: 24px calc(16px + env(safe-area-inset-right)) 120px calc(16px + env(safe-area-inset-left)); }
     .page-title { font-size: 1.6rem; }
     .page-title .page-emoji { font-size: 1.8rem; }
@@ -694,6 +703,7 @@
     .view-tab { padding: 8px 8px; font-size: 0.8rem; }
     .toast { bottom: calc(84px + env(safe-area-inset-bottom)); }   /* 오른쪽 아래 AI 버튼과 안 겹치게 위로 */
   }
+  @media (max-width: 900px) { .view-tabs { display: none; } }   /* 폰·태블릿 세로에서는 상단 바의 알약 버튼이 같은 역할 */
 </style>
 </head>
 <body>
@@ -720,9 +730,15 @@
 </aside>
 
 <div class="main">
-  <div class="topbar">
-    <button class="sb-toggle" id="sbToggleBtn" aria-label="메뉴 열기">☰</button>
-    <span>📓 연구노트</span>
+  <div class="topbar" id="topbar">
+    <button class="tb-avatar" id="sbToggleBtn" aria-label="메뉴 열기"><span id="tbAvatarText">☰</span></button>
+    <nav class="tb-nav" aria-label="화면 선택">
+      <button class="tb-pill" data-view="today" aria-label="오늘" title="오늘"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 11.2 12 4l8.5 7.2"/><path d="M5.5 9.8V19.5h13V9.8"/><path d="M10 19.5v-5h4v5"/></svg><span class="tb-label">오늘</span></button>
+      <button class="tb-pill" data-view="month" aria-label="달력" title="달력"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span class="tb-label">달력</span></button>
+      <button class="tb-pill" data-view="week" aria-label="이번 주" title="이번 주"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4M7.5 14.5h9"/></svg><span class="tb-label">이번 주</span></button>
+      <button class="tb-pill" data-view="list" aria-label="전체 표" title="전체 표"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M3.5 10h17M3.5 15h17M10 4.5v15"/></svg><span class="tb-label">전체 표</span></button>
+      <button class="tb-pill" data-view="board" aria-label="보드" title="보드"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="4.5" height="15" rx="1.5"/><rect x="9.75" y="4.5" width="4.5" height="10" rx="1.5"/><rect x="16" y="4.5" width="4.5" height="6.5" rx="1.5"/></svg><span class="tb-label">보드</span></button>
+    </nav>
   </div>
 
   <div class="page">
@@ -1045,7 +1061,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v12';
+const APP_VERSION = 'v13';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2105,7 +2121,11 @@ function setViewMode(mode) {
     btn.classList.remove('active');
     btn.textContent = '선택';
   }
-  document.querySelectorAll('[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === mode));
+  document.querySelectorAll('[data-view]').forEach(b => {
+    const on = b.dataset.view === mode;
+    b.classList.toggle('active', on);
+    if (b.classList.contains('tb-pill')) b.setAttribute('aria-current', on ? 'page' : 'false');
+  });
   closeSidebar();
   document.getElementById('monthView').style.display = mode === 'month' ? 'block' : 'none';
   document.getElementById('weekView').style.display = mode === 'week' ? 'flex' : 'none';
@@ -2927,7 +2947,7 @@ function closeSidebar() {
     // 브라우저가 화면 가장자리 터치를 근처 입력칸으로 자동 보정하기 때문에, 입력칸이 있는 줄에서도 가장자리 스와이프가 되게 함.
     if (e.target.closest && e.target.closest('input, textarea, select') && t.clientX > 30) return;
     if (e.target.closest && e.target.closest('.chat-panel')) return;
-    const tabs = e.target.closest && e.target.closest('.view-tabs');
+    const tabs = e.target.closest && e.target.closest('.view-tabs, .tb-nav');
     if (tabs && tabs.scrollWidth > tabs.clientWidth + 1) return;          // 가로로 스크롤되는 탭 줄은 스크롤이 우선
     const open = sidebar.classList.contains('open');
     const inEdge = t.clientX <= Math.max(40, Math.round(window.innerWidth * 0.22));
@@ -2965,6 +2985,13 @@ function closeSidebar() {
 })();
 
 document.getElementById('sbToggleBtn').addEventListener('click', openSidebar);
+// 스크롤하면 상단 바 밑에 얇은 선이 생김
+(function () {
+  const bar = document.getElementById('topbar');
+  const update = () => bar.classList.toggle('scrolled', window.scrollY > 4);
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+})();
 document.getElementById('sbOverlay').addEventListener('click', closeSidebar);
 document.getElementById('openDrawerBtn').addEventListener('click', closeSidebar);
 
@@ -3567,6 +3594,8 @@ function syncSetStatus(text, isErr) {
 
 function renderSyncUi(d) {
   const loggedIn = d.state !== 'off';
+  const av = document.getElementById('tbAvatarText');   // 상단 프로필 버튼: 로그인하면 이메일 첫 글자, 아니면 메뉴 아이콘
+  if (av) av.textContent = loggedIn && d.email ? Array.from(d.email)[0].toUpperCase() : '☰';
   const sumEl = document.getElementById('syncSummaryState');
   sumEl.textContent = !loggedIn ? '로그인 안 됨' : d.state === 'error' ? '동기화 오류' : d.state === 'synced' ? (d.email || '동기화됨') : '연결 중…';
   sumEl.className = 'fold-state' + (!loggedIn ? '' : d.state === 'error' ? ' warn' : d.state === 'synced' ? ' ok' : '');
