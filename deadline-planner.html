@@ -641,6 +641,18 @@
     /* iOS는 글자 크기가 16px 미만인 입력칸에 포커스하면 화면이 확대됨 */
     input[type="text"], input[type="email"], input[type="password"], input[type="date"], textarea { font-size: 16px !important; }
   }
+
+  /* ===== 서랍: 접이식 섹션 (로그인·API 키) ===== */
+  .drawer-group-label { font-size: 0.7rem; font-weight: 600; color: var(--ink-faint); letter-spacing: 0.02em; margin: 8px 0 10px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .fold > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; margin-bottom: 0; border-bottom: 1px solid var(--border); }
+  .fold > summary::-webkit-details-marker { display: none; }
+  .fold > summary::before { content: '▸'; color: var(--ink-faint); font-size: 0.8rem; transition: transform 0.15s ease; }
+  .fold[open] > summary::before { transform: rotate(90deg); }
+  .fold[open] > summary { margin-bottom: 10px; }
+  .fold > summary:hover { color: var(--accent); }
+  .fold-state { margin-left: auto; font-size: 0.74rem; font-weight: 500; color: var(--ink-faint); max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fold-state.ok { color: var(--teal); }
+  .fold-state.warn { color: var(--danger); }
 </style>
 </head>
 <body>
@@ -835,40 +847,6 @@
     <button id="closeDrawerBtn" class="drawer-close" aria-label="닫기">×</button>
   </div>
   <div class="drawer-body">
-    <div class="drawer-section" id="syncSection">
-      <div class="drawer-section-title">☁️ 동기화</div>
-      <p class="drawer-desc" id="syncDesc">로그인하면 폰과 컴퓨터가 같은 일정을 실시간으로 봐. 로그인 전에는 이 기기에만 저장돼.</p>
-      <div id="syncLoggedOut">
-        <input type="email" id="syncEmail" class="settings-input" placeholder="이메일" autocomplete="email" autocapitalize="off">
-        <input type="password" id="syncPassword" class="settings-input" placeholder="비밀번호 (6자 이상)" autocomplete="current-password">
-        <div class="settings-actions">
-          <button class="btn-ghost" id="syncLoginBtn">로그인</button>
-          <button class="btn-ghost" id="syncSignupBtn">새로 가입</button>
-        </div>
-        <button class="btn-ghost" id="syncResetBtn" style="width:100%; margin-top:8px;">비밀번호 재설정 메일 받기</button>
-      </div>
-      <div id="syncLoggedIn" style="display:none;">
-        <div class="sync-account"><span class="sync-dot" id="syncDot"></span><span id="syncAccount"></span></div>
-        <div class="settings-actions"><button class="btn-ghost" id="syncLogoutBtn">로그아웃</button></div>
-      </div>
-      <div class="status" id="syncStatus"></div>
-    </div>
-
-    <div class="drawer-section">
-      <div class="drawer-section-title">🤖 AI 설정</div>
-      <p class="drawer-desc">키를 넣으면 앱이 Gemini를 바로 호출해. 비워두면 프롬프트를 복사해서 Claude 등에 붙여넣고, 답을 다시 붙여넣는 방식으로 동작해. 키는 이 기기에만 저장돼.</p>
-      <label class="settings-label" for="geminiKeyInput">Gemini API 키 (선택)</label>
-      <input type="password" id="geminiKeyInput" class="settings-input" placeholder="비워두면 복사·붙여넣기 방식" autocomplete="off">
-      <label class="settings-label" for="geminiModelInput">모델</label>
-      <input type="text" id="geminiModelInput" class="settings-input" placeholder="비워두면 기본 모델 사용">
-      <div class="settings-actions">
-        <button class="btn-ghost" id="saveAiSettingsBtn">저장</button>
-        <button class="btn-ghost" id="testAiBtn">연결 테스트</button>
-      </div>
-      <div class="status" id="aiSettingsStatus"></div>
-      <p class="drawer-desc">키 발급: <a class="settings-link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> (Google 계정으로 로그인)</p>
-    </div>
-
     <div class="drawer-section">
       <div class="drawer-section-title">📚 주제 추천 참고 자료</div>
       <p class="drawer-desc">주제 추천 시 참고돼</p>
@@ -897,6 +875,41 @@
       </div>
       <div class="status" id="backupStatus"></div>
     </div>
+
+    <div class="drawer-group-label">연결 설정</div>
+    <details class="drawer-section fold" id="syncSection">
+      <summary class="drawer-section-title">☁️ 동기화 · 로그인 <span class="fold-state" id="syncSummaryState">로그인 안 됨</span></summary>
+      <p class="drawer-desc" id="syncDesc">로그인하면 폰과 컴퓨터가 같은 일정을 실시간으로 봐. 로그인 전에는 이 기기에만 저장돼.</p>
+      <div id="syncLoggedOut">
+        <input type="email" id="syncEmail" class="settings-input" placeholder="이메일" autocomplete="email" autocapitalize="off">
+        <input type="password" id="syncPassword" class="settings-input" placeholder="비밀번호 (6자 이상)" autocomplete="current-password">
+        <div class="settings-actions">
+          <button class="btn-ghost" id="syncLoginBtn">로그인</button>
+          <button class="btn-ghost" id="syncSignupBtn">새로 가입</button>
+        </div>
+        <button class="btn-ghost" id="syncResetBtn" style="width:100%; margin-top:8px;">비밀번호 재설정 메일 받기</button>
+      </div>
+      <div id="syncLoggedIn" style="display:none;">
+        <div class="sync-account"><span class="sync-dot" id="syncDot"></span><span id="syncAccount"></span></div>
+        <div class="settings-actions"><button class="btn-ghost" id="syncLogoutBtn">로그아웃</button></div>
+      </div>
+      <div class="status" id="syncStatus"></div>
+    </details>
+
+    <details class="drawer-section fold" id="aiSection">
+      <summary class="drawer-section-title">🤖 AI 설정 · API 키 <span class="fold-state" id="aiSummaryState">키 없음</span></summary>
+      <p class="drawer-desc">키를 넣으면 앱이 Gemini를 바로 호출해. 비워두면 프롬프트를 복사해서 Claude 등에 붙여넣고, 답을 다시 붙여넣는 방식으로 동작해. 키는 이 기기에만 저장돼.</p>
+      <label class="settings-label" for="geminiKeyInput">Gemini API 키 (선택)</label>
+      <input type="password" id="geminiKeyInput" class="settings-input" placeholder="비워두면 복사·붙여넣기 방식" autocomplete="off">
+      <label class="settings-label" for="geminiModelInput">모델</label>
+      <input type="text" id="geminiModelInput" class="settings-input" placeholder="비워두면 기본 모델 사용">
+      <div class="settings-actions">
+        <button class="btn-ghost" id="saveAiSettingsBtn">저장</button>
+        <button class="btn-ghost" id="testAiBtn">연결 테스트</button>
+      </div>
+      <div class="status" id="aiSettingsStatus"></div>
+      <p class="drawer-desc">키 발급: <a class="settings-link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> (Google 계정으로 로그인)</p>
+    </details>
   </div>
 </div>
 
@@ -970,7 +983,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v5';
+const APP_VERSION = 'v6';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2105,6 +2118,7 @@ document.getElementById('saveAiSettingsBtn').addEventListener('click', async () 
     await store.set(GEMINI_MODEL_KEY, typedModel);
     statusEl.className = 'status';
     statusEl.textContent = geminiKey ? '저장함 — 앱이 Gemini를 직접 호출해' : '키를 비워서 저장함 — 복사·붙여넣기 방식으로 동작해';
+    updateAiSummary();
   } catch (e) {
     statusEl.className = 'status err';
     statusEl.textContent = '저장 실패: ' + e.message;
@@ -3213,6 +3227,9 @@ function syncSetStatus(text, isErr) {
 
 function renderSyncUi(d) {
   const loggedIn = d.state !== 'off';
+  const sumEl = document.getElementById('syncSummaryState');
+  sumEl.textContent = !loggedIn ? '로그인 안 됨' : d.state === 'error' ? '동기화 오류' : d.state === 'synced' ? (d.email || '동기화됨') : '연결 중…';
+  sumEl.className = 'fold-state' + (!loggedIn ? '' : d.state === 'error' ? ' warn' : d.state === 'synced' ? ' ok' : '');
   document.getElementById('syncLoggedOut').style.display = loggedIn ? 'none' : 'block';
   document.getElementById('syncLoggedIn').style.display = loggedIn ? 'block' : 'none';
   const dot = document.getElementById('syncDot');
@@ -3228,6 +3245,12 @@ function renderSyncUi(d) {
   ver.textContent = '연구노트 ' + APP_VERSION + ' · ☁️ ' + (d.state === 'synced' ? '동기화됨' : d.state === 'error' ? '오류' : '대기');
 }
 window.addEventListener('cloud-status', (e) => renderSyncUi(e.detail));
+
+function updateAiSummary() {
+  const el = document.getElementById('aiSummaryState');
+  el.textContent = geminiKey ? '키 저장됨' : '키 없음 · 복사/붙여넣기';
+  el.className = 'fold-state' + (geminiKey ? ' ok' : '');
+}
 
 function requireCloud() {
   if (window.cloud) return true;
@@ -3285,6 +3308,7 @@ document.getElementById('syncLogoutBtn').addEventListener('click', async () => {
   applyTheme();
   document.getElementById('sbVersion').textContent = '연구노트 ' + APP_VERSION;
   document.getElementById('geminiKeyInput').value = geminiKey;
+  updateAiSummary();
   document.getElementById('geminiModelInput').value = geminiModel === DEFAULT_GEMINI_MODEL ? '' : geminiModel;
   renderKeywordChips();
   renderReferenceList();
