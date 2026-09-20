@@ -231,11 +231,14 @@
     .tb-avatar:active { transform: scale(0.94); }
     .tb-nav { flex: 1; min-width: 0; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
     .tb-nav::-webkit-scrollbar { display: none; }
-    .tb-pill { flex-shrink: 0; height: 40px; min-width: 40px; padding: 0 9px; border-radius: 999px; border: none; background: var(--sidebar); color: var(--ink-dim); display: flex; align-items: center; justify-content: center; font-size: 0.92rem; font-weight: 600; transition: background-color 0.25s ease, color 0.25s ease, padding 0.38s cubic-bezier(0.32, 0.72, 0, 1), transform 0.15s ease; }
+    .tb-pill { flex-shrink: 0; height: 40px; min-width: 40px; padding: 0 9px; border-radius: 999px; border: none; background: var(--sidebar); color: var(--ink-dim); display: flex; align-items: center; justify-content: center; font-size: 0.92rem; font-weight: 600; transition: background-color 0.12s ease, color 0.12s ease, padding 0.12s ease-out, transform 0.15s ease; }
     .tb-pill svg { width: 22px; height: 22px; flex-shrink: 0; }
-    .tb-pill .tb-label { max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap; margin-left: 0; transition: max-width 0.38s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.28s ease, margin 0.38s cubic-bezier(0.32, 0.72, 0, 1); }
-    .tb-pill.active { background: var(--hover); color: var(--ink); padding: 0 15px 0 12px; }
-    .tb-pill.active .tb-label { max-width: 90px; opacity: 1; margin-left: 7px; }
+    /* 이름 폭은 0fr→1fr로 늘려서 실제 글자 폭에 정확히 맞춰 움직임 (max-width로 하면 곡선 앞부분에서 이미 끝나버림) */
+    .tb-pill .tb-label { display: grid; grid-template-columns: 0fr; opacity: 0; margin-left: 0; transition: grid-template-columns 0.1s ease-out, opacity 0.06s ease-out, margin 0.1s ease-out; }
+    .tb-pill .tb-label > span { overflow: hidden; white-space: nowrap; min-width: 0; }
+    .tb-pill.active { background: var(--hover); color: var(--ink); padding: 0 15px 0 12px; transition: background-color 0.1s ease, color 0.15s ease, padding 0.3s cubic-bezier(0.25, 0.6, 0.3, 1), transform 0.15s ease; }
+    .tb-pill.active .tb-label { grid-template-columns: 1fr; opacity: 1; margin-left: 7px; transition: grid-template-columns 0.3s cubic-bezier(0.25, 0.6, 0.3, 1), opacity 0.05s ease, margin 0.3s cubic-bezier(0.25, 0.6, 0.3, 1); }
+    @media (hover: hover) { .tb-pill:not(.active):hover { background: var(--hover); } }
     .tb-pill:not(.active):active { background: var(--hover); transform: scale(0.92); }
     /* 화면이 바뀔 때 새 내용이 눌린 알약 쪽 방향에서 옆으로 밀려 들어옴 */
     @keyframes viewInR { from { opacity: 0; transform: translateX(34px); } to { opacity: 1; transform: none; } }
@@ -788,11 +791,11 @@
   <div class="topbar" id="topbar">
     <button class="tb-avatar" id="sbToggleBtn" aria-label="메뉴 열기"><span id="tbAvatarText">☰</span></button>
     <nav class="tb-nav" aria-label="화면 선택">
-      <button class="tb-pill" data-view="today" aria-label="오늘" title="오늘"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 11.2 12 4l8.5 7.2"/><path d="M5.5 9.8V19.5h13V9.8"/><path d="M10 19.5v-5h4v5"/></svg><span class="tb-label">오늘</span></button>
-      <button class="tb-pill" data-view="month" aria-label="달력" title="달력"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span class="tb-label">달력</span></button>
-      <button class="tb-pill" data-view="week" aria-label="이번 주" title="이번 주"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4M7.5 14.5h9"/></svg><span class="tb-label">이번 주</span></button>
-      <button class="tb-pill" data-view="list" aria-label="전체 표" title="전체 표"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M3.5 10h17M3.5 15h17M10 4.5v15"/></svg><span class="tb-label">전체 표</span></button>
-      <button class="tb-pill" data-view="board" aria-label="보드" title="보드"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="4.5" height="15" rx="1.5"/><rect x="9.75" y="4.5" width="4.5" height="10" rx="1.5"/><rect x="16" y="4.5" width="4.5" height="6.5" rx="1.5"/></svg><span class="tb-label">보드</span></button>
+      <button class="tb-pill" data-view="today" aria-label="오늘" title="오늘"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 11.2 12 4l8.5 7.2"/><path d="M5.5 9.8V19.5h13V9.8"/><path d="M10 19.5v-5h4v5"/></svg><span class="tb-label"><span>오늘</span></span></button>
+      <button class="tb-pill" data-view="month" aria-label="달력" title="달력"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span class="tb-label"><span>달력</span></span></button>
+      <button class="tb-pill" data-view="week" aria-label="이번 주" title="이번 주"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4M7.5 14.5h9"/></svg><span class="tb-label"><span>이번 주</span></span></button>
+      <button class="tb-pill" data-view="list" aria-label="전체 표" title="전체 표"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M3.5 10h17M3.5 15h17M10 4.5v15"/></svg><span class="tb-label"><span>전체 표</span></span></button>
+      <button class="tb-pill" data-view="board" aria-label="보드" title="보드"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="4.5" height="15" rx="1.5"/><rect x="9.75" y="4.5" width="4.5" height="10" rx="1.5"/><rect x="16" y="4.5" width="4.5" height="6.5" rx="1.5"/></svg><span class="tb-label"><span>보드</span></span></button>
     </nav>
   </div>
 
@@ -1116,7 +1119,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v17';
+const APP_VERSION = 'v18';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2214,7 +2217,7 @@ function setViewMode(mode, animate) {
   }
   // 앱을 다시 열어도 마지막에 보던 화면으로 돌아오게 기억
   store.set('view', mode).catch(() => {});
-  if (animate && prevMode !== mode) slideInView(mode, VIEW_ORDER.indexOf(mode) > VIEW_ORDER.indexOf(prevMode));
+  if (animate && prevMode !== mode && window.matchMedia('(max-width: 900px)').matches) slideInView(mode, VIEW_ORDER.indexOf(mode) > VIEW_ORDER.indexOf(prevMode));
 }
 
 // 화면 전환 모션: 알약 순서상 오른쪽 화면이면 오른쪽에서, 왼쪽이면 왼쪽에서 밀려 들어옴
