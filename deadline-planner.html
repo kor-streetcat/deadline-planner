@@ -704,6 +704,15 @@
     .toast { bottom: calc(84px + env(safe-area-inset-bottom)); }   /* 오른쪽 아래 AI 버튼과 안 겹치게 위로 */
   }
   @media (max-width: 900px) { .view-tabs { display: none; } }   /* 폰·태블릿 세로에서는 상단 바의 알약 버튼이 같은 역할 */
+
+  /* ===== 앱처럼 느껴지게: 더블탭 확대와, 길게 눌러 글자 선택·복사 메뉴가 뜨는 것을 끔 ===== */
+  /* manipulation: 이동·핀치 확대는 그대로 두고 "두 번 눌러 확대"만 막음. 빠르게 두 번 누르는 클릭은 그대로 두 번 인식됨. */
+  * { touch-action: manipulation; }
+  /* 터치 기기에서만: 마우스를 쓰는 컴퓨터에서는 글자 선택이 그대로 됨. 입력칸은 글자를 쓰고 붙여넣어야 하므로 예외. */
+  @media (hover: none) and (pointer: coarse) {
+    html, body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+    input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+  }
 </style>
 </head>
 <body>
@@ -1061,7 +1070,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v13';
+const APP_VERSION = 'v14';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
