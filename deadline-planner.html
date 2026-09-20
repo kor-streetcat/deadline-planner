@@ -6,7 +6,7 @@
 <title>Δuenoτe — 마감일 정리기</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#ffffff">
-<script>try{var __t=localStorage.getItem("planner:theme");if(__t)document.documentElement.setAttribute("data-theme",__t);}catch(e){}</script>
+<script>try{var __t=localStorage.getItem("planner:theme");if(__t)document.documentElement.setAttribute("data-theme",__t);if(localStorage.getItem("planner:sidebar")==="1")document.documentElement.classList.add("sb-collapsed");}catch(e){}</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Δuenoτe">
@@ -167,6 +167,27 @@
   .sb-pill.active .sp-label { grid-template-columns: 1fr; opacity: 1; margin-left: 6px; transition: grid-template-columns 0.46s var(--ease-out), opacity 0.32s ease 0.06s, margin 0.46s var(--ease-out); }
   .sb-pill .sp-badge { position: absolute; top: -2px; right: -2px; min-width: 15px; height: 15px; padding: 0 4px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 0.62rem; font-weight: 700; line-height: 15px; text-align: center; box-shadow: 0 0 0 2px var(--sidebar); }
   @media (prefers-reduced-motion: reduce) { .sb-pill, .sb-pill .sp-label { transition: none; } }
+  /* 사이드바 접기(데스크톱·태블릿 가로, 폭 901px 이상): 노션처럼 왼쪽 칸을 접고 펴는 버튼. 접힌 상태는 html.sb-collapsed */
+  .sb-collapse { margin-left: auto; flex-shrink: 0; width: 28px; height: 28px; padding: 0; border: none; border-radius: 8px; background: transparent; color: var(--ink-faint); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color 0.22s var(--ease-out), color 0.22s var(--ease-out), transform 0.25s var(--ease-out); }
+  .sb-collapse:hover { background: var(--hover); color: var(--ink); }
+  .sb-collapse:active { transform: scale(0.92); }
+  .sb-collapse .ic { width: 18px; height: 18px; vertical-align: 0; }
+  .sb-expand { position: fixed; top: 14px; left: 14px; z-index: 46; width: 34px; height: 34px; padding: 0; border: none; border-radius: 10px; background: transparent; color: var(--ink-dim); display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; visibility: hidden; transform: translateX(-6px); transition: opacity 0.3s var(--ease-out), transform 0.4s var(--ease-out), visibility 0s 0.3s, background-color 0.22s var(--ease-out), color 0.22s var(--ease-out); }
+  .sb-expand:hover { background: var(--hover); color: var(--ink); }
+  .sb-expand .ic { width: 20px; height: 20px; vertical-align: 0; }
+  @media (min-width: 901px) {
+    .main { transition: margin-left 0.45s var(--ease-out); }
+    html.sb-collapsed .sidebar { transform: translateX(-100%); visibility: hidden; transition: transform 0.45s var(--ease-out), visibility 0s 0.45s; }
+    html.sb-collapsed .main { margin-left: 0; }
+    html.sb-collapsed .sb-expand { opacity: 1; visibility: visible; transform: none; transition: opacity 0.4s var(--ease-out) 0.2s, transform 0.5s var(--ease-out) 0.2s, visibility 0s, background-color 0.22s var(--ease-out), color 0.22s var(--ease-out); }
+  }
+  @media (max-width: 900px) { .sb-collapse, .sb-expand { display: none; } }
+  /* 홈 화면에 추가한 앱(standalone)에서는 iOS/iPadOS가 화면 맨 위(상태 표시줄 자리)에 흐림 효과를 겹쳐서, 맨 위에 붙은 로고가 흐려 보였다(사용자 제보).
+     그 효과 아래로 내용이 내려오도록 사이드바 머리를 더 아래에서 시작한다. 브라우저·Mac 앱에는 적용되지 않는다. */
+  @media (display-mode: standalone) {
+    .sidebar { padding-top: calc(env(safe-area-inset-top) + 48px); }
+    .sb-expand { top: calc(env(safe-area-inset-top) + 42px); }
+  }
   .sb-brand { display: flex; align-items: center; gap: 8px; padding: 6px 8px 10px; font-weight: 600; font-size: 0.95rem; }
   .sb-brand .ic { width: 1.35rem; height: 1.35rem; color: var(--accent); }
   .sb-label { font-size: 0.7rem; font-weight: 600; color: var(--ink-faint); padding: 14px 8px 4px; letter-spacing: 0.02em; }
@@ -788,12 +809,14 @@
 <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3.5h7l4 4v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-15a1 1 0 0 1 1-1z"/><path d="M14 3.5v4h4M9 12.5h6M9 16h6"/></symbol>
 <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4.5 19.5l1-4L16 5a2 2 0 0 1 2.8 0l.2.2A2 2 0 0 1 19 8L8.5 18.5z"/><path d="M14 7l3 3"/></symbol>
 <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+<symbol id="i-panel-left" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M9.5 4.5v15"/></symbol>
+<symbol id="i-panel-left-close" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M9.5 4.5v15M16 9.5l-2.5 2.5 2.5 2.5"/></symbol>
 <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4h-4"/></symbol>
 </defs></svg>
 <div id="sbOverlay" class="sb-overlay"></div>
 
 <aside id="sidebar" class="sidebar">
-  <div class="sb-brand"><svg class="ic" aria-hidden="true"><use href="#i-notebook"/></svg><span>Δuenoτe</span></div>
+  <div class="sb-brand"><svg class="ic" aria-hidden="true"><use href="#i-notebook"/></svg><span>Δuenoτe</span><button class="sb-collapse" id="sbCollapseBtn" aria-label="사이드바 접기" title="사이드바 접기 (⌘\)"><svg class="ic" aria-hidden="true"><use href="#i-panel-left-close"/></svg></button></div>
   <button class="sb-new" id="sbNewBtn">＋ 새 일정</button>
 
   <nav class="sb-pills" aria-label="화면 선택">
@@ -820,6 +843,8 @@
   <div class="sb-spacer"></div>
   <div class="sb-version" id="sbVersion"></div>
 </aside>
+
+<button class="sb-expand" id="sbExpandBtn" aria-label="사이드바 펴기" title="사이드바 펴기 (⌘\)"><svg class="ic" aria-hidden="true"><use href="#i-panel-left"/></svg></button>
 
 <div class="main">
   <div class="topbar" id="topbar">
@@ -1141,7 +1166,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v25';
+const APP_VERSION = 'v26';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -3015,6 +3040,19 @@ function openSidebar() {
   document.getElementById('sidebar').classList.add('open');
   document.getElementById('sbOverlay').classList.add('open');
 }
+// ---- 사이드바 접기/펴기 (폭 901px 이상): 버튼, 단축키 Cmd/Ctrl+\, 명령창. 상태는 planner:sidebar에 기억("1"=접힘)
+const desktopMq = window.matchMedia('(min-width: 901px)');
+function setSidebarCollapsed(c) {
+  document.documentElement.classList.toggle('sb-collapsed', c);
+  try { localStorage.setItem(APP_PREFIX + 'sidebar', c ? '1' : '0'); } catch (e) {}
+}
+function toggleSidebarCollapsed() {
+  if (desktopMq.matches) setSidebarCollapsed(!document.documentElement.classList.contains('sb-collapsed'));
+  else if (document.getElementById('sidebar').classList.contains('open')) closeSidebar(); else openSidebar();   // 폰에서는 메뉴 열기/닫기
+}
+document.getElementById('sbCollapseBtn').addEventListener('click', () => setSidebarCollapsed(true));
+document.getElementById('sbExpandBtn').addEventListener('click', () => setSidebarCollapsed(false));
+
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sbOverlay').classList.remove('open');
@@ -3369,6 +3407,7 @@ let cmdIndex = 0;
 function paletteEntries(query) {
   const q = query.trim().toLowerCase();
   const cmds = [
+    { icon: 'panel-left', label: '사이드바 접기 · 펴기 (⌘\\)', run: toggleSidebarCollapsed },
     { icon: 'month', label: '달력 보기', run: () => setViewMode('month', true) },
     { icon: 'week', label: '이번 주 보기', run: () => setViewMode('week', true) },
     { icon: 'list', label: '전체 표 보기', run: () => setViewMode('list', true) },
@@ -3450,6 +3489,11 @@ document.getElementById('sbSearchBtn').addEventListener('click', openPalette);
 
 // 전역 단축키: Cmd/Ctrl+K 명령창, Esc로 가장 위에 열린 것부터 닫기
 document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key === '\\') {
+    e.preventDefault();
+    toggleSidebarCollapsed();
+    return;
+  }
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
     e.preventDefault();
     if (document.getElementById('cmdOverlay').classList.contains('open')) closePalette(); else openPalette();
