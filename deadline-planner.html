@@ -156,7 +156,6 @@
   .ic.sm { width: 1.05em; height: 1.05em; vertical-align: -0.18em; }
   /* 데스크톱 사이드바 알약 줄 (노션 데스크톱 배열): 지금 화면만 이름이 펼쳐지고, 나머지는 아이콘만 */
   .sb-pills { display: flex; gap: 2px; margin: 4px 0 2px; }
-  .sb-viewlist { display: none; }
   .sb-pill { position: relative; flex-shrink: 0; height: 32px; min-width: 32px; padding: 0 7px; border-radius: 11px; border: none; background: transparent; color: var(--ink-dim); display: flex; align-items: center; justify-content: center; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background-color 0.3s var(--ease-out), color 0.3s var(--ease-out), padding 0.32s var(--ease-out), transform 0.25s var(--ease-out); }
   .sb-pill .ic { width: 17px; height: 17px; vertical-align: 0; }
   .sb-pill .sp-label { display: grid; grid-template-columns: 0fr; opacity: 0; margin-left: 0; transition: grid-template-columns 0.32s var(--ease-out), opacity 0.18s ease, margin 0.32s var(--ease-out); }
@@ -210,7 +209,6 @@
   }
   .sb-item:hover { background: var(--hover); }
   .sb-item.active { background: var(--hover); color: var(--ink); font-weight: 600; }
-  .sb-item .sb-badge { margin-left: auto; background: var(--danger-soft); color: var(--danger); font-size: 0.68rem; font-weight: 600; padding: 0 6px; border-radius: 999px; }
   .sb-new {
     display: flex;
     align-items: center;
@@ -246,7 +244,6 @@
 
   @media (max-width: 900px) {
     .sb-pills { display: none; }
-    .sb-viewlist { display: contents; }
     .sidebar { transform: translateX(-100%); box-shadow: 8px 0 24px rgba(0,0,0,0.1); width: min(280px, 84vw); }
     .sidebar.open { transform: translateX(0); }
     .main { margin-left: 0; }
@@ -826,15 +823,6 @@
     <button class="sb-pill" data-view="list" aria-label="전체 표" title="전체 표"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg><span class="sp-label"><span>전체 표</span></span><span class="sp-badge" id="sbPillListBadge" style="display:none;"></span></button>
     <button class="sb-pill" data-view="board" aria-label="보드" title="보드"><svg class="ic" aria-hidden="true"><use href="#i-board"/></svg><span class="sp-label"><span>보드</span></span></button>
   </nav>
-  <div class="sb-viewlist">
-  <div class="sb-label">보기</div>
-  <button class="sb-item" data-view="today"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg><span>오늘</span><span class="sb-badge" id="sbTodayBadge" style="display:none;"></span></button>
-  <button class="sb-item" data-view="month"><svg class="ic" aria-hidden="true"><use href="#i-month"/></svg><span>달력</span></button>
-  <button class="sb-item" data-view="week"><svg class="ic" aria-hidden="true"><use href="#i-week"/></svg><span>이번 주</span></button>
-  <button class="sb-item" data-view="list"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg><span>전체 표</span><span class="sb-badge" id="sbOverdueBadge" style="display:none;"></span></button>
-  <button class="sb-item" data-view="board"><svg class="ic" aria-hidden="true"><use href="#i-board"/></svg><span>보드</span></button>
-  </div>
-
   <div class="sb-label">도구</div>
   <button class="sb-item" id="sbSearchBtn"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg><span>검색 · 명령</span><span class="sb-kbd">⌘K</span></button>
   <button class="sb-item" id="sbChatBtn"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg><span>AI 비서</span></button>
@@ -1166,7 +1154,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v27';
+const APP_VERSION = 'v28';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2073,13 +2061,7 @@ function renderSummaryBanner() {
   const todayItems = items.filter(it => it.dueDate === today && !it.done);
   const tomorrowItems = items.filter(it => it.dueDate === tomorrow && !it.done);
 
-  const badge = document.getElementById('sbOverdueBadge');
-  badge.style.display = overdueItems.length ? 'inline-block' : 'none';
-  badge.textContent = overdueItems.length;
   const urgentN = overdueItems.length + todayItems.length;
-  const todayBadge = document.getElementById('sbTodayBadge');
-  todayBadge.style.display = urgentN ? 'inline-block' : 'none';
-  todayBadge.textContent = urgentN;
   const pillToday = document.getElementById('sbPillTodayBadge'), pillList = document.getElementById('sbPillListBadge');
   pillToday.style.display = urgentN ? 'block' : 'none'; pillToday.textContent = urgentN;
   pillList.style.display = overdueItems.length ? 'block' : 'none'; pillList.textContent = overdueItems.length;
