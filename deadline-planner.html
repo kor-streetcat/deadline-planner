@@ -631,6 +631,16 @@
   .cmd-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .cmd-hint { font-size: 0.74rem; color: var(--ink-faint); flex-shrink: 0; }
   .cmd-empty { padding: 16px; text-align: center; color: var(--ink-faint); font-size: 0.85rem; }
+
+  /* ===== 동기화 ===== */
+  .sync-account { font-size: 0.86rem; padding: 8px 12px; background: var(--sidebar); border-radius: 12px; word-break: break-all; }
+  .sync-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--ink-faint); }
+  .sync-dot.on { background: var(--teal); }
+  .sync-dot.wait { background: #e0a030; }
+  @media (max-width: 900px) {
+    /* iOS는 글자 크기가 16px 미만인 입력칸에 포커스하면 화면이 확대됨 */
+    input[type="text"], input[type="email"], input[type="password"], input[type="date"], textarea { font-size: 16px !important; }
+  }
 </style>
 </head>
 <body>
@@ -825,6 +835,25 @@
     <button id="closeDrawerBtn" class="drawer-close" aria-label="닫기">×</button>
   </div>
   <div class="drawer-body">
+    <div class="drawer-section" id="syncSection">
+      <div class="drawer-section-title">☁️ 동기화</div>
+      <p class="drawer-desc" id="syncDesc">로그인하면 폰과 컴퓨터가 같은 일정을 실시간으로 봐. 로그인 전에는 이 기기에만 저장돼.</p>
+      <div id="syncLoggedOut">
+        <input type="email" id="syncEmail" class="settings-input" placeholder="이메일" autocomplete="email" autocapitalize="off">
+        <input type="password" id="syncPassword" class="settings-input" placeholder="비밀번호 (6자 이상)" autocomplete="current-password">
+        <div class="settings-actions">
+          <button class="btn-ghost" id="syncLoginBtn">로그인</button>
+          <button class="btn-ghost" id="syncSignupBtn">새로 가입</button>
+        </div>
+        <button class="btn-ghost" id="syncResetBtn" style="width:100%; margin-top:8px;">비밀번호 재설정 메일 받기</button>
+      </div>
+      <div id="syncLoggedIn" style="display:none;">
+        <div class="sync-account"><span class="sync-dot" id="syncDot"></span><span id="syncAccount"></span></div>
+        <div class="settings-actions"><button class="btn-ghost" id="syncLogoutBtn">로그아웃</button></div>
+      </div>
+      <div class="status" id="syncStatus"></div>
+    </div>
+
     <div class="drawer-section">
       <div class="drawer-section-title">🤖 AI 설정</div>
       <p class="drawer-desc">키를 넣으면 앱이 Gemini를 바로 호출해. 비워두면 프롬프트를 복사해서 Claude 등에 붙여넣고, 답을 다시 붙여넣는 방식으로 동작해. 키는 이 기기에만 저장돼.</p>
@@ -941,7 +970,8 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v4';
+const APP_VERSION = 'v5';
+window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
   trash: `<svg width="40" height="40" viewBox="0 0 48 48" fill="none" stroke="var(--teal)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14h28M18 14V10a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4M14 14l1.5 24a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2L34 14"/><path d="M20 21v11M28 21v11" opacity="0.5"/></svg>`,
@@ -973,6 +1003,7 @@ async function loadItems() {
 async function saveItems() {
   try {
     await store.set(STORAGE_KEY, JSON.stringify(items));
+    cloudPush();
   } catch (e) {
     console.error('저장 실패', e);
   }
@@ -990,6 +1021,7 @@ async function loadTrash() {
 async function saveTrash() {
   try {
     await store.set(TRASH_KEY, JSON.stringify(trashedItems));
+    cloudPush();
   } catch (e) {
     console.error('저장 실패', e);
   }
@@ -1058,6 +1090,7 @@ async function loadKeywordPresets() {
 async function saveKeywordPresets() {
   try {
     await store.set(KEYWORD_PRESETS_KEY, JSON.stringify(keywordPresets));
+    cloudPush();
   } catch (e) {
     console.error('저장 실패', e);
   }
@@ -1109,6 +1142,7 @@ async function loadReferenceMaterials() {
 async function saveReferenceMaterials() {
   try {
     await store.set(REFERENCE_MATERIALS_KEY, JSON.stringify(referenceMaterials));
+    cloudPush();
   } catch (e) {
     console.error('저장 실패', e);
   }
@@ -3041,6 +3075,199 @@ document.addEventListener('keydown', (e) => {
   else closeSidebar();
 });
 
+// ---- 클라우드 동기화 (연결부: 실제 Firebase 통신은 아래 module 스크립트가 담당) ----
+function cloudPush() {
+  if (window.cloud && window.cloud.schedulePush) window.cloud.schedulePush();
+}
+
+function stableStringify(v) {
+  const sortKeys = (x) => Array.isArray(x) ? x.map(sortKeys)
+    : (x && typeof x === 'object') ? Object.keys(x).sort().reduce((a, k) => { a[k] = sortKeys(x[k]); return a; }, {})
+    : x;
+  return JSON.stringify(sortKeys(v));
+}
+
+// 객체 정체성을 유지한 채로 내용만 맞춤 (열려 있는 상세 패널·표 행이 옛 객체를 붙잡고 있어도 안전하게)
+// keep: 서버 내용으로 건드리면 안 되는 id들 (아직 올리지 못한 이 기기의 변경이 있는 일정) — 덮어쓰기·추가·삭제 모두 건너뜀
+function reconcileList(target, incoming, keep) {
+  let changed = false;
+  const byId = new Map(target.map(x => [x.id, x]));
+  const seen = new Set();
+  incoming.forEach(inc => {
+    seen.add(inc.id);
+    if (keep && keep.has(inc.id)) return;
+    const cur = byId.get(inc.id);
+    if (!cur) { target.push(inc); changed = true; return; }
+    if (stableStringify(cur) !== stableStringify(inc)) {
+      Object.keys(cur).forEach(k => delete cur[k]);
+      Object.assign(cur, inc);
+      changed = true;
+    }
+  });
+  for (let i = target.length - 1; i >= 0; i--) {
+    if (!seen.has(target[i].id) && !(keep && keep.has(target[i].id))) { target.splice(i, 1); changed = true; }
+  }
+  return changed;
+}
+
+async function persistLocalAll() {
+  try {
+    await store.set(STORAGE_KEY, JSON.stringify(items));
+    await store.set(TRASH_KEY, JSON.stringify(trashedItems));
+    await store.set(KEYWORD_PRESETS_KEY, JSON.stringify(keywordPresets));
+    await store.set(REFERENCE_MATERIALS_KEY, JSON.stringify(referenceMaterials));
+  } catch (e) { console.error('저장 실패', e); }
+}
+
+function refreshAfterCloud() {
+  activeKeywords = new Set([...activeKeywords].filter(k => keywordPresets.includes(k)));
+  renderKeywordChips();
+  renderReferenceList();
+  renderTrashList();
+  refreshAll();
+}
+
+window.plannerApp = {
+  getState: () => ({ items, trashed: trashedItems, prefs: { keywordPresets, referenceMaterials } }),
+
+  // 이 기기에서 처음 연결할 때: 클라우드와 기기 데이터를 합침 (같은 id는 클라우드가 우선)
+  async mergeFromCloud(cloudItems, cloudTrash, cloudPrefs) {
+    const cloudIds = new Set([...cloudItems, ...cloudTrash].map(x => x.id));
+    items = [...cloudItems, ...items.filter(x => !cloudIds.has(x.id))];
+    trashedItems = [...cloudTrash, ...trashedItems.filter(x => !cloudIds.has(x.id))];
+    const cp = cloudPrefs || {};
+    keywordPresets = [...new Set([...(cp.keywordPresets || []), ...keywordPresets])];
+    const refIds = new Set((cp.referenceMaterials || []).map(r => r.id));
+    referenceMaterials = [...(cp.referenceMaterials || []), ...referenceMaterials.filter(r => !refIds.has(r.id))];
+    await persistLocalAll();
+    refreshAfterCloud();
+  },
+
+  // 클라우드에서 바뀐 내용이 들어옴
+  async applyCloudItems(cloudItems, cloudTrash, keep) {
+    const a = reconcileList(items, cloudItems, keep);
+    const b = reconcileList(trashedItems, cloudTrash, keep);
+    if (a || b) {
+      try {
+        await store.set(STORAGE_KEY, JSON.stringify(items));
+        await store.set(TRASH_KEY, JSON.stringify(trashedItems));
+      } catch (e) { console.error('저장 실패', e); }
+      refreshAfterCloud();
+    }
+    return a || b;
+  },
+
+  async applyCloudPrefs(prefs) {
+    const presets = prefs.keywordPresets || [];
+    const refs = prefs.referenceMaterials || [];
+    let changed = false;
+    if (stableStringify(presets) !== stableStringify(keywordPresets)) { keywordPresets = presets; changed = true; }
+    if (stableStringify(refs) !== stableStringify(referenceMaterials)) { referenceMaterials = refs; changed = true; }
+    if (changed) {
+      try {
+        await store.set(KEYWORD_PRESETS_KEY, JSON.stringify(keywordPresets));
+        await store.set(REFERENCE_MATERIALS_KEY, JSON.stringify(referenceMaterials));
+      } catch (e) { console.error('저장 실패', e); }
+      refreshAfterCloud();
+    }
+    return changed;
+  },
+
+  // 첫 동기화가 끝난 뒤: 유예기간이 지난 휴지통 항목 정리 (동기화 전에 하면 클라우드에서 되살아남)
+  async afterCloudReady() {
+    await purgeExpiredTrash();
+    renderTrashList();
+  },
+
+  // 로그아웃 시 이 기기의 데이터를 비움 (다른 계정과 섞이지 않게)
+  async clearLocal() {
+    items = []; trashedItems = []; keywordPresets = []; referenceMaterials = []; activeKeywords = new Set();
+    await persistLocalAll();
+    await saveActiveKeywords();
+    refreshAfterCloud();
+  }
+};
+
+const AUTH_ERRORS = {
+  'auth/invalid-credential': '이메일이나 비밀번호가 맞지 않아',
+  'auth/wrong-password': '이메일이나 비밀번호가 맞지 않아',
+  'auth/user-not-found': '이메일이나 비밀번호가 맞지 않아',
+  'auth/invalid-email': '이메일 형식이 올바르지 않아',
+  'auth/email-already-in-use': '이미 가입된 이메일이야. "로그인"을 눌러줘',
+  'auth/weak-password': '비밀번호는 6자 이상이어야 해',
+  'auth/missing-password': '비밀번호를 입력해줘',
+  'auth/too-many-requests': '시도가 너무 많아. 잠시 뒤에 다시 해줘',
+  'auth/network-request-failed': '인터넷 연결을 확인해줘',
+  'auth/operation-not-allowed': 'Firebase에서 이메일/비밀번호 로그인이 아직 꺼져 있어',
+  'auth/configuration-not-found': 'Firebase 콘솔에서 Authentication을 아직 시작하지 않았어 ("시작하기" → 이메일/비밀번호 사용 설정)'
+};
+function authErrorText(e) {
+  return AUTH_ERRORS[e && e.code] || ('오류: ' + ((e && (e.code || e.message)) || e));
+}
+
+function syncSetStatus(text, isErr) {
+  const el = document.getElementById('syncStatus');
+  el.className = 'status' + (isErr ? ' err' : '');
+  el.textContent = text || '';
+}
+
+function renderSyncUi(d) {
+  const loggedIn = d.state !== 'off';
+  document.getElementById('syncLoggedOut').style.display = loggedIn ? 'none' : 'block';
+  document.getElementById('syncLoggedIn').style.display = loggedIn ? 'block' : 'none';
+  const dot = document.getElementById('syncDot');
+  const ver = document.getElementById('sbVersion');
+  if (!loggedIn) {
+    ver.textContent = '연구노트 ' + APP_VERSION;
+    return;
+  }
+  document.getElementById('syncAccount').textContent = d.email || '';
+  const label = { connecting: '연결 중…', synced: '동기화됨', pending: '동기화 대기 중 (오프라인이거나 전송 중)', error: '동기화 오류' }[d.state] || '';
+  dot.className = 'sync-dot ' + (d.state === 'synced' ? 'on' : 'wait');
+  syncSetStatus(d.state === 'error' ? ('동기화 오류: ' + (d.message || '')) : label, d.state === 'error');
+  ver.textContent = '연구노트 ' + APP_VERSION + ' · ☁️ ' + (d.state === 'synced' ? '동기화됨' : d.state === 'error' ? '오류' : '대기');
+}
+window.addEventListener('cloud-status', (e) => renderSyncUi(e.detail));
+
+function requireCloud() {
+  if (window.cloud) return true;
+  syncSetStatus('동기화 기능을 불러오지 못했어. 인터넷 연결을 확인하고 새로고침해줘.', true);
+  return false;
+}
+async function syncAuthAction(kind) {
+  if (!requireCloud()) return;
+  const email = document.getElementById('syncEmail').value.trim();
+  const pw = document.getElementById('syncPassword').value;
+  if (!email) { syncSetStatus('이메일을 입력해줘', true); return; }
+  if (kind !== 'reset' && !pw) { syncSetStatus('비밀번호를 입력해줘', true); return; }
+  syncSetStatus(kind === 'reset' ? '메일 보내는 중…' : '처리 중…');
+  try {
+    if (kind === 'login') await window.cloud.signIn(email, pw);
+    else if (kind === 'signup') await window.cloud.signUp(email, pw);
+    else { await window.cloud.resetPassword(email); syncSetStatus('재설정 메일을 보냈어. 메일함(스팸함도)을 확인해줘.'); return; }
+    document.getElementById('syncPassword').value = '';
+  } catch (e) {
+    syncSetStatus(authErrorText(e), true);
+  }
+}
+document.getElementById('syncLoginBtn').addEventListener('click', () => syncAuthAction('login'));
+document.getElementById('syncSignupBtn').addEventListener('click', () => syncAuthAction('signup'));
+document.getElementById('syncResetBtn').addEventListener('click', () => syncAuthAction('reset'));
+document.getElementById('syncPassword').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) syncAuthAction('login'); });
+document.getElementById('syncLogoutBtn').addEventListener('click', async () => {
+  if (!requireCloud()) return;
+  const ok = confirm('로그아웃하면 이 기기에 저장된 일정을 지워. (클라우드에는 그대로 남아 있고, 다시 로그인하면 돌아와)\n\n계속할까?');
+  if (!ok) return;
+  syncSetStatus('로그아웃 중…');
+  try {
+    await window.cloud.signOut();
+    await window.plannerApp.clearLocal();
+    syncSetStatus('');
+  } catch (e) {
+    syncSetStatus(authErrorText(e), true);
+  }
+});
+
 // ---- Init ----
 (async function init() {
   const d = new Date();
@@ -3067,6 +3294,7 @@ document.addEventListener('keydown', (e) => {
   renderSummaryBanner();
   renderChatLog();
   setViewMode('month');
+  window.__plannerResolve();
 })();
 
 // ---- PWA: 서비스 워커 등록 (file:// 이나 미지원 환경에서는 조용히 건너뜀) ----
@@ -3075,6 +3303,262 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     navigator.serviceWorker.register('sw.js').catch(err => console.warn('서비스 워커 등록 실패', err));
   });
 }
+</script>
+<script type="module">
+// ===== Firebase 동기화 (로그인 + Firestore 실시간 연동) =====
+// 아래 설정값은 공개돼도 되는 식별자야. 데이터 보호는 Firestore 보안 규칙(본인 uid만 읽기/쓰기)이 담당해.
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail }
+  from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, onSnapshot, getDocs, getDoc, setDoc, writeBatch, waitForPendingWrites }
+  from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDZRVl5lGE-kXYL-yRJwTKkTWnp0H5ZN1E",
+  authDomain: "research-note-9d3c5.firebaseapp.com",
+  projectId: "research-note-9d3c5",
+  storageBucket: "research-note-9d3c5.firebasestorage.app",
+  messagingSenderId: "106687032235",
+  appId: "1:106687032235:web:4fa3421bb54e0789fac0ee"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+// 오프라인에서 고친 내용은 기기에 쌓아 뒀다가 온라인이 되면 자동으로 올라감
+const db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+
+const sortKeys = (v) => Array.isArray(v) ? v.map(sortKeys)
+  : (v && typeof v === 'object') ? Object.keys(v).sort().reduce((a, k) => { a[k] = sortKeys(v[k]); return a; }, {})
+  : v;
+const stable = (o) => JSON.stringify(sortKeys(o));
+const clone = (o) => JSON.parse(JSON.stringify(o)); // undefined 제거 (Firestore는 undefined를 못 받음)
+
+let uid = null;
+let unsubItems = null, unsubPrefs = null;
+let known = new Map();      // 서버(또는 올리는 중)에 있는 항목 id -> 내용(정렬된 문자열)
+let knownPrefs = '';
+let ready = false;          // 첫 동기화가 끝난 뒤부터만 올림 (덜 받은 상태에서 덮어쓰기 방지)
+let pushTimer = null, retryTimer = null, pushRetries = 0;
+let lastMeta = { fromCache: true, hasPendingWrites: false };
+let appReady = window.plannerReadyPromise || Promise.resolve();
+
+// "서버가 확인해 준 적 있는 id" 기록.
+//  - 서버에서 확인됐던 일정이 사라짐 → 다른 기기에서 지운 것 → 이 기기에서도 지움
+//  - 한 번도 확인 안 된 일정이 서버에 없음 → 올리기가 실패했거나 아직 올리는 중 → 지우지 않고 다시 올림
+let confirmed = new Set();
+let prefsConfirmed = false;
+const confirmedKey = () => 'planner:cloud-confirmed:' + uid;
+const prefsConfirmedKey = () => 'planner:cloud-prefs-confirmed:' + uid;
+const loadConfirmed = () => { try { confirmed = new Set(JSON.parse(localStorage.getItem(confirmedKey()) || '[]')); } catch (e) { confirmed = new Set(); } prefsConfirmed = localStorage.getItem(prefsConfirmedKey()) === '1'; };
+const saveConfirmed = () => { try { localStorage.setItem(confirmedKey(), JSON.stringify([...confirmed])); } catch (e) {} };
+
+const emit = (state, extra) => window.dispatchEvent(new CustomEvent('cloud-status', {
+  detail: { state, email: (auth.currentUser && auth.currentUser.email) || '', ...(extra || {}) }
+}));
+
+const itemsCol = () => collection(db, 'users', uid, 'items');
+const prefsRef = () => doc(db, 'users', uid, 'meta', 'prefs');
+const currentPrefs = (st) => ({ keywordPresets: st.prefs.keywordPresets, referenceMaterials: st.prefs.referenceMaterials });
+
+function statusFromMeta() {
+  if (!ready) return emit('connecting');
+  emit(lastMeta.fromCache || lastMeta.hasPendingWrites ? 'pending' : 'synced');
+}
+
+// 올리기가 거절/실패했을 때 잠시 뒤 다시 시도 (계정을 만든 직후에는 첫 요청이 잠깐 거절되는 경우가 있음)
+function scheduleRetry() {
+  if (!uid || pushRetries >= 6) return;
+  pushRetries++;
+  clearTimeout(retryTimer);
+  retryTimer = setTimeout(() => pushNow().catch(e => console.error(e)), 1000 * pushRetries);
+}
+function onWriteError(e) {
+  console.error('올리기 실패', e);
+  if (e && (e.code === 'permission-denied' || e.code === 'unavailable')) { scheduleRetry(); emit('pending'); }
+  else emit('error', { message: (e && (e.code || e.message)) || String(e) });
+}
+
+async function pushNow() {
+  if (!uid || !ready) return;
+  const st = window.plannerApp.getState();
+  const local = new Map();
+  st.items.forEach(it => local.set(it.id, { ...clone(it), trashed: false }));
+  st.trashed.forEach(it => local.set(it.id, { ...clone(it), trashed: true }));
+
+  const ops = [];
+  local.forEach((obj, id) => { const str = stable(obj); if (known.get(id) !== str) ops.push({ t: 'set', id, obj, str }); });
+  known.forEach((_, id) => { if (!local.has(id)) ops.push({ t: 'del', id }); });
+
+  for (let i = 0; i < ops.length; i += 400) {
+    const batch = writeBatch(db);
+    ops.slice(i, i + 400).forEach(op => {
+      const ref = doc(db, 'users', uid, 'items', op.id);
+      if (op.t === 'set') { batch.set(ref, op.obj); known.set(op.id, op.str); }
+      else { batch.delete(ref); known.delete(op.id); confirmed.delete(op.id); }
+    });
+    // 오프라인이면 commit은 온라인이 될 때까지 끝나지 않으므로 기다리지 않음 (기기 안에는 이미 반영됨)
+    batch.commit().catch(onWriteError);
+  }
+  if (ops.length) saveConfirmed();
+
+  const prefs = currentPrefs(st);
+  const ps = stable(prefs);
+  const prefsChanged = ps !== knownPrefs;
+  if (prefsChanged) {
+    knownPrefs = ps;
+    setDoc(prefsRef(), clone(prefs)).catch(onWriteError);
+  }
+  if (ops.length || prefsChanged) statusFromMeta();
+}
+
+function schedulePush() {
+  if (!uid || !ready) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(() => pushNow().catch(e => console.error(e)), 300);
+}
+
+// 계정을 만든 직후에는 첫 요청이 잠깐(1초 안쪽) permission-denied로 거절되는 경우가 있어서, 잠시 뒤 다시 시도함
+let restartAttempts = 0;
+function handleListenError(e) {
+  console.error(e);
+  if (e && e.code === 'permission-denied' && uid && restartAttempts < 5) {
+    restartAttempts++;
+    const myUid = uid;
+    setTimeout(async () => {
+      if (uid !== myUid) return; // 그 사이 로그아웃/계정 변경됨
+      stopListening();
+      try { await startListening(); } catch (err) { handleListenError(err); }
+    }, 800 * restartAttempts);
+    return;
+  }
+  emit('error', { message: (e && (e.code || e.message)) || String(e) });
+}
+
+function stopListening() {
+  if (unsubItems) unsubItems();
+  if (unsubPrefs) unsubPrefs();
+  unsubItems = unsubPrefs = null;
+  known = new Map(); knownPrefs = ''; ready = false;
+  clearTimeout(pushTimer); clearTimeout(retryTimer); pushRetries = 0;
+}
+
+async function startListening() {
+  await appReady; // 앱이 기기 저장소를 다 읽은 뒤에 시작
+  loadConfirmed();
+  const firstTimeOnDevice = localStorage.getItem('planner:cloud-uid') !== uid;
+
+  if (firstTimeOnDevice) {
+    // 이 기기에서 처음 연결: 클라우드와 기기 데이터를 합친 뒤 올림
+    const [snap, pSnap] = await Promise.all([getDocs(itemsCol()), getDoc(prefsRef())]);
+    const cIts = [], cTr = [];
+    known = new Map();
+    snap.forEach(d => {
+      const data = d.data(); known.set(d.id, stable(data));
+      if (!(d.metadata && d.metadata.hasPendingWrites)) confirmed.add(d.id);
+      const { trashed, ...rest } = data; (trashed ? cTr : cIts).push(rest);
+    });
+    const cPrefs = pSnap.exists() ? pSnap.data() : {};
+    if (pSnap.exists()) { prefsConfirmed = true; try { localStorage.setItem(prefsConfirmedKey(), '1'); } catch (e) {} }
+    knownPrefs = pSnap.exists() ? stable({ keywordPresets: cPrefs.keywordPresets || [], referenceMaterials: cPrefs.referenceMaterials || [] }) : '';
+    saveConfirmed();
+    await window.plannerApp.mergeFromCloud(cIts, cTr, cPrefs);
+    localStorage.setItem('planner:cloud-uid', uid);
+    ready = true;
+    await pushNow(); // 기기에만 있던 데이터를 올림 (리스너를 붙이기 전에 해야 덮어쓰기가 안 일어남)
+  }
+
+  let gotItems = !firstTimeOnDevice, gotPrefs = !firstTimeOnDevice;
+  const maybeReady = async () => {
+    if (ready || !(gotItems && gotPrefs)) return;
+    ready = true;
+    restartAttempts = 0;
+    await window.plannerApp.afterCloudReady();
+    schedulePush();
+    statusFromMeta();
+  };
+  if (firstTimeOnDevice) { gotItems = gotPrefs = true; }
+
+  unsubItems = onSnapshot(itemsCol(), { includeMetadataChanges: true }, async (snap) => {
+    const fromCache = snap.metadata.fromCache;
+    lastMeta = { fromCache, hasPendingWrites: snap.metadata.hasPendingWrites };
+    const its = [], tr = [], present = new Set();
+    // 이 기기에서 고쳤지만 아직 서버로 올리지 않은 일정(dirty). 서버 화면이 그 사이에 도착해도 덮어쓰면 안 됨.
+    // (수정 후 올리기까지 0.3초 대기 중에 화면이 도착하면, 옛 내용으로 되돌려져 수정이 조용히 사라지는 문제가 있었음)
+    // 서버에 있던 일정이 이 기기에서만 달라진 경우만 해당. 서버에 없는 일정은 아래 '확인 기록' 규칙이 따로 처리함.
+    const dirty = new Set();
+    if (ready) {
+      const cur = window.plannerApp.getState();
+      cur.items.forEach(x => { if (known.has(x.id) && known.get(x.id) !== stable({ ...clone(x), trashed: false })) dirty.add(x.id); });
+      cur.trashed.forEach(x => { if (known.has(x.id) && known.get(x.id) !== stable({ ...clone(x), trashed: true })) dirty.add(x.id); });
+    }
+    known = new Map();
+    let confirmedChanged = false;
+    snap.forEach(d => {
+      const data = d.data(); present.add(d.id); known.set(d.id, stable(data));
+      if (!(d.metadata && d.metadata.hasPendingWrites) && !confirmed.has(d.id)) { confirmed.add(d.id); confirmedChanged = true; }
+      const { trashed, ...rest } = data; (trashed ? tr : its).push(rest);
+    });
+
+    // 서버에 없는 이 기기의 일정 중, 지우면 안 되는 것 = (서버 확인이 아직 안 된 것) 또는 (서버 응답이 아니라 캐시만 본 경우)
+    const st = window.plannerApp.getState();
+    const keep = new Set(dirty);
+    [...st.items, ...st.trashed].forEach(x => { if (!present.has(x.id) && (fromCache || !confirmed.has(x.id))) keep.add(x.id); });
+    if (!fromCache) confirmed.forEach(id => { if (!present.has(id)) { confirmed.delete(id); confirmedChanged = true; } });
+    if (confirmedChanged) saveConfirmed();
+
+    await window.plannerApp.applyCloudItems(its, tr, keep);
+    if (dirty.size) schedulePush();                 // 보호한 변경은 곧 서버로 올라감
+    if (keep.size && !fromCache) scheduleRetry();   // 지우지 않은 것들은 다시 올림
+    else if (!keep.size && !fromCache) pushRetries = 0;
+    gotItems = true;
+    await maybeReady();
+    statusFromMeta();
+  }, handleListenError);
+
+  unsubPrefs = onSnapshot(prefsRef(), { includeMetadataChanges: true }, async (snap) => {
+    const data = snap.exists() ? snap.data() : {};
+    const prefs = { keywordPresets: data.keywordPresets || [], referenceMaterials: data.referenceMaterials || [] };
+    if (snap.exists() && !snap.metadata.hasPendingWrites && !prefsConfirmed) { prefsConfirmed = true; try { localStorage.setItem(prefsConfirmedKey(), '1'); } catch (e) {} }
+    const local = currentPrefs(window.plannerApp.getState());
+    const localHas = local.keywordPresets.length || local.referenceMaterials.length;
+    if (!snap.exists() && localHas && (!prefsConfirmed || snap.metadata.fromCache)) {
+      // 서버에 아직 없는데 이 기기에는 있음 → 올리기가 실패했거나 진행 중이므로 지우지 않고 다시 올림
+      knownPrefs = '';
+      if (!snap.metadata.fromCache) scheduleRetry();
+    } else {
+      knownPrefs = stable(prefs);
+      await window.plannerApp.applyCloudPrefs(prefs);
+    }
+    gotPrefs = true;
+    await maybeReady();
+  }, handleListenError);
+}
+
+onAuthStateChanged(auth, async (user) => {
+  stopListening();
+  if (!user) { uid = null; emit('off'); return; }
+  uid = user.uid;
+  restartAttempts = 0;
+  emit('connecting');
+  try { await startListening(); }
+  catch (e) { handleListenError(e); }
+});
+
+// 다른 앱 코드에서 쓰는 창구
+window.cloud = {
+  signIn: (email, pw) => signInWithEmailAndPassword(auth, email, pw),
+  signUp: (email, pw) => createUserWithEmailAndPassword(auth, email, pw),
+  resetPassword: (email) => sendPasswordResetEmail(auth, email),
+  async signOut() {
+    // 아직 못 올린 변경이 있으면 잠깐 기다렸다가 로그아웃 (최대 4초)
+    try { await pushNow(); await Promise.race([waitForPendingWrites(db), new Promise(r => setTimeout(r, 4000))]); } catch (e) { console.error(e); }
+    const u = uid;
+    localStorage.removeItem('planner:cloud-uid');
+    if (u) { localStorage.removeItem('planner:cloud-confirmed:' + u); localStorage.removeItem('planner:cloud-prefs-confirmed:' + u); }
+    await signOut(auth);
+  },
+  schedulePush
+};
 </script>
 </body>
 </html>
