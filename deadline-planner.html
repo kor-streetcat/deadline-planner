@@ -7,6 +7,48 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#ffffff">
 <script>try{var __t=localStorage.getItem("planner:theme");if(__t)document.documentElement.setAttribute("data-theme",__t);if(localStorage.getItem("planner:sidebar")==="1")document.documentElement.classList.add("sb-collapsed");}catch(e){}</script>
+<script>
+/* 문제 기록: 오류·처리 안 된 약속 실패·console.error를 최근 30개까지 이 기기에 남긴다(planner:errlog). 설정 > "문제 기록 복사"로 꺼내 쓴다.
+   키·이메일·계정 번호처럼 보이는 글자는 저장하기 전에 가린다. 일정 제목·내용은 오류 문구에 들어갈 일이 없어 따로 저장하지 않는다. */
+(function () {
+  var KEY = 'planner:errlog', MAX = 30, buf = [];
+  function redact(s) {
+    return String(s)
+      .replace(/AIza[0-9A-Za-z_\-]{20,}/g, '[키]')
+      .replace(/\b(?:sk|ghp|gho)[-_][A-Za-z0-9_\-]{16,}/g, '[키]')
+      .replace(/(key=|x-goog-api-key["':\s=]+)[^\s&"',]+/gi, '$1[키]')
+      .replace(/[\w.+\-]+@[\w\-]+\.[\w.\-]+/g, '[이메일]')
+      .replace(/users\/[A-Za-z0-9]{12,}/g, 'users/[계정]')
+      .replace(/\b[A-Za-z0-9_\-]{28,}\b/g, '[긴값]');
+  }
+  function load() { try { buf = JSON.parse(localStorage.getItem(KEY) || '[]'); if (!Array.isArray(buf)) buf = []; } catch (e) { buf = []; } }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(buf)); } catch (e) {} }
+  function add(kind, msg, stack) {
+    try {
+      msg = redact(msg == null ? '' : msg).slice(0, 300);
+      var st = '';
+      if (stack) st = redact(String(stack).split(location.origin).join('')).split('\n').map(function (x) { return x.trim(); }).filter(Boolean).slice(0, 4).join(' | ').slice(0, 400);
+      var last = buf[buf.length - 1];
+      if (last && last.k === kind && last.m === msg) { last.n = (last.n || 1) + 1; last.t = Date.now(); }
+      else { buf.push({ t: Date.now(), k: kind, m: msg, s: st, n: 1 }); if (buf.length > MAX) buf.splice(0, buf.length - MAX); }
+      save();
+      if (window.plannerLog && typeof window.plannerLog.onchange === 'function') window.plannerLog.onchange();
+    } catch (e) {}
+  }
+  load();
+  window.plannerLog = { get: function () { return buf.slice(); }, add: add, redact: redact, onchange: null, clear: function () { buf = []; save(); if (typeof this.onchange === 'function') this.onchange(); } };
+  window.addEventListener('error', function (e) {
+    if (e.target && e.target !== window) { add('load', '리소스를 불러오지 못함: ' + redact(e.target.src || e.target.href || e.target.tagName)); return; }
+    add('error', (e.message || '오류') + ' @' + String(e.filename || '').split('/').pop() + ':' + e.lineno + ':' + e.colno, e.error && e.error.stack);
+  }, true);
+  window.addEventListener('unhandledrejection', function (e) { var r = e.reason; add('promise', r && r.message ? r.message : String(r), r && r.stack); });
+  var ce = console.error;
+  console.error = function () {
+    try { add('console', Array.prototype.map.call(arguments, function (a) { if (a && a.message) return a.message; if (typeof a === 'object') { try { return JSON.stringify(a); } catch (e) { return String(a); } } return String(a); }).join(' '), (arguments[0] && arguments[0].stack) || ''); } catch (e) {}
+    return ce.apply(console, arguments);
+  };
+})();
+</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Δuenoτe">
@@ -702,6 +744,7 @@
   }
 
   /* ===== 서랍: 접이식 섹션 (로그인·API 키) ===== */
+  .diag-text { min-height: 150px; font-size: 0.7rem; line-height: 1.5; font-family: ui-monospace, Menlo, monospace; resize: vertical; -webkit-user-select: text; user-select: text; }
   .drawer-group-label { font-size: 0.7rem; font-weight: 600; color: var(--ink-faint); letter-spacing: 0.02em; margin: 8px 0 10px; padding-top: 16px; border-top: 1px solid var(--border); }
   .fold > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; margin-bottom: 0; border-bottom: 1px solid var(--border); }
   .fold > summary::-webkit-details-marker { display: none; }
@@ -1076,6 +1119,29 @@
       </div>
       <div class="status" id="aiSettingsStatus"></div>
     </details>
+
+    <div class="drawer-group-label">도움</div>
+    <details class="drawer-section fold" id="quickUrlSection">
+      <summary class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>빠른 입력 주소 (단축어 · Siri)</summary>
+      <p class="drawer-desc">주소 뒤에 <b>?add=제목</b>을 붙여서 열면 바로 일정이 추가돼. 날짜는 <b>&amp;due=2026-10-01</b> (또는 today · tomorrow · 내일 · 모레 · +3), 유형은 <b>&amp;type=과제</b>, 우선순위는 <b>&amp;priority=high</b>, 메모는 <b>&amp;notes=…</b>로 정해. 추가하면 "되돌리기" 알림이 떠.</p>
+      <input type="text" id="quickUrlSample" class="settings-input" readonly>
+      <div class="settings-actions">
+        <button class="btn-ghost" id="quickUrlCopyBtn">주소 형식 복사</button>
+      </div>
+      <p class="drawer-desc" style="margin-top:10px;"><b>아이폰 단축어로 쓰는 법</b><br>1. 단축어 앱 → ＋ → "입력 요청"(질문: 무슨 일정이야?)<br>2. "URL" 동작에 위 주소를 넣고 끝에 입력값을 이어 붙여<br>3. "URL 열기"<br>4. 이름을 "마감 추가"로 하면 "시리야, 마감 추가"로 실행돼<br><br>단축어가 여는 주소는 홈 화면 앱이 아니라 사파리에서 열려. 그 사파리에서 한 번 로그인해 두면 같은 일정에 들어가고, 로그인이 안 돼 있으면 그 기기에만 저장된다고 알려줘.</p>
+      <div class="status" id="quickUrlStatus"></div>
+    </details>
+
+    <details class="drawer-section fold" id="diagSection">
+      <summary class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg>문제 기록 <span class="fold-state" id="diagState">오류 0건</span></summary>
+      <p class="drawer-desc">앱이 이상하게 동작하면 여기서 "복사"를 누르고 그대로 붙여넣어 보내줘. 최근 오류, 앱 버전, 기기 정보가 복사돼. 일정 제목·AI 키·이메일·비밀번호는 들어가지 않아.</p>
+      <div class="settings-actions">
+        <button class="btn-ghost" id="diagCopyBtn">문제 기록 복사</button>
+        <button class="btn-ghost" id="diagClearBtn">기록 지우기</button>
+      </div>
+      <textarea id="diagText" class="settings-input diag-text" readonly style="display:none;"></textarea>
+      <div class="status" id="diagStatus"></div>
+    </details>
   </div>
 </div>
 
@@ -1154,7 +1220,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v28';
+const APP_VERSION = 'v29';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -3649,6 +3715,8 @@ window.plannerApp = {
     if (m) return { ok: true, count: Number(m[1]) };
     return { ok: false, error: msg.replace(/^처리 중 오류가 발생했음:\s*/, '') || '정리하지 못했어' };
   },
+  getTraySummary: () => traySummary(),
+  openItem(id) { if (items.some(x => x.id === id)) { openPeek(id); return true; } return false; },
   getState: () => ({ items, trashed: trashedItems, prefs: { keywordPresets, referenceMaterials } }),
 
   // 이 기기에서 처음 연결할 때: 클라우드와 기기 데이터를 합침 (같은 id는 클라우드가 우선)
@@ -3850,6 +3918,133 @@ document.getElementById('syncLogoutBtn').addEventListener('click', async () => {
 });
 
 // ---- Init ----
+// ---- 문제 기록 복사 / 빠른 입력 주소(단축어) / Mac 메뉴 막대용 요약 ----
+async function copyToClipboard(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+  try {                                                       // 일부 환경(옛 iOS 등)의 대비책
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta);
+    ta.focus(); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return ok;
+  } catch (e) { return false; }
+}
+
+async function buildDiagnostics() {
+  const pad = (n) => String(n).padStart(2, '0');
+  const fmt = (ms) => { const d = new Date(ms); return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
+  const log = window.plannerLog ? window.plannerLog.get() : [];
+  let sw = '없음', caches_ = '없음';
+  try { const r = await navigator.serviceWorker.getRegistration(); if (r) sw = (r.active ? '동작 중' : r.installing ? '설치 중' : '등록됨') + (r.waiting ? ' (새 버전 대기)' : ''); } catch (e) {}
+  try { const ks = await caches.keys(); if (ks.length) caches_ = ks.join(', '); } catch (e) {}
+  const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  const signed = !!(window.cloud && window.cloud.isSignedIn && window.cloud.isSignedIn());
+  const L = [];
+  L.push('Δuenoτe 문제 기록');
+  L.push(`앱 버전: ${APP_VERSION}`);
+  L.push(`만든 시각: ${new Date().toLocaleString('ko-KR')}`);
+  L.push(`기기: ${window.plannerLog ? window.plannerLog.redact(navigator.userAgent) : navigator.userAgent}`);
+  L.push(`화면: ${innerWidth}x${innerHeight} (배율 ${window.devicePixelRatio || 1}) · 홈 화면 앱 ${standalone ? '예' : '아니오'} · 온라인 ${navigator.onLine ? '예' : '아니오'}`);
+  L.push(`현재 화면: ${viewMode} · 테마: ${theme || '자동'}`);
+  L.push(`로그인: ${signed ? '예' : '아니오'} · 동기화: ${(document.getElementById('syncSummaryState') || {}).textContent || '?'}`);
+  L.push(`AI: ${aiLockedDoc ? '키가 잠겨 있음(보호 암호 필요)' : geminiKey ? '키 있음' : '키 없음'}`);
+  L.push(`일정: ${items.length}건 (휴지통 ${trashedItems.length}건)`);
+  L.push(`서비스 워커: ${sw} · 캐시: ${caches_}`);
+  L.push('');
+  L.push(`최근 오류 ${log.length}건 (오래된 것부터):`);
+  if (!log.length) L.push('  (기록된 오류 없음)');
+  log.forEach(e => L.push(`  [${fmt(e.t)}] (${e.k})${e.n > 1 ? ' ×' + e.n : ''} ${e.m}${e.s ? ' — ' + e.s : ''}`));
+  return L.join('\n');
+}
+function updateDiagState() {
+  const el = document.getElementById('diagState'); if (!el) return;
+  const n = window.plannerLog ? window.plannerLog.get().length : 0;
+  el.textContent = `오류 ${n}건`; el.className = 'fold-state' + (n ? ' warn' : '');
+}
+document.getElementById('diagCopyBtn').addEventListener('click', async () => {
+  const st = document.getElementById('diagStatus'), ta = document.getElementById('diagText');
+  const text = await buildDiagnostics();
+  ta.value = text; ta.style.display = 'block';                // 무엇이 복사되는지 그대로 보여줌(복사가 막힌 환경에서는 직접 복사)
+  const ok = await copyToClipboard(text);
+  st.className = 'status' + (ok ? '' : ' err');
+  st.textContent = ok ? '복사했어. 붙여넣어서 보내줘.' : '자동 복사가 안 됐어. 아래 글을 길게 눌러 전체 선택 후 복사해줘.';
+});
+document.getElementById('diagClearBtn').addEventListener('click', () => {
+  if (window.plannerLog) window.plannerLog.clear();
+  document.getElementById('diagText').style.display = 'none';
+  const st = document.getElementById('diagStatus'); st.className = 'status'; st.textContent = '기록을 지웠어.';
+  updateDiagState();
+});
+if (window.plannerLog) window.plannerLog.onchange = updateDiagState;
+
+// 빠른 입력 주소: 설정 창의 예시 주소와 복사 버튼
+(function () {
+  const base = location.origin + location.pathname;
+  const sample = base + '?add=발표 준비&due=tomorrow&type=과제';
+  const inp = document.getElementById('quickUrlSample'); inp.value = sample;
+  document.getElementById('quickUrlCopyBtn').addEventListener('click', async () => {
+    const ok = await copyToClipboard(base + '?add=');
+    const st = document.getElementById('quickUrlStatus'); st.className = 'status' + (ok ? '' : ' err');
+    st.textContent = ok ? '복사했어: 끝에 제목을 이어 붙이면 돼.' : '자동 복사가 안 됐어. 위 칸의 주소를 직접 복사해줘.';
+  });
+})();
+
+function quickDateFromParam(v) {
+  const t = todayISO();
+  if (v == null || String(v).trim() === '') return { date: t, guessed: false };
+  let x = String(v).trim().toLowerCase();
+  const add = (n) => { const d = new Date(t + 'T12:00:00'); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  const words = { today: 0, '오늘': 0, tomorrow: 1, '내일': 1, '모레': 2 };
+  if (x in words) return { date: add(words[x]), guessed: false };
+  if (/^\+\d{1,3}$/.test(x)) return { date: add(parseInt(x.slice(1), 10)), guessed: false };
+  x = x.replace(/[./]/g, '-');
+  if (/^\d{8}$/.test(x)) x = `${x.slice(0, 4)}-${x.slice(4, 6)}-${x.slice(6)}`;
+  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(x);
+  if (m) {
+    const y = +m[1], mo = +m[2], d = +m[3], dt = new Date(y, mo - 1, d);
+    if (dt.getFullYear() === y && dt.getMonth() === mo - 1 && dt.getDate() === d) return { date: `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`, guessed: false };
+  }
+  return { date: t, guessed: true };                            // 못 읽으면 오늘로 넣고 알려줌
+}
+function waitCloudSignedIn(ms) {
+  return new Promise((res) => {
+    const t0 = Date.now();
+    const tick = () => { if (window.cloud && window.cloud.isSignedIn && window.cloud.isSignedIn()) return res(true); if (Date.now() - t0 > ms) return res(false); setTimeout(tick, 300); };
+    tick();
+  });
+}
+// 주소로 일정 추가: ...deadline-planner.html?add=제목&due=...  (아이폰 단축어·Siri, 다른 앱의 링크용)
+async function handleUrlAdd() {
+  let q; try { q = new URLSearchParams(location.search); } catch (e) { return; }
+  if (!q.has('add')) return;
+  const title = (q.get('add') || '').trim().slice(0, 300);
+  const dueParam = q.get('due'), typeParam = q.get('type'), priParam = (q.get('priority') || '').trim().toLowerCase(), notes = (q.get('notes') || '').slice(0, 2000);
+  try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {}   // 새로고침해도 또 추가되지 않게 주소를 정리
+  if (!title) { showToast('주소에 일정 제목(add)이 비어 있어서 추가하지 못했어'); return; }
+  const { date, guessed } = quickDateFromParam(dueParam);
+  const pri = { high: 'high', '높음': 'high', medium: 'medium', '보통': 'medium', low: 'low', '낮음': 'low' }[priParam] || 'medium';
+  const item = { id: uid(), title, shortLabel: '', type: TYPE_OPTIONS.includes(typeParam) ? typeParam : '기타', dueDate: date, priority: pri, notes, aiComment: '', topicSuggestion: '', topicKeyword: '', done: false };
+  items.push(item);
+  await saveItems();
+  refreshAll();
+  const shown = title.length > 24 ? title.slice(0, 24) + '…' : title;
+  showToast(`"${shown}" 추가했어 · ${formatShortDate(date)}${guessed ? ' (날짜를 못 읽어서 오늘로)' : ''}`, '되돌리기', async () => {
+    items = items.filter(x => x.id !== item.id); await saveItems(); refreshAll();
+  }, 6000);
+  waitCloudSignedIn(6000).then((ok) => { if (!ok) showToast('이 브라우저는 로그인 전이라 이 기기에만 저장돼. 설정에서 로그인하면 다른 기기에도 보여', null, null, 9000); });   // 되돌리기 알림(6초)이 끝난 뒤에 표시
+}
+
+// Mac 앱 메뉴 막대용 요약(앱 본체가 주기적으로 물어봄): 지난 마감·오늘·내일 개수와 급한 순서대로 8건
+function traySummary() {
+  const t = todayISO();
+  const active = items.filter(x => !x.done);
+  const byDate = (a, b) => a.dueDate.localeCompare(b.dueDate) || ((PRIORITY_RANK[a.priority] ?? 1) - (PRIORITY_RANK[b.priority] ?? 1));
+  const overdue = active.filter(x => daysUntil(x.dueDate) < 0).sort(byDate);
+  const today = active.filter(x => daysUntil(x.dueDate) === 0).sort(byDate);
+  const tomorrow = active.filter(x => daysUntil(x.dueDate) === 1).sort(byDate);
+  const soon = active.filter(x => { const n = daysUntil(x.dueDate); return n >= 2 && n <= 7; }).sort(byDate);
+  const list = [...overdue, ...today, ...tomorrow, ...soon].slice(0, 8).map(x => ({ id: x.id, title: String(x.title || '').slice(0, 40), dueDate: x.dueDate, dday: daysUntil(x.dueDate), high: x.priority === 'high' }));
+  return { overdue: overdue.length, today: today.length, tomorrow: tomorrow.length, urgent: overdue.length + today.length, list };
+}
+
 (async function init() {
   const d = new Date();
   viewYear = d.getFullYear();
@@ -3880,6 +4075,8 @@ document.getElementById('syncLogoutBtn').addEventListener('click', async () => {
   try { const v = await store.get('view'); if (v && ['today', 'month', 'week', 'list', 'board'].includes(v.value)) startView = v.value; } catch (e) {}
   setViewMode(startView);
   window.__plannerResolve();
+  updateDiagState();
+  handleUrlAdd();
 })();
 
 // ---- PWA: 서비스 워커 등록 (file:// 이나 미지원 환경에서는 조용히 건너뜀) ----
