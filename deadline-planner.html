@@ -597,6 +597,20 @@
   .elaborate-btn:hover { background: var(--hover); }
   .elaborate-btn:disabled { opacity: 0.6; cursor: default; }
   .topic-elaboration { margin-top: 8px; padding: 10px 12px; background: var(--sidebar); border-left: 3px solid var(--teal); border-radius: var(--radius); font-size: 0.8rem; color: var(--ink-dim); white-space: pre-wrap; line-height: 1.55; }
+  .extras-hint { font-weight: 400; color: var(--ink-faint); margin-left: 6px; }
+  .extras-field { font-size: 0.86rem; margin: 0; }
+  .field-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .field-chip { background: var(--hover); border: none; color: var(--ink-dim); font-size: 0.72rem; padding: 3px 10px; border-radius: 999px; transition: background-color 0.22s var(--ease-out), color 0.22s var(--ease-out); }
+  .field-chip:hover { background: var(--accent-soft); color: var(--accent); }
+  .topic-recommend-btn { align-self: flex-start; margin-top: 0; }
+  .topic-current { font-size: 0.78rem; color: var(--ink-dim); margin: 0 0 8px; }
+  .topic-card { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; padding: 10px 10px; margin: 0 -10px; border-radius: 12px; cursor: pointer; transition: background-color 0.22s var(--ease-out); }
+  .topic-card:hover { background: var(--hover); }
+  .topic-card.on { background: var(--accent-soft); }
+  .topic-card input { margin-top: 3px; }
+  .topic-card .tc-topic { font-size: 0.9rem; font-weight: 600; line-height: 1.5; }
+  .topic-card .tc-why { font-size: 0.78rem; color: var(--ink-dim); margin-top: 2px; line-height: 1.45; }
+  .topic-edit { margin-top: 10px; }
   .keyword-tag { display: inline-block; font-size: 0.66rem; background: var(--hover); color: var(--teal); padding: 1px 7px; border-radius: 999px; }
   .item .del, .item .edit-btn { background: none; color: var(--ink-faint); font-size: 0.75rem; padding: 2px 6px; }
   .item .del:hover { color: var(--danger); background: var(--hover); }
@@ -1175,7 +1189,7 @@
     <div id="planBody"></div>
     <div class="status" id="planStatus"></div>
     <div class="ai-modal-actions" id="planActions"></div>
-    <div class="plan-caption">일정의 제목·유형·마감일이 AI에 전달돼. 메모와 키는 보내지 않아.</div>
+    <div class="plan-caption" id="planCaption">일정의 제목·유형·마감일이 AI에 전달돼. 메모와 키는 보내지 않아.</div>
   </div>
 </div>
 
@@ -1254,7 +1268,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v30';
+const APP_VERSION = 'v31';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -1886,6 +1900,12 @@ function buildItemExtras(it) {
   box.innerHTML = `
     <label class="extras-label">메모</label>
     <textarea class="extras-notes" placeholder="메모를 입력해…">${escapeHtml(it.notes)}</textarea>
+    ${topicFieldApplies(it) ? `
+      <label class="extras-label">분야<span class="extras-hint">세부 분야를 적을수록 주제 추천이 구체적이 돼</span></label>
+      <input type="text" class="settings-input extras-field" maxlength="80" placeholder="예: ALD 공정의 박막 균일도, 조선시대 상업사" value="${escapeHtml(it.topicKeyword || '')}" aria-label="분야">
+      ${keywordPresets.length ? `<div class="field-chips">${keywordPresets.map(k => `<button type="button" class="field-chip" data-k="${escapeHtml(k)}">${escapeHtml(k)}</button>`).join('')}</div>` : ''}
+      <button type="button" class="elaborate-btn topic-recommend-btn">${ic('sparkle', 'ic sm')} ${it.topicSuggestion ? '이 분야로 주제 다시 추천' : '이 분야로 주제 추천 받기'}</button>
+    ` : ''}
     ${it.aiComment ? `<div class="ai-comment"><span class="icon">${ic('bulb')}</span><span>${escapeHtml(it.aiComment)}</span></div>` : ''}
     ${it.topicSuggestion ? `
       <div class="topic-suggestion"><span class="icon">${ic('pencil')}</span><span>주제 제안: ${escapeHtml(it.topicSuggestion)}${it.topicKeyword ? ` <span class="keyword-tag">${escapeHtml(it.topicKeyword)}</span>` : ''}</span></div>
@@ -1897,8 +1917,28 @@ function buildItemExtras(it) {
     it.notes = e.target.value.trim();
     await saveItems();
   });
-  const eb = box.querySelector('.elaborate-btn');
+  const eb = box.querySelector('.elaborate-btn:not(.topic-recommend-btn)');
   if (eb) bindElaborateButton(eb, it);
+  const fieldInput = box.querySelector('.extras-field');
+  if (fieldInput) {
+    const setField = async (v) => {
+      it.topicKeyword = cleanText(v, 80);
+      fieldInput.value = it.topicKeyword;
+      await saveItems();
+      const tag = box.querySelector('.topic-suggestion .keyword-tag');       // 주제 옆 분야 표시를 바로 맞춤
+      if (tag) { if (it.topicKeyword) tag.textContent = it.topicKeyword; else tag.remove(); }
+      else if (it.topicKeyword && box.querySelector('.topic-suggestion > span:last-child')) box.querySelector('.topic-suggestion > span:last-child').insertAdjacentHTML('beforeend', ` <span class="keyword-tag">${escapeHtml(it.topicKeyword)}</span>`);
+      refreshAll();
+    };
+    fieldInput.addEventListener('change', () => setField(fieldInput.value));
+    fieldInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) fieldInput.blur(); });
+    box.querySelectorAll('.field-chip').forEach(c => c.addEventListener('click', () => {
+      const cur = fieldInput.value.trim(), k = c.dataset.k;
+      if (cur.split(/\s*,\s*/).includes(k)) return;                          // 이미 있으면 중복해서 붙이지 않음
+      setField(cur ? `${cur}, ${k}` : k);
+    }));
+    box.querySelector('.topic-recommend-btn').addEventListener('click', async () => { await setField(fieldInput.value); recommendTopicsWithAI(it); });
+  }
   return box;
 }
 
@@ -1994,8 +2034,10 @@ async function elaborateTopic(it) {
 
 과목/유형: ${it.type || '기타'}
 항목 제목: ${it.title}
+분야(사용자가 정한 세부 분야): ${it.topicKeyword || '(따로 정하지 않음)'}
 현재 주제 제안: ${it.topicSuggestion}
 ${referenceContext}
+분야가 정해져 있으면 그 분야에서 실제로 쓰는 방법·자료·용어로 구체화해.
 
 다음 세 부분으로, 마크다운 기호(*, # 등) 없이 줄바꿈으로만 구분해서 답해:
 1) 핵심 방향 한 문장
@@ -3444,6 +3486,7 @@ function renderPeek() {
     e.target.className = 'cell-type peek-type t-' + it.type;
     await saveItems();
     refreshAll();
+    if (peekId === it.id) renderPeek();          // 유형에 따라 분야 칸이 나타나거나 사라짐
   });
   q('.peek-priority').addEventListener('change', async (e) => {
     it.priority = e.target.value;
@@ -4104,9 +4147,10 @@ function extractJsonObject(raw) {
 
 let planToken = 0;                       // 창을 닫거나 다시 열면 값이 바뀌어서, 늦게 도착한 AI 답이 엉뚱하게 그려지는 것을 막음
 const planEl = (id) => document.getElementById(id);
-function openPlanModal(title, sub) {
+const PLAN_CAPTION_DEFAULT = '일정의 제목·유형·마감일이 AI에 전달돼. 메모와 키는 보내지 않아.';
+function openPlanModal(title, sub, caption) {
   planToken++;
-  planEl('planTitle').textContent = title; planEl('planSub').textContent = sub || '';
+  planEl('planTitle').textContent = title; planEl('planSub').textContent = sub || ''; planEl('planCaption').textContent = caption || PLAN_CAPTION_DEFAULT;
   planEl('planBody').innerHTML = ''; planEl('planStatus').textContent = ''; planEl('planStatus').className = 'status'; planEl('planActions').innerHTML = '';
   planEl('planOverlay').classList.add('open');
   return planToken;
@@ -4129,7 +4173,8 @@ async function splitItemWithAI(it) {
   if (it.done) return;
   const left = daysUntil(it.dueDate);
   if (left < 2) { showToast(left < 0 ? '이미 지난 마감이라 나눌 수 없어. 마감일을 먼저 고쳐줘' : '마감이 하루 이내라서 더 쪼갤 시간이 없어'); return; }
-  const tok = openPlanModal('AI로 쪼개기', `"${it.title}" · 마감 ${formatShortDate(it.dueDate)} (D-${left})`);
+  const hasTopic = !!(it.topicSuggestion || it.topicKeyword);
+  const tok = openPlanModal('AI로 쪼개기', `"${it.title}" · 마감 ${formatShortDate(it.dueDate)} (D-${left})` + (it.topicSuggestion ? ` · 주제 "${cleanText(it.topicSuggestion, 40)}"를 반영해` : it.topicKeyword ? ` · 분야 "${cleanText(it.topicKeyword, 30)}"를 반영해` : ''), hasTopic ? '일정의 제목·유형·마감일과 주제·분야·구체화 내용이 AI에 전달돼. 메모와 키는 보내지 않아.' : '');
   await runSplit(it, tok);
 }
 function sanitizeSplitSteps(raw, parent) {
@@ -4158,6 +4203,11 @@ async function runSplit(it, tok) {
   const today = todayISO(), left = daysUntil(it.dueDate);
   const busy = {};                        // 같은 기간의 다른 일정이 몰린 날: 제목 없이 개수만 AI에 알려줌
   items.forEach(x => { if (x.id !== it.id && !x.done && x.dueDate >= today && x.dueDate <= it.dueDate) busy[x.dueDate] = (busy[x.dueDate] || 0) + 1; });
+  // 앞서 정해 둔 주제·분야·구체화 내용을 단계에 반영(메모는 보내지 않음)
+  const field = cleanText(it.topicKeyword, 80), topic = cleanText(it.topicSuggestion, 200), elab = cleanText(it.topicElaboration, 600);
+  const topicBlock = topic
+    ? `이미 정해진 주제: ${topic}\n분야: ${field || '(따로 정하지 않음)'}${elab ? `\n구체화한 내용(참고): ${elab}` : ''}\n→ 단계는 이 주제를 완성하는 데 필요한 작업으로 짜고, 주제 밖의 단계는 만들지 마. 구체화한 내용에 나온 하위 질문·방법이 있으면 단계에 녹여.`
+    : field ? `분야: ${field}\n(정해진 주제는 아직 없어. 필요하면 첫 단계에 "이 분야에서 주제 좁히기"를 넣어도 돼.)` : '';
   const busyText = Object.keys(busy).sort().map(d => `${d}(${weekdayKo(d)}) ${busy[d]}건`).join(', ') || '없음';
   const system = `너는 학업·업무 마감을 실행 가능한 단계로 나눠주는 도우미야. 큰 마감 하나를 받으면 오늘부터 마감일 사이에 끝내야 할 중간 단계를 제안해.
 
@@ -4166,7 +4216,7 @@ async function runSplit(it, tok) {
 유형: ${it.type || '기타'}
 마감일: ${it.dueDate} (${weekdayKo(it.dueDate)}), 오늘부터 ${left}일 남음
 이미 다른 일정이 있는 날: ${busyText}
-
+${topicBlock ? '\n' + topicBlock + '\n' : ''}
 규칙:
 - 단계는 ${left <= 3 ? '2~3개' : '3~6개'}. 각 단계는 "무엇을 한다"가 보이는 짧은 행동으로 써(예: "선행 연구 5편 읽기").
 - dueDate는 ${today} 이상 ${it.dueDate} 이하의 YYYY-MM-DD. 날짜순으로 정렬하고, 다른 일정이 3건 이상 있는 날은 되도록 피해.
@@ -4308,6 +4358,96 @@ function renderWeekPlan(plan, pool, days, tok) {
   addPlanButton('닫기', 'btn-ghost', closePlanModal);
 }
 document.getElementById('weekPlanBtn').addEventListener('click', planWeekWithAI);
+
+// ---- 분야로 주제 추천 받기 ----
+// 분야(=topicKeyword)는 일정마다 고칠 수 있고, 적을수록 그 분야에 맞는 구체적인 주제 3개를 받는다. 골라서 정하면 주제 제안을 바꾼다.
+const TOPIC_TYPES = ['보고서', '발표자료', '논문', '과제'];
+function topicFieldApplies(it) { return TOPIC_TYPES.includes(it.type) || !!it.topicSuggestion || !!it.topicKeyword; }
+const USER_DIRECTION = '이 사람은 반도체 공학, 특히 반도체 패키징·소재·공정(ALD/PEALD, SiC/GaN 전력반도체, EUV 리소그래피 등)을 진로로 목표로 하고 있어.';   // 기존 일정 정리 프롬프트와 같은 배경
+function sanitizeTopics(raw) {
+  let arr = null;
+  try { const v = extractJsonArray(raw); if (Array.isArray(v)) arr = v; } catch (e) {}
+  if (!arr) { const o = extractJsonObject(raw); if (o && Array.isArray(o.topics)) arr = o.topics; }
+  if (!Array.isArray(arr)) throw new Error('AI 답을 읽지 못했어');
+  const out = [], seen = new Set();
+  for (const t of arr) {
+    if (!t || typeof t !== 'object') continue;
+    const topic = cleanText(t.topic, 150); if (!topic) continue;
+    const key = topic.replace(/\s+/g, '').toLowerCase(); if (seen.has(key)) continue; seen.add(key);
+    out.push({ topic, why: cleanText(t.why, 120) });
+  }
+  return out.slice(0, 3);
+}
+function recommendTopicsWithAI(it) {
+  const field = cleanText(it.topicKeyword, 80);
+  const tok = openPlanModal('주제 추천', `"${it.title}" · ${it.type || '기타'}` + (field ? ` · 분야: ${field}` : ''), '일정의 제목·유형과 분야·현재 주제, 참고 자료 요약이 AI에 전달돼. 메모와 키는 보내지 않아.');
+  return runTopicRecommend(it, tok);
+}
+async function runTopicRecommend(it, tok) {
+  planLoading('AI가 주제를 찾는 중…');
+  const field = cleanText(it.topicKeyword, 80);
+  const presets = keywordPresets.length ? keywordPresets.slice(0, 12).join(', ') : '(없음)';
+  const refs = referenceMaterials.length ? referenceMaterials.slice(-5).map(r => `- [${r.name}] ${r.summary}`).join('\n') : '(등록된 참고 자료 없음)';
+  const system = `너는 학생의 과제·보고서·논문 주제를 정해주는 도우미야. 아래 정보로, 서로 방향이 다른 구체적인 주제 3개를 제안해.
+
+${USER_DIRECTION}
+과목/유형: ${it.type || '기타'}
+항목 제목: ${it.title}
+분야(사용자가 정한 세부 분야): ${field || '(아직 없음 — 제목에서 짐작하고, 위 진로 방향과 자연스럽게 연결해)'}
+평소 관심 분야 목록: ${presets}
+현재 주제 제안(있으면 겹치지 않게): ${cleanText(it.topicSuggestion, 200) || '(없음)'}
+학생이 등록한 참고 자료 요약(가능하면 연결지어봐):
+${refs}
+
+규칙:
+- 각 주제는 한 문장. 실제로 조사·실험·집필할 수 있는 범위로, 대상·방법·사례 범위 중 최소 두 가지가 드러나게 구체적으로 써.
+- 분야가 적혀 있으면 그 분야 안에서만 제안해. 분야가 좁고 구체적일수록 더 좁혀서 제안해.
+- 흔한 일반론이나 "~에 대한 연구"처럼 뭉뚱그린 표현은 피해.
+- JSON 배열만 반환해. 다른 설명, 마크다운, 코드 블록 없이. 형식: [{"topic":"...","why":"이 분야에서 이 주제가 좋은 이유 한 줄"}]`;
+  try {
+    const raw = await runAI({ system, text: '주제를 추천해줘.', maxTokens: 900, title: '주제 추천' });
+    if (tok !== planToken) return;
+    const topics = sanitizeTopics(raw);
+    if (!topics.length) throw new Error('AI가 쓸 수 있는 주제를 주지 못했어');
+    renderTopicChoices(it, topics, tok);
+  } catch (err) {
+    if (tok !== planToken) return;
+    if (err.message === '취소함') { closePlanModal(); return; }
+    console.error(err);
+    showPlanError('주제를 만들지 못했어: ' + err.message, () => runTopicRecommend(it, tok));
+  }
+}
+function renderTopicChoices(it, topics, tok) {
+  const body = planEl('planBody'); planEl('planActions').innerHTML = ''; body.innerHTML = '';
+  if (it.topicSuggestion) { const c = document.createElement('p'); c.className = 'topic-current'; c.textContent = '현재 주제: ' + it.topicSuggestion; body.appendChild(c); }
+  const cards = topics.map((t, i) => {
+    const card = document.createElement('label'); card.className = 'topic-card' + (i === 0 ? ' on' : '');
+    card.innerHTML = `<input type="radio" name="tpPick" ${i === 0 ? 'checked' : ''}><div><div class="tc-topic"></div><div class="tc-why"></div></div>`;
+    card.querySelector('.tc-topic').textContent = t.topic; card.querySelector('.tc-why').textContent = t.why;
+    body.appendChild(card); return card;
+  });
+  const edit = document.createElement('input'); edit.type = 'text'; edit.className = 'settings-input topic-edit'; edit.maxLength = 150; edit.value = topics[0].topic; edit.setAttribute('aria-label', '선택한 주제 고치기');
+  const hint = document.createElement('div'); hint.className = 'plan-sub'; hint.style.marginTop = '8px'; hint.textContent = '고르면 아래 칸에 들어가. 정하기 전에 문장을 고쳐도 돼.';
+  body.appendChild(hint); body.appendChild(edit);
+  cards.forEach((card, i) => card.querySelector('input').addEventListener('change', () => { cards.forEach(c => c.classList.remove('on')); card.classList.add('on'); edit.value = topics[i].topic; }));
+  const apply = async (elaborate) => {
+    if (tok !== planToken) return;
+    const topic = cleanText(edit.value, 150); if (!topic) { planEl('planStatus').className = 'status err'; planEl('planStatus').textContent = '주제를 비워둘 수 없어'; return; }
+    const prev = { topicSuggestion: it.topicSuggestion, topicElaboration: it.topicElaboration, topicKeyword: it.topicKeyword };
+    it.topicSuggestion = topic; it.topicElaboration = '';                  // 주제가 바뀌었으니 예전 구체화 내용은 비움
+    await saveItems(); refreshAll(); if (peekId === it.id) renderPeek(); closePlanModal();
+    showToast('주제를 정했어', '되돌리기', async () => { Object.assign(it, prev); if (!prev.topicElaboration) delete it.topicElaboration; await saveItems(); refreshAll(); if (peekId === it.id) renderPeek(); }, 7000);
+    if (elaborate) {
+      showToast('주제를 정했어 · 구체화하는 중…', null, null, 60000);
+      try { it.topicElaboration = await elaborateTopic(it); await saveItems(); refreshAll(); if (peekId === it.id) renderPeek(); showToast('주제를 정하고 구체화까지 끝냈어'); }
+      catch (err) { if (err.message !== '취소함') { console.error(err); showToast('주제는 정했는데 구체화는 실패했어: ' + err.message, null, null, 7000); } else hideToast(); }
+    }
+  };
+  addPlanButton('이 주제로 정하기', 'btn-main', () => apply(false));
+  addPlanButton('정하고 구체화까지', 'btn-ghost', () => apply(true));
+  addPlanButton('다시 추천', 'btn-ghost', () => runTopicRecommend(it, tok));
+  addPlanButton('취소', 'btn-ghost', closePlanModal);
+}
 
 (async function init() {
   const d = new Date();
