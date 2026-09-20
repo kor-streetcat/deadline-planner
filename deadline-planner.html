@@ -107,7 +107,8 @@
     }
   }
   * { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; }
+  html { -webkit-text-size-adjust: 100%; overscroll-behavior-y: none; }
+  body { overscroll-behavior-y: none; }
   body {
     margin: 0;
     background: var(--bg);
@@ -1070,7 +1071,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v14';
+const APP_VERSION = 'v15';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2991,6 +2992,34 @@ function closeSidebar() {
   };
   document.addEventListener('touchend', finish);
   document.addEventListener('touchcancel', finish);
+})();
+
+// 더블탭 확대 차단 (touch-action만으로 안 막히는 iOS 버전 대비).
+// 빠른 두 번째 탭에서 브라우저 기본 동작(확대)을 취소하면 그 탭의 클릭도 같이 사라지므로, 클릭 이벤트를 직접 발생시켜 두 번 누른 효과는 그대로 유지함.
+(function setupDoubleTapGuard() {
+  const mq = window.matchMedia('(hover: none) and (pointer: coarse)');
+  let start = null, lastTap = null;
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) { start = null; lastTap = null; return; }   // 여러 손가락(핀치)은 건드리지 않음
+    const t = e.touches[0];
+    start = { x: t.clientX, y: t.clientY, t: Date.now() };
+  }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    if (!mq.matches || !start || e.changedTouches.length !== 1) return;
+    const t = e.changedTouches[0], now = Date.now();
+    const isTap = Math.hypot(t.clientX - start.x, t.clientY - start.y) < 10 && now - start.t < 300;
+    start = null;
+    if (!isTap) { lastTap = null; return; }                                 // 스와이프·스크롤은 탭이 아님
+    if (e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"]')) { lastTap = null; return; }  // 입력칸은 그대로
+    const isDouble = lastTap && now - lastTap.t < 350 && Math.hypot(t.clientX - lastTap.x, t.clientY - lastTap.y) < 40;
+    if (isDouble) {
+      lastTap = null;
+      e.preventDefault();                                                   // 확대 취소(이 탭의 기본 클릭도 함께 취소됨)
+      e.target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window, clientX: t.clientX, clientY: t.clientY }));
+    } else {
+      lastTap = { x: t.clientX, y: t.clientY, t: now };
+    }
+  }, { passive: false });
 })();
 
 document.getElementById('sbToggleBtn').addEventListener('click', openSidebar);
