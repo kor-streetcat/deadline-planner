@@ -1119,7 +1119,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v18';
+const APP_VERSION = 'v19';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -3005,6 +3005,7 @@ function closeSidebar() {
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
   const otherLayerOpen = () => ['peekPanel', 'drawerPanel'].some(id => document.getElementById(id).classList.contains('open'))
     || ['cmdOverlay', 'aiModalOverlay'].some(id => document.getElementById(id).classList.contains('open'));
+  const OPEN_ZONE = 0.5;                       // 열기 스와이프를 받는 영역: 화면 폭의 왼쪽 절반
   let g = null;
 
   const setDrag = (progress) => {              // 0 = 닫힘, 1 = 열림
@@ -3030,6 +3031,7 @@ function closeSidebar() {
     const tabs = e.target.closest && e.target.closest('.view-tabs, .tb-nav');
     if (tabs && tabs.scrollWidth > tabs.clientWidth + 1) return;          // 가로로 스크롤되는 탭 줄은 스크롤이 우선
     const open = sidebar.classList.contains('open');
+    if (!open && t.clientX > window.innerWidth * OPEN_ZONE) return;          // 메뉴 열기는 화면 왼쪽 절반에서 시작한 스와이프만 (사용자 요청)
     const inEdge = t.clientX <= Math.max(40, Math.round(window.innerWidth * 0.22));
     g = { mode: open ? 'close' : 'open', strict: !open && !inEdge, x0: t.clientX, y0: t.clientY, t0: Date.now(), locked: false, progress: open ? 1 : 0, last: t.clientX, w: sidebar.getBoundingClientRect().width || 280 };
   }, { passive: true });
