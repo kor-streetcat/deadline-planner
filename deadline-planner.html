@@ -185,8 +185,8 @@
   /* 홈 화면에 추가한 앱(standalone)에서는 iOS/iPadOS가 화면 맨 위(상태 표시줄 자리)에 흐림 효과를 겹쳐서, 맨 위에 붙은 로고가 흐려 보였다(사용자 제보).
      그 효과 아래로 내용이 내려오도록 사이드바 머리를 더 아래에서 시작한다. 브라우저·Mac 앱에는 적용되지 않는다. */
   @media (display-mode: standalone) {
-    .sidebar { padding-top: calc(env(safe-area-inset-top) + 48px); }
-    .sb-expand { top: calc(env(safe-area-inset-top) + 42px); }
+    .sidebar { padding-top: calc(env(safe-area-inset-top) + 32px); }
+    .sb-expand { top: calc(env(safe-area-inset-top) + 26px); }
   }
   .sb-brand { display: flex; align-items: center; gap: 8px; padding: 6px 8px 10px; font-weight: 600; font-size: 0.95rem; }
   .sb-brand .ic { width: 1.35rem; height: 1.35rem; color: var(--accent); }
@@ -1166,7 +1166,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v26';
+const APP_VERSION = 'v27';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
