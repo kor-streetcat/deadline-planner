@@ -36,6 +36,7 @@
     --sidebar-w: 240px;
     --accent-hover: #1b74cc;
     --topbar-bg: rgba(255,255,255,0.92);
+    --toast-action: #8fc2ff;
     color-scheme: light;
 
     /* 유형별 태그 색 (노션식 옅은 배경 + 진한 글자) */
@@ -65,6 +66,7 @@
     --danger-soft: #ff736929;
     --sage: #6f6e6b;
     --topbar-bg: rgba(25,25,25,0.92);
+    --toast-action: #1a5fb4;
     --tbg-blue: #1f3a4d;   --tfg-blue: #a9d0ea;
     --tbg-purple: #3a2b4d; --tfg-purple: #d4b8e6;
     --tbg-green: #24402c;  --tfg-green: #a6d3b0;
@@ -93,6 +95,7 @@
     --danger-soft: #ff736929;
     --sage: #6f6e6b;
     --topbar-bg: rgba(25,25,25,0.92);
+    --toast-action: #1a5fb4;
     --tbg-blue: #1f3a4d;   --tfg-blue: #a9d0ea;
     --tbg-purple: #3a2b4d; --tfg-purple: #d4b8e6;
     --tbg-green: #24402c;  --tfg-green: #a6d3b0;
@@ -651,6 +654,46 @@
   .fold-state.warn { color: var(--danger); }
   .ai-lock { background: var(--sidebar); border-radius: 14px; padding: 12px; margin: 0 0 12px; }
   .ai-lock-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; }
+
+  /* ===== D-day 표시 ===== */
+  .dday { display: inline-block; flex-shrink: 0; font-size: 0.68rem; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--hover); color: var(--ink-dim); font-variant-numeric: tabular-nums; line-height: 1.5; }
+  .dday.d-over { background: var(--danger-soft); color: var(--danger); }
+  .dday.d-today { background: var(--accent); color: #fff; }
+  .dday.d-soon { background: var(--tbg-orange); color: var(--tfg-orange); }
+  .cell-title-wrap .dday { margin-left: 4px; }
+
+  /* ===== 오늘 화면 ===== */
+  .today-head { display: flex; justify-content: space-between; align-items: flex-end; margin: 18px 0 8px; }
+  .today-date { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; }
+  .today-progress-text { font-size: 0.82rem; color: var(--ink-dim); margin-top: 2px; }
+  .today-progress { height: 6px; background: var(--hover); border-radius: 999px; overflow: hidden; }
+  .today-progress-bar { height: 100%; width: 0; background: var(--teal); border-radius: 999px; transition: width 0.3s ease; }
+  .today-section { margin-top: 22px; }
+  .today-section > h3 { font-size: 0.88rem; font-weight: 600; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+  .today-section > h3 .count { font-size: 0.74rem; font-weight: 500; color: var(--ink-faint); }
+  .today-section.overdue > h3 { color: var(--danger); }
+  details.today-section > summary { cursor: pointer; list-style: none; font-size: 0.86rem; font-weight: 600; color: var(--ink-dim); padding: 4px 0; }
+  details.today-section > summary::-webkit-details-marker { display: none; }
+  details.today-section > summary::before { content: '▸'; margin-right: 6px; color: var(--ink-faint); display: inline-block; transition: transform 0.15s ease; }
+  details.today-section[open] > summary::before { transform: rotate(90deg); }
+  .today-empty { text-align: center; padding: 34px 12px; color: var(--ink-dim); font-size: 0.9rem; line-height: 1.7; }
+  .today-empty .big { font-size: 2rem; display: block; margin-bottom: 6px; }
+  .today-empty .next { color: var(--ink); font-weight: 500; }
+
+  /* ===== 바로 추가(AI 없이) ===== */
+  .add-row { display: flex; gap: 8px; margin: 12px 0 4px; }
+  .add-input { flex: 1; min-width: 0; border: 1px dashed var(--border); background: transparent; border-radius: 12px; padding: 9px 12px; font-size: 0.9rem; }
+  .add-input:focus { border-style: solid; }
+  .add-type { flex-shrink: 0; border: 1px solid var(--border); background: var(--bg); border-radius: 12px; padding: 0 8px; font-size: 0.8rem; color: var(--ink-dim); }
+
+  /* ===== 되돌리기 알림 ===== */
+  .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translate(-50%, 16px); opacity: 0; visibility: hidden; background: var(--ink); color: var(--bg); padding: 10px 14px; border-radius: 14px; box-shadow: 0 8px 28px rgba(0,0,0,0.25); display: flex; align-items: center; gap: 14px; font-size: 0.86rem; z-index: 90; max-width: calc(100vw - 32px); transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease; }
+  .toast.show { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+  .toast button { background: transparent; color: var(--toast-action); font-weight: 700; padding: 2px 4px; white-space: nowrap; }
+  @media (max-width: 480px) {
+    .view-tab { padding: 8px 8px; font-size: 0.8rem; }
+    .toast { bottom: calc(84px + env(safe-area-inset-bottom)); }   /* 오른쪽 아래 AI 버튼과 안 겹치게 위로 */
+  }
 </style>
 </head>
 <body>
@@ -661,6 +704,7 @@
   <button class="sb-new" id="sbNewBtn">＋ 새 일정</button>
 
   <div class="sb-label">보기</div>
+  <button class="sb-item" data-view="today">🏠 오늘<span class="sb-badge" id="sbTodayBadge" style="display:none;"></span></button>
   <button class="sb-item" data-view="month">📅 달력</button>
   <button class="sb-item" data-view="week">🗓️ 이번 주</button>
   <button class="sb-item" data-view="list">📋 전체 표<span class="sb-badge" id="sbOverdueBadge" style="display:none;"></span></button>
@@ -695,7 +739,7 @@
 
     <div class="quick-bar">
       <span class="qicon">✨</span>
-      <input type="text" id="quickInput" placeholder="일정을 적고 Enter (예: 보고서 10/3까지)" autocomplete="off">
+      <input type="text" id="quickInput" placeholder="일정을 적고 Enter" autocomplete="off">
       <button class="qmore" id="quickMoreBtn" title="이미지·키워드·반복 일정 옵션">옵션</button>
       <button class="qbtn" id="quickAddBtn">AI 정리</button>
     </div>
@@ -757,13 +801,14 @@
     </div>
 
     <div class="view-tabs">
+      <button class="view-tab" data-view="today">🏠 오늘</button>
       <button class="view-tab" data-view="month">📅 달력</button>
       <button class="view-tab" data-view="week">🗓️ 이번 주</button>
       <button class="view-tab" data-view="list">📋 전체 표</button>
       <button class="view-tab" data-view="board">🧩 보드</button>
     </div>
 
-    <div class="cal-head">
+    <div class="cal-head" id="calHead">
       <div class="label" id="monthLabel"></div>
       <div class="cal-nav">
         <button id="prevBtn">◀</button>
@@ -804,13 +849,33 @@
       <div class="board" id="boardCols"></div>
     </div>
 
+    <div id="todayView" style="display:none;">
+      <div class="today-head">
+        <div>
+          <div class="today-date" id="todayDate"></div>
+          <div class="today-progress-text" id="todayProgressText"></div>
+        </div>
+      </div>
+      <div class="today-progress"><div class="today-progress-bar" id="todayProgressBar"></div></div>
+      <div class="add-row">
+        <input type="text" id="todayAddInput" class="add-input" placeholder="＋ 오늘 할 일 추가 (Enter)" autocomplete="off">
+        <select id="todayAddType" class="add-type" aria-label="유형"></select>
+      </div>
+      <div id="todaySections"></div>
+    </div>
+
     <div class="detail" id="detailPanel">
       <h3 id="detailTitle">날짜를 선택해줘</h3>
       <div id="detailList"></div>
+      <div class="add-row" id="detailAddRow" style="display:none;">
+        <input type="text" id="detailAddInput" class="add-input" placeholder="＋ 이 날짜에 일정 추가 (Enter)" autocomplete="off">
+        <select id="detailAddType" class="add-type" aria-label="유형"></select>
+      </div>
     </div>
   </div>
 </div>
 
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <button class="chat-fab" id="chatFab" aria-label="AI 비서 열기">💬</button>
 <div class="chat-panel" id="chatPanel">
   <div class="chat-panel-head">
@@ -980,7 +1045,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v11';
+const APP_VERSION = 'v12';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -1371,6 +1436,133 @@ async function runAI({ system, text, media, maxTokens, title, history }) {
   });
 }
 
+// ---- D-day / 알림(토스트) / 바로 추가 / 앱 아이콘 배지 ----
+function daysUntil(iso) {
+  return Math.round((new Date(iso + 'T00:00:00') - new Date(todayISO() + 'T00:00:00')) / 86400000);
+}
+function ddayHtml(it) {
+  if (it.done) return '';
+  const n = daysUntil(it.dueDate);
+  if (n === 0) return '<span class="dday d-today">D-day</span>';
+  if (n > 0) return `<span class="dday${n <= 3 ? ' d-soon' : ''}">D-${n}</span>`;
+  return `<span class="dday d-over">D+${-n}</span>`;
+}
+
+let toastTimer = null;
+function hideToast() {
+  clearTimeout(toastTimer);
+  document.getElementById('toast').classList.remove('show');
+}
+function showToast(msg, actionLabel, onAction, ms) {
+  const el = document.getElementById('toast');
+  el.innerHTML = '';
+  const span = document.createElement('span');
+  span.textContent = msg;
+  el.appendChild(span);
+  if (actionLabel) {
+    const b = document.createElement('button');
+    b.textContent = actionLabel;
+    b.addEventListener('click', async () => { hideToast(); await onAction(); });
+    el.appendChild(b);
+  }
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, ms || 5000);
+}
+function toastUndoDelete(moved) {
+  if (!moved || !moved.length) return;
+  const ids = moved.map(x => x.id);
+  showToast(`${ids.length}건 삭제했어`, '되돌리기', async () => {
+    for (const id of ids) await restoreFromTrash(id);
+    renderTrashList();
+    refreshAll();
+    showToast('되돌렸어');
+  });
+}
+
+// AI 없이 바로 추가 (제목·날짜·유형만)
+async function addItemDirect(title, dueDate, type) {
+  const t = (title || '').trim();
+  if (!t) return false;
+  items.push({ id: uid(), title: t, shortLabel: '', type: type || '기타', dueDate, priority: 'medium', notes: '', aiComment: '', topicSuggestion: '', topicKeyword: '', done: false });
+  await saveItems();
+  refreshAll();
+  showToast('추가했어');
+  return true;
+}
+function setupAddRow(inputId, typeId, getDate) {
+  const input = document.getElementById(inputId);
+  const sel = document.getElementById(typeId);
+  sel.innerHTML = TYPE_OPTIONS.map(t => `<option value="${t}" ${t === '기타' ? 'selected' : ''}>${t}</option>`).join('');
+  input.addEventListener('keydown', async (e) => {
+    if (e.key !== 'Enter' || e.isComposing) return;
+    const date = getDate();
+    if (!date) return;
+    if (await addItemDirect(input.value, date, sel.value)) { input.value = ''; input.focus(); }
+  });
+}
+
+// 설치한 앱 아이콘에 "오늘 마감 + 지난 마감(미완료)" 개수를 표시 (지원되는 환경에서만)
+function updateAppBadge(n) {
+  try {
+    if (n > 0 && navigator.setAppBadge) Promise.resolve(navigator.setAppBadge(n)).catch(() => {});
+    else if (n === 0 && navigator.clearAppBadge) Promise.resolve(navigator.clearAppBadge()).catch(() => {});
+  } catch (e) {}
+}
+
+// ---- 오늘 화면 ----
+function renderTodayView() {
+  const now = new Date();
+  const WD = ['일', '월', '화', '수', '목', '금', '토'];
+  document.getElementById('todayDate').textContent = `${now.getMonth() + 1}월 ${now.getDate()}일 ${WD[now.getDay()]}요일`;
+  const t = todayISO();
+  const active = items.filter(it => !it.done);
+  const byDate = (a, b) => a.dueDate.localeCompare(b.dueDate) || ((PRIORITY_RANK[a.priority] ?? 1) - (PRIORITY_RANK[b.priority] ?? 1));
+  const groups = [
+    { cls: 'overdue', title: '⚠️ 지난 마감', list: active.filter(it => daysUntil(it.dueDate) < 0).sort(byDate) },
+    { cls: 'today', title: '📌 오늘', list: active.filter(it => daysUntil(it.dueDate) === 0).sort(byDate) },
+    { cls: 'tomorrow', title: '🌅 내일', list: active.filter(it => daysUntil(it.dueDate) === 1).sort(byDate) },
+    { cls: 'week', title: '🗓️ 앞으로 7일', list: active.filter(it => { const n = daysUntil(it.dueDate); return n >= 2 && n <= 7; }).sort(byDate) }
+  ];
+
+  // 오늘 진행률: 오늘이 마감인 일정 중 완료한 비율
+  const todayAll = items.filter(it => it.dueDate === t);
+  const todayDone = todayAll.filter(it => it.done);
+  const overdueN = groups[0].list.length;
+  document.getElementById('todayProgressText').textContent =
+    (todayAll.length ? `오늘 마감 ${todayAll.length}건 중 ${todayDone.length}건 완료` : '오늘 마감인 일정은 없어') + (overdueN ? ` · 밀린 일정 ${overdueN}건` : '');
+  document.getElementById('todayProgressBar').style.width = todayAll.length ? Math.round(todayDone.length / todayAll.length * 100) + '%' : '0%';
+
+  const box = document.getElementById('todaySections');
+  box.innerHTML = '';
+  groups.forEach(g => {
+    if (!g.list.length) return;
+    const sec = document.createElement('div');
+    sec.className = 'today-section ' + g.cls;
+    sec.innerHTML = `<h3>${g.title}<span class="count">${g.list.length}</span></h3>`;
+    g.list.forEach(it => sec.appendChild(renderItemRow(it, { showDate: true })));
+    box.appendChild(sec);
+  });
+
+  if (!groups.some(g => g.list.length)) {
+    const next = active.slice().sort(byDate)[0];
+    const empty = document.createElement('div');
+    empty.className = 'today-empty';
+    empty.innerHTML = active.length
+      ? `<span class="big">🎉</span>앞으로 7일 안에 급한 일정이 없어.<br>다음 일정: <span class="next">${escapeHtml(next.title)}</span> ${ddayHtml(next)}`
+      : `<span class="big">📝</span>등록된 일정이 없어.<br>위 입력칸에 바로 적거나 ＋ 새 일정으로 추가해봐.`;
+    box.appendChild(empty);
+  }
+
+  if (todayDone.length) {
+    const det = document.createElement('details');
+    det.className = 'today-section';
+    det.innerHTML = `<summary>✅ 오늘 완료 ${todayDone.length}건</summary>`;
+    todayDone.forEach(it => det.appendChild(renderItemRow(it, { showDate: true })));
+    box.appendChild(det);
+  }
+}
+
 // ---- Item row renderer (shared by detail panel, week view, list view) ----
 const TYPE_OPTIONS = ['보고서', '발표자료', '논문', '과제', '약속', '개인', '기타'];
 
@@ -1392,8 +1584,8 @@ function renderItemRow(it, opts) {
     <input type="checkbox" class="check" data-id="${it.id}" ${it.done ? 'checked' : ''}>
     <div class="bar ${isOverdue ? 'high' : it.priority}"></div>
     <div class="body">
-      <div class="title ${it.done ? 'done' : ''}">${escapeHtml(it.title)}${it.recurringId ? '<span class="recurring-tag">🔁 반복</span>' : ''}${isOverdue ? '<span class="overdue-tag">⚠️ 지남</span>' : ''}</div>
-      <div class="meta">${dateLabel ? `<span>${dateLabel}</span>` : ''}<span class="type-tag t-${escapeHtml(it.type || '기타')}">${escapeHtml(it.type || '기타')}</span><span>우선순위 ${priorityLabel(it.priority)}</span></div>
+      <div class="title ${it.done ? 'done' : ''}">${escapeHtml(it.title)}${it.recurringId ? '<span class="recurring-tag">🔁 반복</span>' : ''}</div>
+      <div class="meta">${dateLabel ? `<span>${dateLabel}</span>` : ''}${ddayHtml(it)}<span class="type-tag t-${escapeHtml(it.type || '기타')}">${escapeHtml(it.type || '기타')}</span><span>우선순위 ${priorityLabel(it.priority)}</span></div>
       ${it.notes ? `<div class="notes">${escapeHtml(it.notes)}</div>` : ''}
       ${it.aiComment ? `<div class="ai-comment"><span class="icon">💡</span><span>${escapeHtml(it.aiComment)}</span></div>` : ''}
       ${it.topicSuggestion ? `
@@ -1421,9 +1613,10 @@ function renderItemRow(it, opts) {
     refreshAll();
   });
   row.querySelector('.del').addEventListener('click', async () => {
-    await deleteItemWithGroupCheck(it);
+    const moved = await deleteItemWithGroupCheck(it);
     renderTrashList();
     refreshAll();
+    toastUndoDelete(moved);
   });
   row.querySelector('.title').addEventListener('click', () => openPeek(it.id));
   const elaborateBtn = row.querySelector('.elaborate-btn');
@@ -1511,7 +1704,7 @@ function renderTableRow(it, opts) {
     <input type="checkbox" class="check cell-done" ${it.done ? 'checked' : ''} aria-label="완료">
     <div class="cell-title-wrap">
       <input type="text" class="cell-title" value="${escapeHtml(it.title)}" aria-label="제목">
-      ${it.recurringId ? '<span class="recurring-tag">🔁</span>' : ''}
+      ${ddayHtml(it)}${it.recurringId ? '<span class="recurring-tag">🔁</span>' : ''}
     </div>
     <div class="cell-meta">
       <input type="date" class="cell-date ${overdue ? 'overdue' : ''}" value="${it.dueDate}" aria-label="마감일">
@@ -1570,9 +1763,10 @@ function renderTableRow(it, opts) {
     renderListView();
   });
   q('.cell-del').addEventListener('click', async () => {
-    await deleteItemWithGroupCheck(it);
+    const moved = await deleteItemWithGroupCheck(it);
     renderTrashList();
     refreshAll();
+    toastUndoDelete(moved);
   });
 
   group.appendChild(row);
@@ -1603,21 +1797,23 @@ ${referenceContext}
 }
 
 async function deleteItemWithGroupCheck(it) {
+  let moved;
   if (it.recurringId) {
     const wholeSeries = confirm('이 일정은 반복 시리즈의 일부야. 전체 시리즈를 삭제할까? (취소하면 이 항목만 삭제됨)');
     if (wholeSeries) {
-      const toTrash = items.filter(x => x.recurringId === it.recurringId);
+      moved = items.filter(x => x.recurringId === it.recurringId);
       items = items.filter(x => x.recurringId !== it.recurringId);
-      await moveToTrash(toTrash);
     } else {
+      moved = [it];
       items = items.filter(x => x.id !== it.id);
-      await moveToTrash([it]);
     }
   } else {
+    moved = [it];
     items = items.filter(x => x.id !== it.id);
-    await moveToTrash([it]);
   }
+  await moveToTrash(moved);
   await saveItems();
+  return moved;
 }
 
 function renderItemEditForm(it) {
@@ -1757,6 +1953,11 @@ function renderSummaryBanner() {
   const badge = document.getElementById('sbOverdueBadge');
   badge.style.display = overdueItems.length ? 'inline-block' : 'none';
   badge.textContent = overdueItems.length;
+  const urgentN = overdueItems.length + todayItems.length;
+  const todayBadge = document.getElementById('sbTodayBadge');
+  todayBadge.style.display = urgentN ? 'inline-block' : 'none';
+  todayBadge.textContent = urgentN;
+  updateAppBadge(urgentN);
 
   if (!overdueItems.length && !todayItems.length && !tomorrowItems.length) {
     el.style.display = 'none';
@@ -1827,7 +2028,8 @@ document.getElementById('briefingBtn').addEventListener('click', async () => {
 function refreshAll() {
   renderCalendar();
   renderSummaryBanner();
-  if (viewMode === 'week') renderWeekView();
+  if (viewMode === 'today') renderTodayView();
+  else if (viewMode === 'week') renderWeekView();
   else if (viewMode === 'list') renderListView();
   else if (viewMode === 'board') renderBoard();
   else renderDetail();
@@ -1836,6 +2038,7 @@ function refreshAll() {
 function renderDetail() {
   const titleEl = document.getElementById('detailTitle');
   const listEl = document.getElementById('detailList');
+  document.getElementById('detailAddRow').style.display = selectedDate ? 'flex' : 'none';
 
   if (!selectedDate) {
     titleEl.textContent = '날짜를 선택해줘';
@@ -1908,11 +2111,15 @@ function setViewMode(mode) {
   document.getElementById('weekView').style.display = mode === 'week' ? 'flex' : 'none';
   document.getElementById('listView').style.display = mode === 'list' ? 'block' : 'none';
   document.getElementById('boardView').style.display = mode === 'board' ? 'block' : 'none';
+  document.getElementById('todayView').style.display = mode === 'today' ? 'block' : 'none';
+  document.getElementById('calHead').style.display = mode === 'today' ? 'none' : '';
   document.getElementById('detailPanel').style.display = mode === 'month' ? 'block' : 'none';
   document.getElementById('prevBtn').style.display = mode === 'month' ? '' : 'none';
   document.getElementById('nextBtn').style.display = mode === 'month' ? '' : 'none';
 
-  if (mode === 'week') {
+  if (mode === 'today') {
+    renderTodayView();
+  } else if (mode === 'week') {
     document.getElementById('monthLabel').textContent = '이번 주';
     renderWeekView();
   } else if (mode === 'board') {
@@ -1926,6 +2133,8 @@ function setViewMode(mode) {
     document.getElementById('monthLabel').textContent = `${viewYear}년 ${viewMonth+1}월`;
     renderCalendar();
   }
+  // 앱을 다시 열어도 마지막에 보던 화면으로 돌아오게 기억
+  store.set('view', mode).catch(() => {});
 }
 
 document.querySelectorAll('[data-view]').forEach(b => {
@@ -1970,6 +2179,7 @@ document.getElementById('bulkDeleteBtn').addEventListener('click', async () => {
   document.getElementById('selectModeBtn').classList.remove('active');
   document.getElementById('selectModeBtn').textContent = '선택';
   refreshAll();
+  toastUndoDelete(toTrash);
 });
 
 // ---- List view (all items, filterable) ----
@@ -2712,11 +2922,13 @@ function closeSidebar() {
   document.addEventListener('touchstart', (e) => {
     g = null;
     if (!mq.matches || e.touches.length !== 1 || otherLayerOpen()) return;
-    if (e.target.closest && e.target.closest('input, textarea, select')) return;
+    const t = e.touches[0];
+    // 입력칸 안쪽에서 시작한 터치는 글자 선택·커서 이동일 수 있어서 무시. 다만 맨 왼쪽 30px는 예외:
+    // 브라우저가 화면 가장자리 터치를 근처 입력칸으로 자동 보정하기 때문에, 입력칸이 있는 줄에서도 가장자리 스와이프가 되게 함.
+    if (e.target.closest && e.target.closest('input, textarea, select') && t.clientX > 30) return;
     if (e.target.closest && e.target.closest('.chat-panel')) return;
     const tabs = e.target.closest && e.target.closest('.view-tabs');
     if (tabs && tabs.scrollWidth > tabs.clientWidth + 1) return;          // 가로로 스크롤되는 탭 줄은 스크롤이 우선
-    const t = e.touches[0];
     const open = sidebar.classList.contains('open');
     const inEdge = t.clientX <= Math.max(40, Math.round(window.innerWidth * 0.22));
     g = { mode: open ? 'close' : 'open', strict: !open && !inEdge, x0: t.clientX, y0: t.clientY, t0: Date.now(), locked: false, progress: open ? 1 : 0, last: t.clientX, w: sidebar.getBoundingClientRect().width || 280 };
@@ -2861,7 +3073,7 @@ function renderBoard() {
       card.innerHTML = `
         <div class="bc-title">${escapeHtml(it.title)}</div>
         <div class="bc-meta">
-          <span class="bc-date ${overdue ? 'overdue' : ''}">${overdue ? '⚠️ ' : ''}${formatShortDate(it.dueDate)}</span>
+          <span class="bc-date ${overdue ? 'overdue' : ''}">${overdue ? '⚠️ ' : ''}${formatShortDate(it.dueDate)}</span>${ddayHtml(it)}
           ${boardGroup === 'status' ? `<span class="type-tag t-${escapeHtml(it.type || '기타')}">${escapeHtml(it.type || '기타')}</span>` : ''}
           ${it.priority === 'high' ? '<span class="bc-pri">높음</span>' : ''}
           ${it.recurringId ? '<span>🔁</span>' : ''}
@@ -2963,10 +3175,11 @@ function renderPeek() {
     refreshAll();
   });
   q('#peekDelBtn').addEventListener('click', async () => {
-    await deleteItemWithGroupCheck(it);
+    const moved = await deleteItemWithGroupCheck(it);
     closePeek();
     renderTrashList();
     refreshAll();
+    toastUndoDelete(moved);
   });
 }
 document.getElementById('peekCloseBtn').addEventListener('click', closePeek);
@@ -3445,7 +3658,11 @@ document.getElementById('syncLogoutBtn').addEventListener('click', async () => {
   renderDetail();
   renderSummaryBanner();
   renderChatLog();
-  setViewMode('month');
+  setupAddRow('todayAddInput', 'todayAddType', () => todayISO());
+  setupAddRow('detailAddInput', 'detailAddType', () => selectedDate);
+  let startView = 'today';
+  try { const v = await store.get('view'); if (v && ['today', 'month', 'week', 'list', 'board'].includes(v.value)) startView = v.value; } catch (e) {}
+  setViewMode(startView);
   window.__plannerResolve();
 })();
 
