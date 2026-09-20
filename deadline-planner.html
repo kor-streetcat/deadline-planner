@@ -391,6 +391,23 @@
   .quick-opts-clip { overflow: hidden; min-height: 0; }
   .quick-opts-inner { margin-top: 10px; padding: 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--sidebar); opacity: 0; transform: translateY(-6px); transition: opacity 0.3s var(--ease-out), transform 0.42s var(--ease-out); }
   .quick-opts.open .quick-opts-inner { opacity: 1; transform: none; transition-delay: 0.05s; }
+  /* 정리 중 칸: 먼저 접수된 글이 AI 정리를 기다리는 곳, 날짜를 못 찾은 항목이 날짜를 받는 곳 */
+  .pending-lane { margin-top: 10px; display: grid; gap: 6px; }
+  .pending-lane[hidden] { display: none; }
+  .pending-head { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 600; color: var(--ink-dim); padding: 0 4px; }
+  .pending-head .pending-note { font-weight: 400; margin-left: auto; font-size: 0.72rem; }
+  .pending-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--sidebar); font-size: 0.86rem; animation: riseIn 0.4s var(--ease-out); }
+  .pending-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; animation: planPulse 1.2s ease-in-out infinite; }
+  .pending-row.failed .pending-dot { background: var(--danger); animation: none; }
+  .pending-text { flex: 1 1 140px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pending-sub { font-size: 0.74rem; color: var(--ink-dim); }
+  .pending-row.failed .pending-sub { color: var(--danger); }
+  .pending-date { border: 1px solid var(--border); background: var(--bg); border-radius: var(--radius); font-size: 0.82rem; padding: 3px 6px; }
+  .pending-btn { border: none; background: transparent; color: var(--ink-dim); font-size: 0.76rem; padding: 4px 9px; border-radius: var(--radius); cursor: pointer; font-family: inherit; }
+  .pending-btn:hover { background: var(--hover); color: var(--ink); }
+  .pending-btn.primary { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .pending-hint { flex-basis: 100%; font-size: 0.74rem; color: var(--danger); }
+  .pending-hint:empty { display: none; }
   .quick-opts-inner .panel-role { margin: 0 0 4px; line-height: 1.5; }
   .panel-role { font-size: 0.78rem; color: var(--ink-dim); margin: 0 0 12px; }
   .filebox { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 0.78rem; color: var(--ink-dim); }
@@ -728,6 +745,7 @@
   .peek-time-clear:hover, .peek-mini:hover { background: var(--hover); color: var(--ink); }
   .time-chip { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; font-size: 0.68rem; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--hover); color: var(--ink-dim); font-variant-numeric: tabular-nums; line-height: 1.5; white-space: nowrap; }
   .time-chip .ic { width: 11px; height: 11px; }
+  .ai-busy { display: inline-flex; align-items: center; flex-shrink: 0; font-size: 0.68rem; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); line-height: 1.5; white-space: nowrap; animation: planPulse 1.2s ease-in-out infinite; }
   .time-chip.late { background: var(--danger-soft); color: var(--danger); }
   .cell-title-wrap .time-chip { margin-left: 4px; }
   .peek-row label { font-size: 0.86rem; display: flex; align-items: center; gap: 6px; cursor: pointer; }
@@ -1004,6 +1022,7 @@
     </div></div></div>
     </div>
     <div class="status" id="status"></div>
+    <div class="pending-lane" id="pendingLane" hidden></div>
 
     <div class="cal-head" id="calHead">
       <div class="label" id="monthLabel"></div>
@@ -1273,7 +1292,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v36';
+const APP_VERSION = 'v37';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -1900,7 +1919,7 @@ function renderItemRow(it, opts) {
     <div class="bar ${isOverdue ? 'high' : it.priority}"></div>
     <div class="body">
       <div class="title ${it.done ? 'done' : ''}">${escapeHtml(it.title)}${it.recurringId ? `<span class="recurring-tag">${ic('repeat')}반복</span>` : ''}</div>
-      <div class="meta">${dateLabel ? `<span>${dateLabel}</span>` : ''}${ddayHtml(it)}${timeChipHtml(it)}<span class="type-tag t-${escapeHtml(it.type || '기타')}">${escapeHtml(it.type || '기타')}</span><span>우선순위 ${priorityLabel(it.priority)}</span></div>
+      <div class="meta">${dateLabel ? `<span>${dateLabel}</span>` : ''}${ddayHtml(it)}${timeChipHtml(it)}${aiBusyHtml(it)}<span class="type-tag t-${escapeHtml(it.type || '기타')}">${escapeHtml(it.type || '기타')}</span><span>우선순위 ${priorityLabel(it.priority)}</span></div>
       ${it.notes ? `<div class="notes">${escapeHtml(it.notes)}</div>` : ''}
       ${it.aiComment ? `<div class="ai-comment"><span class="icon">${ic('bulb')}</span><span>${escapeHtml(it.aiComment)}</span></div>` : ''}
       ${it.topicSuggestion ? `
@@ -2045,7 +2064,7 @@ function renderTableRow(it, opts) {
     <input type="checkbox" class="check cell-done" ${it.done ? 'checked' : ''} aria-label="완료">
     <div class="cell-title-wrap">
       <input type="text" class="cell-title" value="${escapeHtml(it.title)}" aria-label="제목">
-      ${ddayHtml(it)}${timeChipHtml(it)}${it.recurringId ? `<span class="recurring-tag">${ic('repeat')}</span>` : ''}
+      ${ddayHtml(it)}${timeChipHtml(it)}${aiBusyHtml(it)}${it.recurringId ? `<span class="recurring-tag">${ic('repeat')}</span>` : ''}
     </div>
     <div class="cell-meta">
       <input type="date" class="cell-date ${overdue ? 'overdue' : ''}" value="${it.dueDate}" aria-label="마감일">
@@ -2990,95 +3009,371 @@ function extractJsonArray(rawText) {
   throw new Error('응답에서 JSON 배열을 찾지 못했음');
 }
 
+// ---- 일정 정리(AI)는 "먼저 접수 → 이어서 정리" ----
+// 누르는 즉시 입력창이 비워지고 "정리 중" 칸에 접수돼서 바로 다음 입력을 할 수 있다. AI가 끝나면 일정으로 옮겨지고,
+// 날짜를 못 찾은 항목은 이 칸에 남아서 날짜를 고르면 추가된다(예전에는 조용히 버려졌다).
+// 이 칸은 이 기기에만 잠깐 보관(planner:pending)하고 동기화하지 않는다. 일정이 된 뒤부터 동기화된다.
+let pendingJobs = [];                // {id, text, hasImage, kw, status: 'working'|'failed'|'undated', error, drafts[]}
+const jobMedia = new Map();          // 이미지는 메모리에만 둔다(용량). 앱이 닫히면 이미지 작업은 다시 시도할 수 없다.
+let jobChain = Promise.resolve();    // AI 작업은 한 번에 하나씩(키가 없으면 복사·붙여넣기 창이 하나뿐이라 겹치면 안 됨)
+const PARSE_EMPTY_MSG = '마감일 정보를 찾지 못했음. 조금 더 구체적으로 입력해줘.';
+
+// ---- 먼저 등록: 글에 날짜가 다 들어 있으면 AI 없이 날짜·시각만 바로 읽어서 등록하고, AI는 이어서 나머지를 채운다 ----
+// 줄(또는 쉼표)마다 날짜가 읽혀야만 이 경로를 쓴다. 하나라도 못 읽으면 통째로 AI에 맡기는 기존 경로(정리 중 칸)로 간다.
+// 날짜를 잘못 읽는 것이 가장 위험하므로 확실한 형태(연도·월일·오늘/내일/모레·N일 뒤·다음주/이번주 요일)는 AI가 못 고치게 하고,
+// 애매한 형태(월/일 줄임, 요일만, 시만 있는 시각)만 사용자가 안 건드렸을 때 AI가 고칠 수 있게 한다.
+const enrichingIds = new Set();      // 등록은 됐고 AI가 아직 채우는 중인 일정(메모리에만: 카드에 "AI 정리 중…" 표시용)
+function isoOfDate(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+function readLocalWhen(line, todayIso) {
+  let s = ' ' + line + ' ', date = '', sure = false, time = '', timeSure = false, m;
+  const cut = (re) => { const r = re.exec(s); if (!r) return null; s = s.slice(0, r.index) + ' ' + s.slice(r.index + r[0].length); return r; };
+  const t0 = new Date(todayIso + 'T12:00:00');
+  const plus = (n) => { const d = new Date(t0); d.setDate(d.getDate() + n); return isoOfDate(d); };
+  const mk = (y, mo, d) => { const c = new Date(y, mo - 1, d, 12); return c.getFullYear() === y && c.getMonth() === mo - 1 && c.getDate() === d ? isoOfDate(c) : ''; };
+  const yearless = (mo, d) => { let r = mk(t0.getFullYear(), mo, d); if (r && r < todayIso) r = mk(t0.getFullYear() + 1, mo, d); return r; };
+  const dow = t0.getDay(), mondayOffset = (k) => (k + 6) % 7;
+  if ((m = cut(/(\d{4})\s*[-/.년]\s*(\d{1,2})\s*[-/.월]\s*(\d{1,2})\s*일?/))) { date = mk(+m[1], +m[2], +m[3]); sure = !!date; }
+  else if ((m = cut(/(\d{1,2})\s*월\s*(\d{1,2})\s*일/))) { date = yearless(+m[1], +m[2]); sure = !!date; }
+  else if ((m = cut(/(?<![\d/.:])(\d{1,2})\s*[/.]\s*(\d{1,2})(?![\d/.:]|\s*(?:개|명|분|장|번|%|시간|페이지|쪽))/))) { date = yearless(+m[1], +m[2]); sure = false; }
+  else if ((m = cut(/내일\s*모레|(\d{1,2})\s*일\s*(?:뒤|후)|모레|글피|내일|오늘/))) {
+    const w = m[0].replace(/\s+/g, '');
+    const n = m[1] ? +m[1] : { '내일모레': 2, '모레': 2, '글피': 3, '내일': 1, '오늘': 0 }[w];
+    if (n <= 365) { date = plus(n); sure = true; }
+  }
+  else if ((m = cut(/(다음|이번)\s*주\s*(?:에\s*)?([월화수목금토일])요일/))) {
+    const idx = '일월화수목금토'.indexOf(m[2]);
+    const monday = m[1] === '다음' ? (((8 - dow) % 7) || 7) : -mondayOffset(dow);
+    date = plus(monday + mondayOffset(idx)); sure = true;
+  }
+  else if ((m = cut(/([월화수목금토일])요일/))) {
+    date = plus((('일월화수목금토'.indexOf(m[1])) - dow + 7) % 7); sure = false;
+  }
+  if (!date) return null;
+  let ap = '', h = -1, mi = 0;
+  if ((m = cut(/(오전|오후|아침|저녁|밤)?\s*(\d{1,2})\s*:\s*(\d{2})/))) { ap = m[1] || ''; h = +m[2]; mi = +m[3]; timeSure = !!ap || h >= 13 || h === 0; }
+  else if ((m = cut(/(오전|오후|아침|저녁|밤)?\s*(\d{1,2})\s*시(?!간)\s*(?:(\d{1,2})\s*분|(반))?/))) { ap = m[1] || ''; h = +m[2]; mi = m[4] ? 30 : (m[3] ? +m[3] : 0); timeSure = !!ap || h >= 13; }
+  if (h >= 0) {
+    if (/오후|저녁|밤/.test(ap)) { if (h < 12) h += 12; }
+    else if (/오전|아침/.test(ap)) { if (h === 12) h = 0; }
+    else if (h >= 1 && h <= 6) h += 12;                    // "3시"는 보통 오후 3시(애매하니 AI가 고칠 수 있게 timeSure=false)
+    time = normTime(`${h}:${String(mi).padStart(2, '0')}`);
+  }
+  const tidy = (x) => cleanText(x.replace(/[\s,·:;\-–]+$/, '').replace(/^[\s,·:;\-–]+/, ''), 300);
+  const noParticle = s.replace(/(^|\s)(까지|부터|에서|에|쯤|경)(?=\s|$)/g, ' ');
+  const title = tidy(noParticle.replace(/(^|\s)(마감|기한)(?=\s|$)/g, ' ')) || tidy(noParticle);      // "마감"만 남으면 그것이 제목
+  return { date, sure, time, timeSure, title };
+}
+function readLocalPlan(text) {
+  const t = String(text || '').trim();
+  if (!t || t.length > 600) return null;
+  const segs = t.split(/[\n,，;；]+/).map(x => x.trim()).filter(Boolean);
+  if (!segs.length || segs.length > 10) return null;
+  const today = todayISO(), out = [];
+  for (const raw of segs) {
+    const r = readLocalWhen(raw, today);
+    if (!r || !r.title) return null;
+    out.push({ ...r, raw });
+  }
+  return out;
+}
+function aiBusyHtml(it) { return enrichingIds.has(it.id) ? '<span class="ai-busy">AI 정리 중…</span>' : ''; }
+
+async function registerInstantly(plan, kw) {
+  const created = plan.map(p => ({ id: uid(), title: p.title, shortLabel: '', type: '기타', dueDate: p.date, priority: 'medium', notes: '', aiComment: '', topicSuggestion: '', topicKeyword: '', done: false, ...(p.time ? { dueTime: p.time } : {}) }));
+  items = items.concat(created);
+  await saveItems();
+  selectedDate = created[0].dueDate;
+  const [y, mo] = selectedDate.split('-');
+  viewYear = parseInt(y); viewMonth = parseInt(mo) - 1;
+  const statusEl = document.getElementById('status');
+  statusEl.className = 'status';
+  statusEl.textContent = `${created.length}건 등록했어 · AI가 이어서 정리하는 중…`;
+  const ctx = { ids: created.map(c => c.id), plan, kw, cancelled: false };
+  const p = enqueueEnrich(ctx);
+  refreshAll();
+  const first = created[0].title.length > 24 ? created[0].title.slice(0, 24) + '…' : created[0].title;
+  showToast(created.length === 1 ? `"${first}" 등록했어 · ${formatShortDate(created[0].dueDate)}` : `${created.length}건 등록했어`, '되돌리기', async () => {
+    ctx.cancelled = true;
+    ctx.ids.forEach(id => enrichingIds.delete(id));
+    const gone = new Set(ctx.ids);
+    items = items.filter(x => !gone.has(x.id));
+    await saveItems(); refreshAll();
+  }, 6000);
+  return { ctx, done: p, count: created.length };
+}
+function enqueueEnrich(ctx) {
+  ctx.ids.forEach(id => enrichingIds.add(id));
+  const p = jobChain.then(() => runEnrich(ctx));
+  jobChain = p.catch(() => {});
+  return p;
+}
+async function runEnrich(ctx) {
+  const statusEl = document.getElementById('status');
+  const finish = () => { ctx.ids.forEach(id => enrichingIds.delete(id)); };
+  if (ctx.cancelled) { finish(); return { ok: false, cancelled: true }; }
+  try {
+    const lines = ctx.plan.map((p, i) => `${i + 1}. 원문: ${p.raw} | 읽은 날짜: ${p.date}${p.time ? ' ' + p.time : ''}`).join('\n');
+    const system = buildSystemPrompt(ctx.kw) + `
+
+[이미 날짜를 읽어서 등록한 일정이라, 새로 추출하지 말고 아래 줄마다 정보를 채워줘]
+- 줄 하나당 정확히 1개 객체를 반환하고, 객체에 "n"(줄 번호, 1부터)을 넣어. 줄 수와 순서를 바꾸지 마.
+- title은 날짜·시각 표현을 뺀 깔끔한 제목. dueDate는 "읽은 날짜"를 그대로 쓰고, 원문 표현이 그것과 분명히 다를 때만 고쳐. dueTime은 원문에 시각이 있을 때만.
+- 나머지(shortLabel, type, priority, notes, aiComment, topicSuggestion, durationMin)는 위 형식대로 채워.`;
+    const raw = await runAI({ system, text: lines, maxTokens: 2000, title: '일정 정리' });
+    if (ctx.cancelled) { finish(); return { ok: false, cancelled: true }; }
+    const rows = extractJsonArray(raw);
+    if (!Array.isArray(rows)) throw new Error('AI 답을 읽지 못했어');
+    let filled = 0;
+    rows.forEach(r => {
+      if (!r || typeof r !== 'object') return;
+      const i = parseInt(r.n, 10) - 1;
+      if (!(i >= 0 && i < ctx.ids.length)) return;
+      const it = items.find(x => x.id === ctx.ids[i]), loc = ctx.plan[i];
+      if (!it) return;
+      filled++;
+      const title = cleanText(r.title, 300);
+      if (title && it.title === loc.title) it.title = title;                      // 그 사이 사용자가 고친 제목은 건드리지 않는다
+      if (!it.shortLabel) it.shortLabel = cleanText(r.shortLabel, 40);
+      if (it.type === '기타' && TYPE_OPTIONS.includes(r.type)) it.type = r.type;
+      if (it.priority === 'medium' && ['high', 'low'].includes(r.priority)) it.priority = r.priority;
+      if (!it.notes && r.notes) it.notes = String(r.notes).slice(0, 2000);
+      if (!it.aiComment && r.aiComment) it.aiComment = cleanText(r.aiComment, 300);
+      if (!it.topicSuggestion && r.topicSuggestion) { it.topicSuggestion = cleanText(r.topicSuggestion, 300); it.topicKeyword = ctx.kw || ''; }
+      if (!it.durationMin && normDuration(r.durationMin)) setAiDuration(it, r.durationMin);
+      const tm = normTime(r.dueTime);
+      if (tm && (!it.dueTime || (it.dueTime === loc.time && !loc.timeSure))) it.dueTime = tm;
+      if (isValidISO(r.dueDate) && r.dueDate !== it.dueDate && !loc.sure && it.dueDate === loc.date) it.dueDate = r.dueDate;   // 애매하게 읽은 날짜만 AI가 고칠 수 있음
+    });
+    finish();
+    await saveItems();
+    statusEl.className = 'status';
+    statusEl.textContent = `${ctx.ids.length}건 등록 완료`;
+    refreshAll();
+    return { ok: true, count: ctx.ids.length, filled };
+  } catch (err) {
+    finish();
+    refreshAll();
+    if (err && err.message === '취소함') {
+      statusEl.className = 'status'; statusEl.textContent = 'AI 정리는 건너뛰었어 · 일정은 등록돼 있어';
+      return { ok: true, count: ctx.ids.length, filled: 0, skipped: true };
+    }
+    console.error(err);
+    statusEl.className = 'status err'; statusEl.textContent = '등록은 됐지만 AI 정리에 실패했어: ' + ((err && err.message) || err);
+    showToast('AI 정리에 실패했어 · 일정은 등록돼 있어', '다시 시도', async () => { ctx.cancelled = false; enqueueEnrich(ctx); refreshAll(); }, 8000);
+    return { ok: true, count: ctx.ids.length, filled: 0, error: String((err && err.message) || err) };
+  }
+}
+
+function savePending() {
+  try {
+    const data = pendingJobs.map(j => ({ id: j.id, text: j.text, hasImage: !!j.hasImage, kw: j.kw || '', status: j.status, error: j.error || '', drafts: j.drafts || [] }));
+    store.set('pending', JSON.stringify(data)).catch(() => {});
+  } catch (e) {}
+}
+async function loadPending() {
+  pendingJobs = [];
+  try {
+    const r = await store.get('pending');
+    const arr = r && r.value ? JSON.parse(r.value) : [];
+    if (!Array.isArray(arr)) return;
+    arr.slice(0, 20).forEach(j => {
+      if (!j || typeof j !== 'object' || typeof j.id !== 'string') return;
+      const drafts = (Array.isArray(j.drafts) ? j.drafts : []).map(sanitizeDraft).filter(Boolean).slice(0, 10);
+      let status = ['failed', 'undated'].includes(j.status) ? j.status : 'failed';
+      let error = cleanText(j.error, 200);
+      if (j.status === 'working') error = '정리를 마치기 전에 앱이 닫혔어';      // 이전 실행에서 끝나지 못한 작업
+      if (status === 'undated' && !drafts.length) return;
+      pendingJobs.push({ id: j.id, text: cleanText(j.text, 2000), hasImage: !!j.hasImage, kw: cleanText(j.kw, 200), status, error, drafts });
+    });
+  } catch (e) {}
+}
+function sanitizeDraft(p) {
+  if (!p || typeof p !== 'object') return null;
+  const title = cleanText(p.title, 300);
+  if (!title) return null;
+  const d = {
+    title, shortLabel: cleanText(p.shortLabel, 40), type: TYPE_OPTIONS.includes(p.type) ? p.type : '기타',
+    priority: ['high', 'medium', 'low'].includes(p.priority) ? p.priority : 'medium',
+    notes: String(p.notes || '').slice(0, 2000), aiComment: cleanText(p.aiComment, 300), topicSuggestion: cleanText(p.topicSuggestion, 300),
+    kw: cleanText(p.kw, 200)
+  };
+  if (normTime(p.dueTime)) d.dueTime = normTime(p.dueTime);
+  if (normDuration(p.durationMin)) { d.durationMin = normDuration(p.durationMin); d.durationAi = d.durationMin; }
+  return d;
+}
+function makeParsedItem(p, kw) {
+  return {
+    id: uid(),
+    title: p.title || '제목 없음',
+    shortLabel: p.shortLabel || '',
+    type: p.type || '기타',
+    dueDate: p.dueDate,
+    priority: ['high','medium','low'].includes(p.priority) ? p.priority : 'medium',
+    notes: p.notes || '',
+    aiComment: p.aiComment || '',
+    topicSuggestion: p.topicSuggestion || '',
+    topicKeyword: p.topicSuggestion ? kw : '',
+    done: false,
+    ...(normTime(p.dueTime) ? { dueTime: normTime(p.dueTime) } : {}),
+    ...(normDuration(p.durationMin) ? { durationMin: normDuration(p.durationMin), durationAi: normDuration(p.durationMin) } : {})
+  };
+}
+function removeJob(job) {
+  job.cancelled = true;
+  pendingJobs = pendingJobs.filter(j => j !== job);
+  jobMedia.delete(job.id);
+  savePending(); renderPendingLane();
+}
+function enqueueParse({ text, media, kw }) {
+  const job = { id: uid(), text: cleanText(text, 2000), hasImage: !!(media && media.length), kw: kw || '', status: 'working', error: '', drafts: [] };
+  if (job.hasImage) jobMedia.set(job.id, media);
+  pendingJobs.push(job);
+  return { job, done: startJob(job) };
+}
+function startJob(job) {
+  job.status = 'working'; job.error = ''; job.cancelled = false;
+  savePending(); renderPendingLane();
+  const p = jobChain.then(() => runParseJob(job));
+  jobChain = p.catch(() => {});
+  return p;
+}
+async function runParseJob(job) {
+  const statusEl = document.getElementById('status');
+  if (job.cancelled) return { ok: false, cancelled: true };
+  const fail = (msg) => {
+    job.status = 'failed'; job.error = msg;
+    statusEl.textContent = msg === PARSE_EMPTY_MSG ? msg : '처리 중 오류가 발생했음: ' + msg;
+    statusEl.className = 'status err';
+    savePending(); renderPendingLane();
+    return { ok: false, error: msg };
+  };
+  try {
+    const rawText = await runAI({
+      system: buildSystemPrompt(job.kw),
+      text: job.text || '이미지에서 마감일 정보를 추출해줘.',
+      media: jobMedia.get(job.id) || [],
+      maxTokens: 2000,
+      title: '일정 정리'
+    });
+    if (job.cancelled) return { ok: false, cancelled: true };
+    const parsed = extractJsonArray(rawText);
+    const rows = Array.isArray(parsed) ? parsed.filter(p => p && typeof p === 'object') : [];
+    if (!rows.length) return fail(PARSE_EMPTY_MSG);
+    const dated = rows.filter(p => isValidISO(p.dueDate));
+    const drafts = rows.filter(p => !isValidISO(p.dueDate)).map(p => sanitizeDraft({ ...p, kw: job.kw })).filter(Boolean).slice(0, 10);
+    if (!dated.length && !drafts.length) return fail(PARSE_EMPTY_MSG);
+    const newItems = dated.map(p => makeParsedItem(p, job.kw));
+    if (newItems.length) {
+      items = items.concat(newItems);
+      await saveItems();
+      selectedDate = newItems[0].dueDate;
+      const [y, m] = selectedDate.split('-');
+      viewYear = parseInt(y);
+      viewMonth = parseInt(m) - 1;
+    }
+    jobMedia.delete(job.id);
+    job.drafts = drafts;
+    if (drafts.length) { job.status = 'undated'; savePending(); } else removeJob(job);
+    statusEl.className = 'status';
+    statusEl.textContent = newItems.length
+      ? `${newItems.length}건 등록 완료` + (drafts.length ? ` · 날짜를 못 찾은 ${drafts.length}건은 "정리 중" 칸에 뒀어` : '')
+      : `날짜를 못 찾은 ${drafts.length}건을 "정리 중" 칸에 뒀어. 날짜를 정해줘`;
+    refreshAll(); renderPendingLane();
+    return { ok: true, count: newItems.length, undated: drafts.length };
+  } catch (err) {
+    if (job.cancelled) return { ok: false, cancelled: true };
+    if (err && err.message === '취소함') {             // 복사·붙여넣기 창에서 취소: 접수를 없던 일로 하고 글을 돌려준다
+      removeJob(job);
+      const qi = document.getElementById('quickInput');
+      if (!qi.value && job.text) { qi.value = job.text; growQuickInput(); }
+      statusEl.textContent = ''; statusEl.className = 'status';
+      return { ok: false, cancelled: true };
+    }
+    console.error(err);
+    return fail((err && err.message) || String(err));
+  }
+}
+
+function renderPendingLane() {
+  const box = document.getElementById('pendingLane');
+  if (!box) return;
+  if (!pendingJobs.length) { box.hidden = true; box.textContent = ''; return; }
+  box.hidden = false; box.textContent = '';
+  const head = document.createElement('div'); head.className = 'pending-head';
+  head.innerHTML = ic('clock', 'ic sm') + '<span>정리 중</span><span class="pending-note">이 기기에만 잠시 보관돼</span>';
+  box.appendChild(head);
+  const mkBtn = (label, cls, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'pending-btn ' + cls; b.textContent = label; b.addEventListener('click', fn); return b; };
+  pendingJobs.forEach(job => {
+    if (job.status === 'undated') {
+      job.drafts.forEach(d => {
+        const row = document.createElement('div'); row.className = 'pending-row undated';
+        const t = document.createElement('span'); t.className = 'pending-text'; t.textContent = d.title;
+        const sub = document.createElement('span'); sub.className = 'pending-sub'; sub.textContent = '날짜를 못 찾았어';
+        const date = document.createElement('input'); date.type = 'date'; date.className = 'pending-date'; date.value = d.pickedDate || ''; date.setAttribute('aria-label', '날짜');
+        date.addEventListener('change', () => { d.pickedDate = date.value; });
+        const hint = document.createElement('span'); hint.className = 'pending-hint';
+        const add = mkBtn('일정으로 추가', 'primary', async () => {
+          if (!isValidISO(date.value)) { hint.textContent = '날짜를 골라줘'; return; }
+          const it = makeParsedItem({ ...d, dueDate: date.value }, d.kw);
+          items.push(it);
+          job.drafts = job.drafts.filter(x => x !== d);
+          if (!job.drafts.length) removeJob(job); else { savePending(); renderPendingLane(); }
+          await saveItems();
+          refreshAll();
+          showToast(`"${it.title.length > 24 ? it.title.slice(0, 24) + '…' : it.title}" 추가했어 · ${formatShortDate(it.dueDate)}`);
+        });
+        const del = mkBtn('지우기', '', () => { job.drafts = job.drafts.filter(x => x !== d); if (!job.drafts.length) removeJob(job); else { savePending(); renderPendingLane(); } });
+        row.append(t, sub, date, add, del, hint);
+        box.appendChild(row);
+      });
+      return;
+    }
+    const row = document.createElement('div'); row.className = 'pending-row ' + job.status;
+    const dot = document.createElement('span'); dot.className = 'pending-dot';
+    const t = document.createElement('span'); t.className = 'pending-text'; t.textContent = job.text || '(이미지)';
+    const sub = document.createElement('span'); sub.className = 'pending-sub';
+    row.append(dot, t, sub);
+    if (job.status === 'working') {
+      sub.textContent = 'AI가 정리하는 중…';
+      row.appendChild(mkBtn('취소', '', () => removeJob(job)));
+    } else {
+      sub.textContent = job.error || '정리하지 못했어';
+      const canRetry = !!job.text || jobMedia.has(job.id);
+      if (canRetry) row.appendChild(mkBtn('다시 시도', 'primary', () => startJob(job)));
+      else sub.textContent += ' · 이미지는 다시 첨부해야 해';
+      row.appendChild(mkBtn('지우기', '', () => removeJob(job)));
+    }
+    box.appendChild(row);
+  });
+}
+
 document.getElementById('parseBtn').addEventListener('click', async () => {
-  const text = document.getElementById('quickInput').value.trim();
+  const qi = document.getElementById('quickInput');
+  const text = qi.value.trim();
   const typedKeyword = document.getElementById('itemKeywordInput').value.trim();
   const combinedKeywords = [
     ...activeKeywords,
     ...(typedKeyword ? typedKeyword.split(',').map(s => s.trim()).filter(Boolean) : [])
   ];
-  const effectiveKeywordString = combinedKeywords.join(', ');
   const statusEl = document.getElementById('status');
-  const btn = document.getElementById('parseBtn');
 
   if (!text && !pendingImageBase64) {
     statusEl.textContent = '텍스트를 입력하거나 이미지를 첨부해줘';
     statusEl.className = 'status err';
     return;
   }
-
-  btn.disabled = true;
-  statusEl.className = 'status';
-  statusEl.textContent = 'AI가 읽는 중...';
-
   const media = pendingImageBase64 ? [{ mime: pendingImageMediaType, data: pendingImageBase64 }] : [];
-
-  try {
-    const rawText = await runAI({
-      system: buildSystemPrompt(effectiveKeywordString),
-      text: text || '이미지에서 마감일 정보를 추출해줘.',
-      media,
-      maxTokens: 2000,
-      title: '일정 정리'
-    });
-    const parsed = extractJsonArray(rawText);
-
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      statusEl.textContent = '마감일 정보를 찾지 못했음. 조금 더 구체적으로 입력해줘.';
-      statusEl.className = 'status err';
-      btn.disabled = false;
-      return;
-    }
-
-    const newItems = parsed
-      .filter(p => p.dueDate)
-      .map(p => ({
-        id: uid(),
-        title: p.title || '제목 없음',
-        shortLabel: p.shortLabel || '',
-        type: p.type || '기타',
-        dueDate: p.dueDate,
-        priority: ['high','medium','low'].includes(p.priority) ? p.priority : 'medium',
-        notes: p.notes || '',
-        aiComment: p.aiComment || '',
-        topicSuggestion: p.topicSuggestion || '',
-        topicKeyword: p.topicSuggestion ? effectiveKeywordString : '',
-        done: false,
-        ...(normTime(p.dueTime) ? { dueTime: normTime(p.dueTime) } : {}),
-        ...(normDuration(p.durationMin) ? { durationMin: normDuration(p.durationMin), durationAi: normDuration(p.durationMin) } : {})
-      }));
-
-    items = items.concat(newItems);
-    await saveItems();
-
-    document.getElementById('quickInput').value = '';
-    growQuickInput();
-    document.getElementById('itemKeywordInput').value = '';
-    renderKeywordChips();
-    document.getElementById('fileInput').value = '';
-    document.getElementById('thumb').style.display = 'none';
-    pendingImageBase64 = null;
-
-    if (newItems.length) {
-      selectedDate = newItems[0].dueDate;
-      const [y,m] = selectedDate.split('-');
-      viewYear = parseInt(y);
-      viewMonth = parseInt(m) - 1;
-    }
-
-    statusEl.textContent = `${newItems.length}건 등록 완료`;
-    refreshAll();
-  } catch (err) {
-    console.error(err);
-    if (err.message === '취소함') {
-      statusEl.textContent = '';
-    } else {
-      statusEl.textContent = '처리 중 오류가 발생했음: ' + err.message;
-      statusEl.className = 'status err';
-    }
-  } finally {
-    btn.disabled = false;
-  }
+  const plan = media.length ? null : readLocalPlan(text);          // 글에 날짜가 다 들어 있으면 AI를 기다리지 않고 바로 등록
+  // 접수: 입력창·옵션 칸을 바로 비워서 다음 입력을 받을 수 있게 한다
+  qi.value = ''; growQuickInput();
+  document.getElementById('itemKeywordInput').value = '';
+  renderKeywordChips();
+  document.getElementById('fileInput').value = '';
+  document.getElementById('thumb').style.display = 'none';
+  pendingImageBase64 = null; pendingImageMediaType = null;
+  statusEl.className = 'status'; statusEl.textContent = '';
+  if (plan) { await registerInstantly(plan, combinedKeywords.join(', ')); return; }
+  enqueueParse({ text, media, kw: combinedKeywords.join(', ') });
 });
 
 function buildChatContext() {
@@ -3501,7 +3796,7 @@ function renderBoard() {
       card.innerHTML = `
         <div class="bc-title">${escapeHtml(it.title)}</div>
         <div class="bc-meta">
-          <span class="bc-date ${overdue ? 'overdue' : ''}">${overdue ? ic('alert', 'ic sm') + ' ' : ''}${formatShortDate(it.dueDate)}</span>${ddayHtml(it)}${timeChipHtml(it)}
+          <span class="bc-date ${overdue ? 'overdue' : ''}">${overdue ? ic('alert', 'ic sm') + ' ' : ''}${formatShortDate(it.dueDate)}</span>${ddayHtml(it)}${timeChipHtml(it)}${aiBusyHtml(it)}
           ${boardGroup === 'status' ? `<span class="type-tag t-${escapeHtml(it.type || '기타')}">${escapeHtml(it.type || '기타')}</span>` : ''}
           ${it.priority === 'high' ? '<span class="bc-pri">높음</span>' : ''}
           ${it.recurringId ? `<span>${ic('repeat', 'ic sm')}</span>` : ''}
@@ -3904,28 +4199,18 @@ window.plannerApp = {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dueDate || ''))) return false;
     return addItemDirect(title, dueDate, TYPE_OPTIONS.includes(type) ? type : '기타');
   },
-  // Mac 앱 빠른 추가 창에서 이미지를 붙였을 때: 기존 "AI 정리" 흐름(quickInput + 첨부 이미지 → parseBtn)을 그대로 태운다.
+  // Mac 앱 빠른 추가 창에서 이미지를 붙였을 때: "정리 중" 접수 흐름(enqueueParse)에 이미지와 글을 태운다.
   // 키가 없으면 복사·붙여넣기 창이 뜨는데 그 창은 이 창에서 처리할 수 없으니, 창을 띄우지 않고 이유만 돌려준다.
   async addQuickImage(text, mime, data) {
     await window.plannerReadyPromise;
     if (aiLockedDoc) return { ok: false, error: 'AI 키가 잠겨 있어. 앱에서 보호 암호를 먼저 입력해줘' };
     if (!geminiKey) return { ok: false, error: '이미지는 AI 키가 있어야 읽을 수 있어. 앱 설정에서 키를 넣어줘' };
     if (!/^image\/(png|jpeg|webp|gif)$/.test(String(mime)) || typeof data !== 'string' || !data) return { ok: false, error: '지원하지 않는 이미지야' };
-    const btn = document.getElementById('parseBtn'), statusEl = document.getElementById('status');
-    if (btn.disabled) return { ok: false, error: '앱에서 다른 정리가 진행 중이야. 잠시 뒤에 다시 해줘' };
-    pendingImageBase64 = data; pendingImageMediaType = mime;
-    const qi = document.getElementById('quickInput'), draft = qi.value;      // 사용자가 쓰던 글은 정리가 끝나면 돌려놓는다
-    qi.value = String(text || '').slice(0, 2000);
-    btn.click();                                      // 클릭 즉시 btn.disabled가 되고, 끝나면 풀린다
-    for (let i = 0; i < 600 && btn.disabled; i++) await new Promise(r => setTimeout(r, 200));
-    qi.value = draft; growQuickInput();
-    const msg = statusEl.textContent || '';
-    const m = /(\d+)건 등록 완료/.exec(msg);
-    // 실패해도 첨부가 남아서 다음에 앱에서 정리할 때 딸려 들어가지 않게 비운다
-    pendingImageBase64 = null; pendingImageMediaType = null;
-    document.getElementById('fileInput').value = ''; document.getElementById('thumb').style.display = 'none';
-    if (m) return { ok: true, count: Number(m[1]) };
-    return { ok: false, error: msg.replace(/^처리 중 오류가 발생했음:\s*/, '') || '정리하지 못했어' };
+    const { done } = enqueueParse({ text: String(text || '').slice(0, 2000), media: [{ mime, data }], kw: '' });
+    const r = await done;                              // 이 작업의 정리가 끝날 때까지(앞에 다른 작업이 있으면 그 뒤에) 기다린다
+    if (r.ok && r.count > 0) return { ok: true, count: r.count };
+    if (r.ok) return { ok: false, error: '날짜를 못 찾아서 앱의 "정리 중" 칸에 뒀어. 앱에서 날짜를 정해줘' };
+    return { ok: false, error: r.cancelled ? '취소됐어' : String(r.error || '정리하지 못했어').replace(/^처리 중 오류가 발생했음:\s*/, '') };
   },
   getTraySummary: () => traySummary(),
   openItem(id) { if (items.some(x => x.id === id)) { openPeek(id); return true; } return false; },
@@ -4612,6 +4897,7 @@ function renderTopicChoices(it, topics, tok) {
   viewMonth = d.getMonth();
   selectedDate = todayISO();
   await loadItems();
+  await loadPending();
   await loadTrash();
   await purgeExpiredTrash();
   await loadActiveKeywords();
@@ -4631,6 +4917,7 @@ function renderTopicChoices(it, topics, tok) {
   renderDetail();
   renderSummaryBanner();
   renderChatLog();
+  renderPendingLane();
   setupAddRow('detailAddInput', 'detailAddType', () => selectedDate);
   let startView = 'today';
   try { const v = await store.get('view'); if (v && ['today', 'month', 'week', 'list', 'board'].includes(v.value)) startView = v.value; } catch (e) {}
