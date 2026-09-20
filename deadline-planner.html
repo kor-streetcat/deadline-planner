@@ -648,6 +648,8 @@
   .fold-state { margin-left: auto; font-size: 0.74rem; font-weight: 500; color: var(--ink-faint); max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .fold-state.ok { color: var(--teal); }
   .fold-state.warn { color: var(--danger); }
+  .ai-lock { background: var(--sidebar); border-radius: 14px; padding: 12px; margin: 0 0 12px; }
+  .ai-lock-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; }
 </style>
 </head>
 <body>
@@ -814,7 +816,7 @@
     <h2>💬 AI 비서</h2>
     <button class="chat-close" id="chatCloseBtn" aria-label="닫기">×</button>
   </div>
-  <p class="panel-role">완료·삭제·변경·질문 전용 (Gemini 키 필요)</p>
+  <p class="panel-role">완료·삭제·변경·질문 전용 (AI 키 필요)</p>
   <div id="chatLog" class="chat-log"></div>
   <div class="chat-input-row">
     <input type="text" id="chatInput" placeholder="예: 완료 처리해줘 / 뭐가 급해?">
@@ -860,7 +862,7 @@
     <div class="drawer-group-label">연결 설정</div>
     <details class="drawer-section fold" id="syncSection">
       <summary class="drawer-section-title">☁️ 동기화 · 로그인 <span class="fold-state" id="syncSummaryState">로그인 안 됨</span></summary>
-      <p class="drawer-desc" id="syncDesc">로그인하면 폰과 컴퓨터가 같은 일정을 실시간으로 봐. 로그인 전에는 이 기기에만 저장돼.</p>
+      <p class="drawer-desc" id="syncDesc">로그인하면 폰과 컴퓨터가 같은 일정을 실시간으로 봐. AI 키는 보호 암호를 정하면 암호화해서 함께 나눠. 로그인 전에는 이 기기에만 저장돼.</p>
       <div id="syncLoggedOut">
         <input type="email" id="syncEmail" class="settings-input" placeholder="이메일" autocomplete="email" autocapitalize="off">
         <input type="password" id="syncPassword" class="settings-input" placeholder="비밀번호 (6자 이상)" autocomplete="current-password">
@@ -879,17 +881,25 @@
 
     <details class="drawer-section fold" id="aiSection">
       <summary class="drawer-section-title">🤖 AI 설정 · API 키 <span class="fold-state" id="aiSummaryState">키 없음</span></summary>
-      <p class="drawer-desc">키를 넣으면 앱이 Gemini를 바로 호출해. 비워두면 프롬프트를 복사해서 Claude 등에 붙여넣고, 답을 다시 붙여넣는 방식으로 동작해. 키는 이 기기에만 저장돼.</p>
-      <label class="settings-label" for="geminiKeyInput">Gemini API 키 (선택)</label>
+      <p class="drawer-desc">키를 넣으면 앱이 AI를 바로 호출해. 비워두면 프롬프트를 복사해서 Claude 등에 붙여넣고, 답을 다시 붙여넣는 방식으로 동작해. 다른 기기와 키를 나누려면 보호 암호를 정해줘. 키는 그 암호로 암호화돼서 서버에는 암호화된 값만 저장되고, 새 기기에서 로그인하면 보호 암호를 한 번 입력해서 풀어. 암호를 잊으면 키를 다시 넣으면 돼. 보호 암호를 정하지 않으면 키는 이 기기에만 저장돼.</p>
+      <div id="aiLockBox" class="ai-lock" style="display:none;">
+        <div class="ai-lock-title">🔒 암호화된 키가 있어</div>
+        <div class="drawer-desc" style="margin:0 0 8px;">다른 기기에서 저장한 키야. 그 기기에서 정한 보호 암호를 입력하면 이 기기에서도 쓸 수 있어.</div>
+        <input type="password" id="aiUnlockInput" class="settings-input" placeholder="보호 암호" autocomplete="current-password" style="margin-top:0;">
+        <button class="btn-main" id="aiUnlockBtn" style="margin-top:8px;">키 풀기</button>
+        <div class="status" id="aiUnlockStatus"></div>
+      </div>
+      <label class="settings-label" for="geminiKeyInput">AI API 키 (선택)</label>
       <input type="password" id="geminiKeyInput" class="settings-input" placeholder="비워두면 복사·붙여넣기 방식" autocomplete="off">
       <label class="settings-label" for="geminiModelInput">모델</label>
       <input type="text" id="geminiModelInput" class="settings-input" placeholder="비워두면 기본 모델 사용">
+      <label class="settings-label" for="aiPassInput">보호 암호 (다른 기기와 키를 나눌 때)</label>
+      <input type="password" id="aiPassInput" class="settings-input" placeholder="6자 이상 · 정하면 키가 암호화돼서 내 계정에 저장" autocomplete="new-password">
       <div class="settings-actions">
         <button class="btn-ghost" id="saveAiSettingsBtn">저장</button>
         <button class="btn-ghost" id="testAiBtn">연결 테스트</button>
       </div>
       <div class="status" id="aiSettingsStatus"></div>
-      <p class="drawer-desc">키 발급: <a class="settings-link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> (Google 계정으로 로그인)</p>
     </details>
   </div>
 </div>
@@ -923,6 +933,8 @@ const KEYWORD_PRESETS_KEY = 'topic-keyword-presets';
 const REFERENCE_MATERIALS_KEY = 'reference-materials';
 const GEMINI_KEY_KEY = 'gemini-key';
 const GEMINI_MODEL_KEY = 'gemini-model';
+const AI_PASS_KEY = 'ai-pass'; // 보호 암호에서 만든 암호화 키(이 기기에만 저장)
+const GEMINI_UPDATED_KEY = 'gemini-updated'; // 키를 마지막으로 바꾼 시각(ms). 기기 간에 나중에 저장한 쪽이 이기게 하는 기준
 const DEFAULT_GEMINI_MODEL = 'gemini-3.6-flash';
 const THINKING_TOKEN_BUFFER = 2000;
 const GEMINI_RETRY_DELAYS_MS = [2000, 5000];
@@ -949,6 +961,9 @@ let keywordPresets = [];
 let referenceMaterials = [];
 let geminiKey = '';
 let geminiModel = DEFAULT_GEMINI_MODEL;
+let geminiUpdatedAt = 0;
+let aiPass = null;        // {salt, key}: 보호 암호로 만든 암호화 키. 이 기기에만 저장되고 서버로 나가지 않음
+let aiLockedDoc = null;   // 다른 기기가 올린 암호화된 키 중 이 기기에서 아직 못 푼 것
 let viewYear, viewMonth; // month: 0-11
 let selectedDate = null;
 let viewMode = 'month'; // 'month' | 'week' | 'list'
@@ -964,7 +979,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v7';
+const APP_VERSION = 'v10';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -1235,7 +1250,13 @@ async function loadAiSettings() {
     geminiKey = k && k.value ? k.value : '';
     const m = await store.get(GEMINI_MODEL_KEY);
     geminiModel = m && m.value && !RETIRED_GEMINI_MODELS.includes(m.value) ? m.value : DEFAULT_GEMINI_MODEL;
+    const u = await store.get(GEMINI_UPDATED_KEY);
+    geminiUpdatedAt = u && u.value ? (Number(u.value) || 0) : 0;
+    const ap = await store.get(AI_PASS_KEY);
+    try { aiPass = ap && ap.value ? JSON.parse(ap.value) : null; } catch (e2) { aiPass = null; }
   } catch (e) {
+    aiPass = null;
+    geminiUpdatedAt = 0;
     geminiKey = '';
     geminiModel = DEFAULT_GEMINI_MODEL;
   }
@@ -1270,7 +1291,7 @@ async function callGemini({ system, text, media, maxTokens, history }) {
     let detail = '';
     try { detail = (await response.json()).error?.message || ''; } catch (e) {}
     const hint = response.status === 404 ? ' (모델 이름 문제일 수 있어. 메뉴 → AI 설정의 모델 칸을 비우거나 오류 메시지에 나온 새 모델명을 넣어줘)' : '';
-    throw new Error(`Gemini 응답 오류 ${response.status}${detail ? ': ' + detail : ''}${hint}`);
+    throw new Error(`AI 응답 오류 ${response.status}${detail ? ': ' + detail : ''}${hint}`);
   }
   const data = await response.json();
   const cand = data.candidates?.[0];
@@ -1282,7 +1303,7 @@ async function callGemini({ system, text, media, maxTokens, history }) {
       : cand?.finishReason
         ? `종료 사유: ${cand.finishReason}`
         : '응답에 후보가 없음';
-    console.warn('Gemini 빈 응답 원본', data);
+    console.warn('AI 빈 응답 원본', data);
     throw new Error(`빈 응답 (${reason})`);
   }
   return out;
@@ -1339,7 +1360,7 @@ async function runAI({ system, text, media, maxTokens, title, history }) {
   const hasMedia = media && media.length;
   const nonImage = hasMedia && media.some(m => !m.mime.startsWith('image/'));
   if (nonImage) {
-    throw new AiUnavailableError('PDF는 Gemini 키가 있어야 처리할 수 있어. 텍스트(txt/md)나 이미지로 등록해줘.');
+    throw new AiUnavailableError('PDF는 AI 키가 있어야 처리할 수 있어. 텍스트(txt/md)나 이미지로 등록해줘.');
   }
   const prompt = `${system}\n\n---\n\n${text}`;
   return askViaClipboard({
@@ -2090,15 +2111,18 @@ document.getElementById('drawerOverlay').addEventListener('click', closeDrawer);
 // ---- AI 설정 ----
 document.getElementById('saveAiSettingsBtn').addEventListener('click', async () => {
   const statusEl = document.getElementById('aiSettingsStatus');
-  geminiKey = document.getElementById('geminiKeyInput').value.trim();
+  const keyVal = document.getElementById('geminiKeyInput').value.trim();
   const typedModel = document.getElementById('geminiModelInput').value.trim();
-  geminiModel = typedModel || DEFAULT_GEMINI_MODEL;
+  const passVal = document.getElementById('aiPassInput').value;
   try {
-    await store.set(GEMINI_KEY_KEY, geminiKey);
-    // 비워두면 빈 값으로 저장해서, 나중에 기본 모델이 바뀌면 자동으로 따라가게 함
-    await store.set(GEMINI_MODEL_KEY, typedModel);
+    const r = await saveAiConfig(keyVal, typedModel, passVal);
+    const signedIn = !!(window.cloud && window.cloud.isSignedIn && window.cloud.isSignedIn());
+    let msg = keyVal ? '저장함 — 앱이 AI를 직접 호출해' : '키를 비워서 저장함 — 복사·붙여넣기 방식으로 동작해';
+    if (signedIn && keyVal) msg += r.shared ? ' (암호화해서 내 계정에 저장했어. 다른 기기에서는 보호 암호를 한 번 입력하면 돼)' : ' (이 기기에만 저장했어. 다른 기기와 나누려면 보호 암호를 정해줘)';
+    else if (signedIn) msg += ' (다른 기기에도 적용돼)';
     statusEl.className = 'status';
-    statusEl.textContent = geminiKey ? '저장함 — 앱이 Gemini를 직접 호출해' : '키를 비워서 저장함 — 복사·붙여넣기 방식으로 동작해';
+    statusEl.textContent = msg;
+    document.getElementById('aiPassInput').value = '';
     updateAiSummary();
   } catch (e) {
     statusEl.className = 'status err';
@@ -2106,6 +2130,22 @@ document.getElementById('saveAiSettingsBtn').addEventListener('click', async () 
   }
   renderChatLog();
 });
+
+document.getElementById('aiUnlockBtn').addEventListener('click', async () => {
+  const st = document.getElementById('aiUnlockStatus');
+  const pass = document.getElementById('aiUnlockInput').value;
+  if (!pass) { st.className = 'status err'; st.textContent = '보호 암호를 입력해줘'; return; }
+  st.className = 'status'; st.textContent = '푸는 중…';
+  try {
+    await unlockAi(pass);
+    document.getElementById('aiUnlockInput').value = '';
+    document.getElementById('aiSettingsStatus').className = 'status';
+    document.getElementById('aiSettingsStatus').textContent = '키를 풀었어. 이 기기에서 바로 쓸 수 있어.';
+  } catch (e) {
+    st.className = 'status err'; st.textContent = e.message;
+  }
+});
+document.getElementById('aiUnlockInput').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) document.getElementById('aiUnlockBtn').click(); });
 
 document.getElementById('testAiBtn').addEventListener('click', async () => {
   const statusEl = document.getElementById('aiSettingsStatus');
@@ -2565,7 +2605,7 @@ function renderChatLog() {
   log.innerHTML = '';
   if (!chatHistory.length) {
     const empty = document.createElement('div');
-    empty.innerHTML = emptyStateHtml('chat', geminiKey ? '완료·삭제·변경 지시나 질문을 해줘' : '메뉴(☰)에서 Gemini 키를 넣으면 쓸 수 있어');
+    empty.innerHTML = emptyStateHtml('chat', geminiKey ? '완료·삭제·변경 지시나 질문을 해줘' : '메뉴(☰)에서 AI 키를 넣으면 쓸 수 있어');
     log.appendChild(empty);
     return;
   }
@@ -2583,7 +2623,7 @@ async function sendChatMessage() {
   const text = input.value.trim();
   if (!text) return;
   if (!geminiKey) {
-    chatHistory.push({ role: 'assistant', text: 'AI 비서는 Gemini 키가 있어야 써. 메뉴(☰) → AI 설정에서 키를 넣어줘.' });
+    chatHistory.push({ role: 'assistant', text: 'AI 비서는 AI 키가 있어야 써. 메뉴(☰) → 설정 → AI 설정에서 키를 넣어줘.' });
     renderChatLog();
     return;
   }
@@ -2643,6 +2683,68 @@ function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sbOverlay').classList.remove('open');
 }
+// 모바일: 화면 왼쪽 가장자리에서 오른쪽으로 밀면 열리고, 열린 메뉴를 왼쪽으로 밀면 닫힘. 손가락을 따라 메뉴가 같이 움직임.
+// 가장자리 바로 끝(iOS의 '뒤로 가기' 제스처 영역)을 피하려고 시작 구역을 화면 폭의 22%(최소 40px)로 넉넉히 잡음.
+(function setupSidebarSwipe() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sbOverlay');
+  const mq = window.matchMedia('(max-width: 900px)');
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+  const otherLayerOpen = () => ['peekPanel', 'drawerPanel'].some(id => document.getElementById(id).classList.contains('open'))
+    || ['cmdOverlay', 'aiModalOverlay'].some(id => document.getElementById(id).classList.contains('open'));
+  let g = null;
+
+  const setDrag = (progress) => {              // 0 = 닫힘, 1 = 열림
+    sidebar.style.transition = 'none';
+    overlay.style.transition = 'none';
+    sidebar.style.transform = `translateX(${(progress - 1) * 100}%)`;
+    overlay.style.opacity = String(progress);
+    overlay.style.visibility = progress > 0 ? 'visible' : '';
+  };
+  const clearDrag = () => {
+    sidebar.style.transition = ''; overlay.style.transition = '';
+    sidebar.style.transform = ''; overlay.style.opacity = ''; overlay.style.visibility = '';
+  };
+
+  document.addEventListener('touchstart', (e) => {
+    g = null;
+    if (!mq.matches || e.touches.length !== 1 || otherLayerOpen()) return;
+    if (e.target.closest && e.target.closest('input, textarea, select')) return;
+    const t = e.touches[0];
+    const open = sidebar.classList.contains('open');
+    if (!open && t.clientX > Math.max(40, Math.round(window.innerWidth * 0.22))) return;
+    g = { mode: open ? 'close' : 'open', x0: t.clientX, y0: t.clientY, t0: Date.now(), locked: false, progress: open ? 1 : 0, last: t.clientX, w: sidebar.getBoundingClientRect().width || 280 };
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!g) return;
+    const t = e.touches[0];
+    const dx = t.clientX - g.x0, dy = t.clientY - g.y0;
+    if (!g.locked) {
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;          // 아직 방향을 알 수 없음
+      if (Math.abs(dy) > Math.abs(dx)) { g = null; return; }        // 세로 스크롤이면 무시
+      if ((g.mode === 'open' && dx <= 0) || (g.mode === 'close' && dx >= 0)) { g = null; return; }
+      g.locked = true;
+    }
+    e.preventDefault();                                             // 가로로 밀 때는 화면이 같이 스크롤되지 않게
+    g.progress = g.mode === 'open' ? clamp(dx / g.w, 0, 1) : clamp(1 + dx / g.w, 0, 1);
+    g.last = t.clientX;
+    setDrag(g.progress);
+  }, { passive: false });
+
+  const finish = () => {
+    if (!g) return;
+    const cur = g; g = null;
+    if (!cur.locked) return;
+    const velocity = (cur.last - cur.x0) / Math.max(1, Date.now() - cur.t0);   // px/ms, 오른쪽이 +
+    const shouldOpen = cur.mode === 'open' ? (cur.progress > 0.35 || velocity > 0.5) : !(cur.progress < 0.65 || velocity < -0.5);
+    clearDrag();
+    if (shouldOpen) openSidebar(); else closeSidebar();
+  };
+  document.addEventListener('touchend', finish);
+  document.addEventListener('touchcancel', finish);
+})();
+
 document.getElementById('sbToggleBtn').addEventListener('click', openSidebar);
 document.getElementById('sbOverlay').addEventListener('click', closeSidebar);
 document.getElementById('openDrawerBtn').addEventListener('click', closeSidebar);
@@ -3031,6 +3133,86 @@ function refreshAfterCloud() {
   refreshAll();
 }
 
+// ---- AI 키 암호화 (보호 암호 → PBKDF2 → AES-GCM). 서버에는 암호화된 값만 올라가고 보호 암호와 암호화 키는 이 기기 밖으로 나가지 않음 ----
+const AI_PBKDF2_ITER = 250000;
+const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const unb64 = (str) => Uint8Array.from(atob(str), c => c.charCodeAt(0));
+function requireCrypto() {
+  if (!(globalThis.crypto && crypto.subtle)) throw new Error('이 환경에서는 암호화를 쓸 수 없어 (https 주소에서 열어줘)');
+}
+async function deriveAesKey(passphrase, saltBytes) {
+  requireCrypto();
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: saltBytes, iterations: AI_PBKDF2_ITER, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+}
+const exportRawKey = async (k) => b64(await crypto.subtle.exportKey('raw', k));
+const importRawKey = (rawB64) => crypto.subtle.importKey('raw', unb64(rawB64), { name: 'AES-GCM' }, true, ['encrypt', 'decrypt']);
+async function encryptWith(plain, aesKey, saltB64) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, aesKey, new TextEncoder().encode(plain));
+  return { v: 1, salt: saltB64, iv: b64(iv), ct: b64(ct) };
+}
+async function decryptWith(enc, aesKey) {
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(enc.iv) }, aesKey, unb64(enc.ct));
+  return new TextDecoder().decode(pt);
+}
+
+function setAiLockUi(locked) {
+  const box = document.getElementById('aiLockBox');
+  if (box) box.style.display = locked ? 'block' : 'none';
+  if (!locked) { const st = document.getElementById('aiUnlockStatus'); if (st) st.textContent = ''; }
+}
+
+async function persistAiLocal() {
+  try {
+    await store.set(GEMINI_KEY_KEY, geminiKey);
+    await store.set(GEMINI_MODEL_KEY, geminiModel === DEFAULT_GEMINI_MODEL ? '' : geminiModel);
+    await store.set(GEMINI_UPDATED_KEY, String(geminiUpdatedAt));
+    await store.set(AI_PASS_KEY, aiPass ? JSON.stringify(aiPass) : '');
+  } catch (e) { console.error('저장 실패', e); }
+}
+function showAiInputs() {
+  document.getElementById('geminiKeyInput').value = geminiKey;
+  document.getElementById('geminiModelInput').value = geminiModel === DEFAULT_GEMINI_MODEL ? '' : geminiModel;
+}
+
+// 설정 화면의 "저장": 키·모델을 이 기기에 저장하고, 보호 암호가 있으면 암호화해서 내 계정에도 올림
+async function saveAiConfig(keyVal, typedModel, passVal) {
+  if (passVal && passVal.length < 6) throw new Error('보호 암호는 6자 이상이어야 해');
+  if (passVal) {                                   // 암호를 새로 정하면 새 salt로 다시 만듦 (다른 기기는 새 암호로 한 번 더 풀어야 함)
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const aes = await deriveAesKey(passVal, salt);
+    aiPass = { salt: b64(salt), key: await exportRawKey(aes) };
+  }
+  geminiKey = keyVal;
+  geminiModel = typedModel || DEFAULT_GEMINI_MODEL;
+  geminiUpdatedAt = Date.now();
+  aiLockedDoc = null;
+  setAiLockUi(false);
+  await persistAiLocal();
+  cloudPush();
+  return { shared: !!aiPass };
+}
+
+// 다른 기기가 올린 암호화된 키를 보호 암호로 풂
+async function unlockAi(pass) {
+  if (!aiLockedDoc || !aiLockedDoc.enc) throw new Error('풀 키가 없어');
+  const d = aiLockedDoc;
+  const aes = await deriveAesKey(pass, unb64(d.enc.salt));
+  let plain;
+  try { plain = await decryptWith(d.enc, aes); } catch (e) { throw new Error('보호 암호가 맞지 않아'); }
+  aiPass = { salt: d.enc.salt, key: await exportRawKey(aes) };
+  geminiKey = plain;
+  geminiModel = d.model && !RETIRED_GEMINI_MODELS.includes(d.model) ? d.model : DEFAULT_GEMINI_MODEL;
+  geminiUpdatedAt = Number(d.updatedAt);
+  aiLockedDoc = null;
+  setAiLockUi(false);
+  await persistAiLocal();
+  showAiInputs();
+  updateAiSummary();
+  renderChatLog();
+}
+
 window.plannerApp = {
   getState: () => ({ items, trashed: trashedItems, prefs: { keywordPresets, referenceMaterials } }),
 
@@ -3083,11 +3265,59 @@ window.plannerApp = {
     renderTrashList();
   },
 
-  // 로그아웃 시 이 기기의 데이터를 비움 (다른 계정과 섞이지 않게)
+  // AI 키·모델 (키는 보호 암호로 암호화돼서 내 계정에 저장됨. 서버에는 암호화된 값만 올라감)
+  getAiMeta() {
+    if (geminiKey && !geminiUpdatedAt) { geminiUpdatedAt = Date.now(); store.set(GEMINI_UPDATED_KEY, String(geminiUpdatedAt)).catch(() => {}); }
+    return { hasKey: !!geminiKey, updatedAt: geminiUpdatedAt };
+  },
+
+  // 서버에 올릴 모양. 키가 없으면 "지웠다"는 표시(enc:null). 키는 있는데 보호 암호가 없으면 올리지 않음(null)
+  async getCloudAi() {
+    const model = geminiModel === DEFAULT_GEMINI_MODEL ? '' : geminiModel;
+    if (!geminiKey) return { enc: null, model, updatedAt: geminiUpdatedAt };
+    if (!aiPass) return null;
+    return { enc: await encryptWith(geminiKey, await importRawKey(aiPass.key), aiPass.salt), model, updatedAt: geminiUpdatedAt };
+  },
+
+  // 서버의 키가 이 기기 것보다 나중에 저장된 것일 때만 받아들임. enc 필드가 없는 문서(옛 형식·알 수 없는 형식)는 무시
+  async applyCloudAi(d) {
+    if (!d || d.enc === undefined || !(Number(d.updatedAt) > geminiUpdatedAt)) return false;
+    if (d.enc === null) {                                  // 다른 기기에서 키를 지움
+      geminiKey = '';
+      geminiModel = d.model && !RETIRED_GEMINI_MODELS.includes(d.model) ? d.model : DEFAULT_GEMINI_MODEL;
+      geminiUpdatedAt = Number(d.updatedAt);
+      aiLockedDoc = null; setAiLockUi(false);
+      await persistAiLocal(); showAiInputs(); updateAiSummary(); renderChatLog();
+      return true;
+    }
+    if (aiPass && aiPass.salt === d.enc.salt) {            // 이 기기에 같은 보호 암호가 있으면 자동으로 풂
+      try {
+        const plain = await decryptWith(d.enc, await importRawKey(aiPass.key));
+        geminiKey = plain;
+        geminiModel = d.model && !RETIRED_GEMINI_MODELS.includes(d.model) ? d.model : DEFAULT_GEMINI_MODEL;
+        geminiUpdatedAt = Number(d.updatedAt);
+        aiLockedDoc = null; setAiLockUi(false);
+        await persistAiLocal(); showAiInputs(); updateAiSummary(); renderChatLog();
+        return true;
+      } catch (e) { console.warn('키를 풀지 못함', e); }
+    }
+    aiLockedDoc = d;                                       // 보호 암호가 필요함: 이 기기의 키는 건드리지 않고 입력 상자를 보여줌
+    setAiLockUi(true);
+    updateAiSummary();
+    return false;
+  },
+
+  // 로그아웃 시 이 기기의 데이터와 키·보호 암호를 비움 (다른 계정과 섞이지 않게)
   async clearLocal() {
     items = []; trashedItems = []; keywordPresets = []; referenceMaterials = []; activeKeywords = new Set();
     await persistLocalAll();
     await saveActiveKeywords();
+    geminiKey = ''; geminiModel = DEFAULT_GEMINI_MODEL; geminiUpdatedAt = 0; aiPass = null; aiLockedDoc = null;
+    await persistAiLocal();
+    setAiLockUi(false);
+    showAiInputs();
+    updateAiSummary();
+    renderChatLog();
     refreshAfterCloud();
   }
 };
@@ -3138,6 +3368,7 @@ window.addEventListener('cloud-status', (e) => renderSyncUi(e.detail));
 
 function updateAiSummary() {
   const el = document.getElementById('aiSummaryState');
+  if (aiLockedDoc) { el.textContent = '🔒 보호 암호 필요'; el.className = 'fold-state warn'; return; }
   el.textContent = geminiKey ? '키 저장됨' : '키 없음 · 복사/붙여넣기';
   el.className = 'fold-state' + (geminiKey ? ' ok' : '');
 }
@@ -3169,7 +3400,7 @@ document.getElementById('syncResetBtn').addEventListener('click', () => syncAuth
 document.getElementById('syncPassword').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) syncAuthAction('login'); });
 document.getElementById('syncLogoutBtn').addEventListener('click', async () => {
   if (!requireCloud()) return;
-  const ok = confirm('로그아웃하면 이 기기에 저장된 일정을 지워. (클라우드에는 그대로 남아 있고, 다시 로그인하면 돌아와)\n\n계속할까?');
+  const ok = confirm('로그아웃하면 이 기기에 저장된 일정과 API 키를 지워. (내 계정에는 그대로 남아 있고, 다시 로그인하면 돌아와)\n\n계속할까?');
   if (!ok) return;
   syncSetStatus('로그아웃 중…');
   try {
@@ -3248,9 +3479,10 @@ const stable = (o) => JSON.stringify(sortKeys(o));
 const clone = (o) => JSON.parse(JSON.stringify(o)); // undefined 제거 (Firestore는 undefined를 못 받음)
 
 let uid = null;
-let unsubItems = null, unsubPrefs = null;
+let unsubItems = null, unsubPrefs = null, unsubAi = null;
 let known = new Map();      // 서버(또는 올리는 중)에 있는 항목 id -> 내용(정렬된 문자열)
 let knownPrefs = '';
+let knownAi = '', knownAiAt = 0; // 클라우드에 있는 AI 키 문서(내용 문자열, 저장 시각)
 let ready = false;          // 첫 동기화가 끝난 뒤부터만 올림 (덜 받은 상태에서 덮어쓰기 방지)
 let pushTimer = null, retryTimer = null, pushRetries = 0;
 let lastMeta = { fromCache: true, hasPendingWrites: false };
@@ -3272,6 +3504,8 @@ const emit = (state, extra) => window.dispatchEvent(new CustomEvent('cloud-statu
 
 const itemsCol = () => collection(db, 'users', uid, 'items');
 const prefsRef = () => doc(db, 'users', uid, 'meta', 'prefs');
+const aiRef = () => doc(db, 'users', uid, 'meta', 'ai');
+const shapeAi = (d) => ({ enc: d && d.enc !== undefined ? d.enc : undefined, model: (d && d.model) || '', updatedAt: Number(d && d.updatedAt) || 0 });
 const currentPrefs = (st) => ({ keywordPresets: st.prefs.keywordPresets, referenceMaterials: st.prefs.referenceMaterials });
 
 function statusFromMeta() {
@@ -3322,7 +3556,20 @@ async function pushNow() {
     knownPrefs = ps;
     setDoc(prefsRef(), clone(prefs)).catch(onWriteError);
   }
-  if (ops.length || prefsChanged) statusFromMeta();
+
+  // AI 키: 이 기기 것이 클라우드보다 나중에 저장된 것일 때만 올림 (옛 값이 새 값을 덮어쓰지 않게).
+  // 암호화할 때마다 값이 달라지므로 내용 비교가 아니라 저장 시각으로 변경 여부를 판단함. 키는 암호화된 형태로만 올라감(보호 암호가 없으면 올리지 않음).
+  const aiMeta = window.plannerApp.getAiMeta();
+  let aiChanged = false;
+  if ((aiMeta.hasKey || aiMeta.updatedAt) && aiMeta.updatedAt > knownAiAt) {
+    const aiDoc = await window.plannerApp.getCloudAi();
+    if (aiDoc) {
+      aiChanged = true;
+      knownAiAt = aiDoc.updatedAt;
+      setDoc(aiRef(), clone(aiDoc)).catch(onWriteError);
+    }
+  }
+  if (ops.length || prefsChanged || aiChanged) statusFromMeta();
 }
 
 function schedulePush() {
@@ -3351,8 +3598,9 @@ function handleListenError(e) {
 function stopListening() {
   if (unsubItems) unsubItems();
   if (unsubPrefs) unsubPrefs();
-  unsubItems = unsubPrefs = null;
-  known = new Map(); knownPrefs = ''; ready = false;
+  if (unsubAi) unsubAi();
+  unsubItems = unsubPrefs = unsubAi = null;
+  known = new Map(); knownPrefs = ''; knownAi = ''; knownAiAt = 0; ready = false;
   clearTimeout(pushTimer); clearTimeout(retryTimer); pushRetries = 0;
 }
 
@@ -3363,7 +3611,7 @@ async function startListening() {
 
   if (firstTimeOnDevice) {
     // 이 기기에서 처음 연결: 클라우드와 기기 데이터를 합친 뒤 올림
-    const [snap, pSnap] = await Promise.all([getDocs(itemsCol()), getDoc(prefsRef())]);
+    const [snap, pSnap, aSnap] = await Promise.all([getDocs(itemsCol()), getDoc(prefsRef()), getDoc(aiRef())]);
     const cIts = [], cTr = [];
     known = new Map();
     snap.forEach(d => {
@@ -3376,21 +3624,26 @@ async function startListening() {
     knownPrefs = pSnap.exists() ? stable({ keywordPresets: cPrefs.keywordPresets || [], referenceMaterials: cPrefs.referenceMaterials || [] }) : '';
     saveConfirmed();
     await window.plannerApp.mergeFromCloud(cIts, cTr, cPrefs);
+    if (aSnap.exists()) {   // 클라우드에 키가 있으면: 이 기기 것보다 나중에 저장된 경우에만 받아옴 (아니면 아래 push에서 이 기기 것이 올라감)
+      const shaped = shapeAi(aSnap.data());
+      knownAiAt = shaped.updatedAt;
+      await window.plannerApp.applyCloudAi(shaped);
+    }
     localStorage.setItem('planner:cloud-uid', uid);
     ready = true;
     await pushNow(); // 기기에만 있던 데이터를 올림 (리스너를 붙이기 전에 해야 덮어쓰기가 안 일어남)
   }
 
-  let gotItems = !firstTimeOnDevice, gotPrefs = !firstTimeOnDevice;
+  let gotItems = !firstTimeOnDevice, gotPrefs = !firstTimeOnDevice, gotAi = !firstTimeOnDevice;
   const maybeReady = async () => {
-    if (ready || !(gotItems && gotPrefs)) return;
+    if (ready || !(gotItems && gotPrefs && gotAi)) return;
     ready = true;
     restartAttempts = 0;
     await window.plannerApp.afterCloudReady();
     schedulePush();
     statusFromMeta();
   };
-  if (firstTimeOnDevice) { gotItems = gotPrefs = true; }
+  if (firstTimeOnDevice) { gotItems = gotPrefs = gotAi = true; }
 
   unsubItems = onSnapshot(itemsCol(), { includeMetadataChanges: true }, async (snap) => {
     const fromCache = snap.metadata.fromCache;
@@ -3446,6 +3699,21 @@ async function startListening() {
     gotPrefs = true;
     await maybeReady();
   }, handleListenError);
+
+  unsubAi = onSnapshot(aiRef(), { includeMetadataChanges: true }, async (snap) => {
+    if (snap.exists()) {
+      const shaped = shapeAi(snap.data());
+      knownAiAt = shaped.updatedAt;
+      await window.plannerApp.applyCloudAi(shaped);
+      if (window.plannerApp.getAiMeta().updatedAt > shaped.updatedAt) schedulePush();  // 이 기기 것이 더 최신이면 올림
+    } else {
+      // 문서가 없다고 이 기기의 키를 지우지 않음(키를 지울 때는 문서를 지우지 않고 enc:null로 저장함). 이 기기에 키가 있으면 올림
+      knownAiAt = 0;
+      if (window.plannerApp.getAiMeta().hasKey) schedulePush();
+    }
+    gotAi = true;
+    await maybeReady();
+  }, handleListenError);
 }
 
 onAuthStateChanged(auth, async (user) => {
@@ -3471,6 +3739,7 @@ window.cloud = {
     if (u) { localStorage.removeItem('planner:cloud-confirmed:' + u); localStorage.removeItem('planner:cloud-prefs-confirmed:' + u); }
     await signOut(auth);
   },
+  isSignedIn: () => !!uid,
   schedulePush
 };
 </script>
