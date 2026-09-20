@@ -231,12 +231,19 @@
     .tb-avatar:active { transform: scale(0.94); }
     .tb-nav { flex: 1; min-width: 0; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
     .tb-nav::-webkit-scrollbar { display: none; }
-    .tb-pill { flex-shrink: 0; height: 40px; min-width: 40px; padding: 0 9px; border-radius: 999px; border: none; background: var(--sidebar); color: var(--ink-dim); display: flex; align-items: center; justify-content: center; font-size: 0.92rem; font-weight: 600; transition: background-color 0.15s ease, color 0.15s ease, padding 0.2s ease; }
+    .tb-pill { flex-shrink: 0; height: 40px; min-width: 40px; padding: 0 9px; border-radius: 999px; border: none; background: var(--sidebar); color: var(--ink-dim); display: flex; align-items: center; justify-content: center; font-size: 0.92rem; font-weight: 600; transition: background-color 0.25s ease, color 0.25s ease, padding 0.38s cubic-bezier(0.32, 0.72, 0, 1), transform 0.15s ease; }
     .tb-pill svg { width: 22px; height: 22px; flex-shrink: 0; }
-    .tb-pill .tb-label { max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap; margin-left: 0; transition: max-width 0.25s ease, opacity 0.2s ease, margin 0.25s ease; }
+    .tb-pill .tb-label { max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap; margin-left: 0; transition: max-width 0.38s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.28s ease, margin 0.38s cubic-bezier(0.32, 0.72, 0, 1); }
     .tb-pill.active { background: var(--hover); color: var(--ink); padding: 0 15px 0 12px; }
     .tb-pill.active .tb-label { max-width: 90px; opacity: 1; margin-left: 7px; }
-    .tb-pill:not(.active):active { background: var(--hover); }
+    .tb-pill:not(.active):active { background: var(--hover); transform: scale(0.92); }
+    /* 화면이 바뀔 때 새 내용이 눌린 알약 쪽 방향에서 옆으로 밀려 들어옴 */
+    @keyframes viewInR { from { opacity: 0; transform: translateX(34px); } to { opacity: 1; transform: none; } }
+    @keyframes viewInL { from { opacity: 0; transform: translateX(-34px); } to { opacity: 1; transform: none; } }
+    body.view-sliding { overflow-x: hidden; }
+    .view-in-r { animation: viewInR 0.38s cubic-bezier(0.32, 0.72, 0, 1); }
+    .view-in-l { animation: viewInL 0.38s cubic-bezier(0.32, 0.72, 0, 1); }
+    @media (prefers-reduced-motion: reduce) { .view-in-r, .view-in-l { animation: none; } .tb-pill, .tb-pill .tb-label { transition: none; } }
     .page { padding: 24px calc(16px + env(safe-area-inset-right)) 120px calc(16px + env(safe-area-inset-left)); }
     .page-title { font-size: 1.6rem; }
     .page-title .page-emoji .ic { width: 1.7rem; height: 1.7rem; }
@@ -1109,7 +1116,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v16';
+const APP_VERSION = 'v17';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2162,7 +2169,9 @@ function renderWeekView() {
   });
 }
 
-function setViewMode(mode) {
+const VIEW_ORDER = ['today', 'month', 'week', 'list', 'board'];
+function setViewMode(mode, animate) {
+  const prevMode = viewMode;
   viewMode = mode;
   if (mode !== 'list' && selectMode) {
     selectMode = false;
@@ -2205,10 +2214,28 @@ function setViewMode(mode) {
   }
   // 앱을 다시 열어도 마지막에 보던 화면으로 돌아오게 기억
   store.set('view', mode).catch(() => {});
+  if (animate && prevMode !== mode) slideInView(mode, VIEW_ORDER.indexOf(mode) > VIEW_ORDER.indexOf(prevMode));
+}
+
+// 화면 전환 모션: 알약 순서상 오른쪽 화면이면 오른쪽에서, 왼쪽이면 왼쪽에서 밀려 들어옴
+let slideTimer = null;
+function slideInView(mode, fromRight) {
+  const id = { today: 'todayView', month: 'monthView', week: 'weekView', list: 'listView', board: 'boardView' }[mode];
+  const els = [document.getElementById(id), document.getElementById('calHead'), mode === 'month' ? document.getElementById('detailPanel') : null].filter(el => el && el.style.display !== 'none');
+  clearViewSlide();
+  els.forEach(el => { void el.offsetWidth; el.classList.add(fromRight ? 'view-in-r' : 'view-in-l'); });
+  document.body.classList.add('view-sliding');
+  clearTimeout(slideTimer);
+  slideTimer = setTimeout(clearViewSlide, 420);
+}
+// 연타하면 이미 숨겨진 화면에도 모션 표시가 남을 수 있어서, 전부 찾아서 지운다
+function clearViewSlide() {
+  document.body.classList.remove('view-sliding');
+  document.querySelectorAll('.view-in-r, .view-in-l').forEach(el => el.classList.remove('view-in-r', 'view-in-l'));
 }
 
 document.querySelectorAll('[data-view]').forEach(b => {
-  b.addEventListener('click', () => setViewMode(b.dataset.view));
+  b.addEventListener('click', () => setViewMode(b.dataset.view, true));
 });
 
 document.getElementById('listSearchInput').addEventListener('input', (e) => {
@@ -3312,10 +3339,10 @@ let cmdIndex = 0;
 function paletteEntries(query) {
   const q = query.trim().toLowerCase();
   const cmds = [
-    { icon: 'month', label: '달력 보기', run: () => setViewMode('month') },
-    { icon: 'week', label: '이번 주 보기', run: () => setViewMode('week') },
-    { icon: 'list', label: '전체 표 보기', run: () => setViewMode('list') },
-    { icon: 'board', label: '보드 보기', run: () => setViewMode('board') },
+    { icon: 'month', label: '달력 보기', run: () => setViewMode('month', true) },
+    { icon: 'week', label: '이번 주 보기', run: () => setViewMode('week', true) },
+    { icon: 'list', label: '전체 표 보기', run: () => setViewMode('list', true) },
+    { icon: 'board', label: '보드 보기', run: () => setViewMode('board', true) },
     { icon: 'plus', label: '새 일정 입력', run: () => { window.scrollTo({ top: 0, behavior: 'smooth' }); document.getElementById('quickInput').focus(); } },
     { icon: 'chat', label: 'AI 비서 열기', run: () => toggleChat(true) },
     { icon: 'settings', label: '설정 · 자료 열기', run: openDrawer },
