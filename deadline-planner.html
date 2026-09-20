@@ -349,7 +349,7 @@
   .status { font-size: 0.78rem; color: var(--ink-dim); margin-top: 8px; min-height: 16px; }
   .status.err { color: var(--danger); }
 
-  textarea, input[type="text"], input[type="password"], input[type="date"], select {
+  textarea, input[type="text"], input[type="password"], input[type="date"], input[type="time"], select {
     font-family: inherit;
     color: var(--ink);
   }
@@ -616,7 +616,7 @@
   .item .del:hover { color: var(--danger); background: var(--hover); }
   .item .edit-btn:hover { color: var(--accent); background: var(--hover); }
   .item-edit { display: flex; flex-direction: column; gap: 6px; padding: 10px 0; border-bottom: 1px solid var(--border); }
-  .item-edit input[type="text"], .item-edit select, .item-edit input[type="date"] { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.86rem; padding: 6px 8px; width: 100%; }
+  .item-edit input[type="text"], .item-edit select, .item-edit input[type="date"], .item-edit input[type="time"] { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.86rem; padding: 6px 8px; width: 100%; }
   .item-edit .edit-row { display: flex; gap: 6px; }
   .item-edit .edit-row > * { flex: 1; min-width: 0; }
   .item-edit .edit-actions { display: flex; gap: 6px; margin-top: 4px; }
@@ -723,6 +723,15 @@
   .peek-key { font-size: 0.8rem; color: var(--ink-dim); }
   .peek-row input[type="date"] { border: 1px solid transparent; background: transparent; border-radius: var(--radius); font-size: 0.86rem; padding: 4px 6px; justify-self: start; }
   .peek-row input[type="date"]:hover { background: var(--hover); }
+  .peek-row input[type="time"], .peek-row select.peek-dur { border: 1px solid transparent; background: transparent; border-radius: var(--radius); font-size: 0.86rem; padding: 4px 6px; justify-self: start; color: var(--ink); transition: background 0.2s var(--ease-out); }
+  .peek-row input[type="time"]:hover, .peek-row select.peek-dur:hover { background: var(--hover); }
+  .peek-time-wrap { display: flex; align-items: center; gap: 6px; }
+  .peek-time-clear { border: none; background: transparent; color: var(--ink-dim); font-size: 0.74rem; padding: 3px 7px; border-radius: var(--radius); cursor: pointer; font-family: inherit; }
+  .peek-time-clear:hover { background: var(--hover); color: var(--ink); }
+  .time-chip { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; font-size: 0.68rem; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--hover); color: var(--ink-dim); font-variant-numeric: tabular-nums; line-height: 1.5; white-space: nowrap; }
+  .time-chip .ic { width: 11px; height: 11px; }
+  .time-chip.late { background: var(--danger-soft); color: var(--danger); }
+  .cell-title-wrap .time-chip { margin-left: 4px; }
   .peek-row label { font-size: 0.86rem; display: flex; align-items: center; gap: 6px; cursor: pointer; }
   .peek-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
   .peek-body .tbl-extras { padding: 14px 0 0; }
@@ -776,7 +785,7 @@
   .sync-dot.wait { background: #e0a030; }
   @media (max-width: 900px) {
     /* iOS는 글자 크기가 16px 미만인 입력칸에 포커스하면 화면이 확대됨 */
-    input[type="text"], input[type="email"], input[type="password"], input[type="date"], textarea { font-size: 16px !important; }
+    input[type="text"], input[type="email"], input[type="password"], input[type="date"], input[type="time"], select.peek-dur, textarea { font-size: 16px !important; }
   }
 
   /* ===== 서랍: 접이식 섹션 (로그인·API 키) ===== */
@@ -1160,7 +1169,7 @@
     <div class="drawer-group-label">도움</div>
     <details class="drawer-section fold" id="quickUrlSection">
       <summary class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>빠른 입력 주소 (단축어 · Siri)</summary>
-      <p class="drawer-desc">주소 뒤에 <b>?add=제목</b>을 붙여서 열면 바로 일정이 추가돼. 날짜는 <b>&amp;due=2026-10-01</b> (또는 today · tomorrow · 내일 · 모레 · +3), 유형은 <b>&amp;type=과제</b>, 우선순위는 <b>&amp;priority=high</b>, 메모는 <b>&amp;notes=…</b>로 정해. 추가하면 "되돌리기" 알림이 떠.</p>
+      <p class="drawer-desc">주소 뒤에 <b>?add=제목</b>을 붙여서 열면 바로 일정이 추가돼. 날짜는 <b>&amp;due=2026-10-01</b> (또는 today · tomorrow · 내일 · 모레 · +3), 유형은 <b>&amp;type=과제</b>, 우선순위는 <b>&amp;priority=high</b>, 메모는 <b>&amp;notes=…</b>, 마감 시각은 <b>&amp;time=15:30</b>(또는 오후 3시), 예상 소요시간은 <b>&amp;min=90</b>(분)으로 정해. 추가하면 "되돌리기" 알림이 떠.</p>
       <input type="text" id="quickUrlSample" class="settings-input" readonly>
       <div class="settings-actions">
         <button class="btn-ghost" id="quickUrlCopyBtn">주소 형식 복사</button>
@@ -1268,7 +1277,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v31';
+const APP_VERSION = 'v32';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -1663,6 +1672,50 @@ async function runAI({ system, text, media, maxTokens, title, history }) {
 function daysUntil(iso) {
   return Math.round((new Date(iso + 'T00:00:00') - new Date(todayISO() + 'T00:00:00')) / 86400000);
 }
+// ---- 마감 시각(dueTime "HH:MM") · 예상 소요시간(durationMin, 분): 둘 다 선택 항목이라 없는 일정은 그대로 동작 ----
+function normTime(v) {
+  const m = String(v == null ? '' : v).trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return '';
+  const h = +m[1], mi = +m[2];
+  return h > 23 || mi > 59 ? '' : String(h).padStart(2, '0') + ':' + m[2];
+}
+function normDuration(v) {
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) && n >= 5 && n <= 1440 ? n : 0;
+}
+function fmtTime(t) {
+  const [h, m] = t.split(':').map(Number);
+  return `${h < 12 ? '오전' : '오후'} ${h % 12 || 12}:${String(m).padStart(2, '0')}`;
+}
+function fmtDuration(min) {
+  if (!min) return '';
+  const h = Math.floor(min / 60), m = min % 60;
+  return h && m ? `${h}시간 ${m}분` : h ? `${h}시간` : `${m}분`;
+}
+function setItemTime(it, v) { const t = normTime(v); if (t) it.dueTime = t; else delete it.dueTime; }
+function setItemDuration(it, v) { const n = normDuration(v); if (n) it.durationMin = n; else delete it.durationMin; }
+const DURATION_PRESETS = [15, 30, 45, 60, 90, 120, 180, 240, 360, 480];
+function durationOptionsHtml(cur) {
+  const c = normDuration(cur), list = c && !DURATION_PRESETS.includes(c) ? [...DURATION_PRESETS, c].sort((x, y) => x - y) : DURATION_PRESETS;
+  return `<option value="0">정하지 않음</option>` + list.map(n => `<option value="${n}" ${n === c ? 'selected' : ''}>${fmtDuration(n)}</option>`).join('');
+}
+function timeChipHtml(it) {
+  const t = normTime(it.dueTime), d = normDuration(it.durationMin);
+  if (!t && !d) return '';
+  const nowT = new Date(), late = t && !it.done && it.dueDate === todayISO() && t < String(nowT.getHours()).padStart(2, '0') + ':' + String(nowT.getMinutes()).padStart(2, '0');
+  return `<span class="time-chip${late ? ' late' : ''}">${ic('clock', 'ic sm')}${[t ? fmtTime(t) : '', d ? (t ? '' : '약 ') + fmtDuration(d) : ''].filter(Boolean).join(' · ')}</span>`;
+}
+// 같은 날짜 안에서는 시각이 있는 일정을 시각 순으로 앞에, 없는 일정은 뒤에 둔다
+function cmpDue(a, b) {
+  return a.dueDate.localeCompare(b.dueDate) || (normTime(a.dueTime) || '99:99').localeCompare(normTime(b.dueTime) || '99:99') || ((PRIORITY_RANK[a.priority] ?? 1) - (PRIORITY_RANK[b.priority] ?? 1));
+}
+function cmpDay(a, b) {
+  const ta = normTime(a.dueTime), tb = normTime(b.dueTime);
+  if (ta && tb && ta !== tb) return ta < tb ? -1 : 1;
+  if (ta && !tb) return -1;
+  if (!ta && tb) return 1;
+  return (a.priority === 'high' ? 0 : 1) - (b.priority === 'high' ? 0 : 1);
+}
 function ddayHtml(it) {
   if (it.done) return '';
   const n = daysUntil(it.dueDate);
@@ -1742,7 +1795,7 @@ function renderTodayView() {
   document.getElementById('todayDate').textContent = `${now.getMonth() + 1}월 ${now.getDate()}일 ${WD[now.getDay()]}요일`;
   const t = todayISO();
   const active = items.filter(it => !it.done);
-  const byDate = (a, b) => a.dueDate.localeCompare(b.dueDate) || ((PRIORITY_RANK[a.priority] ?? 1) - (PRIORITY_RANK[b.priority] ?? 1));
+  const byDate = cmpDue;
   const groups = [
     { cls: 'overdue', title: ic('alert') + ' 지난 마감', list: active.filter(it => daysUntil(it.dueDate) < 0).sort(byDate) },
     { cls: 'today', title: ic('pin') + ' 오늘', list: active.filter(it => daysUntil(it.dueDate) === 0).sort(byDate) },
@@ -1810,7 +1863,7 @@ function renderItemRow(it, opts) {
     <div class="bar ${isOverdue ? 'high' : it.priority}"></div>
     <div class="body">
       <div class="title ${it.done ? 'done' : ''}">${escapeHtml(it.title)}${it.recurringId ? `<span class="recurring-tag">${ic('repeat')}반복</span>` : ''}</div>
-      <div class="meta">${dateLabel ? `<span>${dateLabel}</span>` : ''}${ddayHtml(it)}<span class="type-tag t-${escapeHtml(it.type || '기타')}">${escapeHtml(it.type || '기타')}</span><span>우선순위 ${priorityLabel(it.priority)}</span></div>
+      <div class="meta">${dateLabel ? `<span>${dateLabel}</span>` : ''}${ddayHtml(it)}${timeChipHtml(it)}<span class="type-tag t-${escapeHtml(it.type || '기타')}">${escapeHtml(it.type || '기타')}</span><span>우선순위 ${priorityLabel(it.priority)}</span></div>
       ${it.notes ? `<div class="notes">${escapeHtml(it.notes)}</div>` : ''}
       ${it.aiComment ? `<div class="ai-comment"><span class="icon">${ic('bulb')}</span><span>${escapeHtml(it.aiComment)}</span></div>` : ''}
       ${it.topicSuggestion ? `
@@ -1875,7 +1928,7 @@ function sortItems(arr) {
     if (listSortKey === 'priority') r = (PRIORITY_RANK[a.priority] ?? 1) - (PRIORITY_RANK[b.priority] ?? 1);
     else if (listSortKey === 'type') r = TYPE_OPTIONS.indexOf(a.type || '기타') - TYPE_OPTIONS.indexOf(b.type || '기타');
     else r = String(a[listSortKey] || '').localeCompare(String(b[listSortKey] || ''), 'ko');
-    if (r === 0) r = a.dueDate.localeCompare(b.dueDate);
+    if (r === 0) r = cmpDue(a, b);
     return r * listSortDir;
   });
 }
@@ -1955,7 +2008,7 @@ function renderTableRow(it, opts) {
     <input type="checkbox" class="check cell-done" ${it.done ? 'checked' : ''} aria-label="완료">
     <div class="cell-title-wrap">
       <input type="text" class="cell-title" value="${escapeHtml(it.title)}" aria-label="제목">
-      ${ddayHtml(it)}${it.recurringId ? `<span class="recurring-tag">${ic('repeat')}</span>` : ''}
+      ${ddayHtml(it)}${timeChipHtml(it)}${it.recurringId ? `<span class="recurring-tag">${ic('repeat')}</span>` : ''}
     </div>
     <div class="cell-meta">
       <input type="date" class="cell-date ${overdue ? 'overdue' : ''}" value="${it.dueDate}" aria-label="마감일">
@@ -2085,6 +2138,7 @@ function renderItemEditForm(it) {
       </select>
     </div>
     <input type="date" class="e-date" value="${it.dueDate}">
+    <input type="time" class="e-time" value="${normTime(it.dueTime)}" aria-label="마감 시각(선택)">
     <div class="edit-actions">
       <button class="btn-main e-save" style="margin-top:0;">저장</button>
       <button class="btn-ghost e-cancel">취소</button>
@@ -2095,6 +2149,7 @@ function renderItemEditForm(it) {
     it.type = wrap.querySelector('.e-type').value;
     it.priority = wrap.querySelector('.e-priority').value;
     it.dueDate = wrap.querySelector('.e-date').value || it.dueDate;
+    setItemTime(it, wrap.querySelector('.e-time').value);
     editingId = null;
     await saveItems();
     refreshAll();
@@ -2153,7 +2208,7 @@ function renderCalendar() {
     cell.innerHTML = `<div class="day-num">${day}</div>`;
 
     const dayItems = items.filter(it => it.dueDate === iso)
-      .sort((a,b) => (a.priority === 'high' ? -1 : 1));
+      .sort(cmpDay);
 
     if (dayItems.length) {
       const shown = dayItems.slice(0, 2);
@@ -2298,7 +2353,7 @@ function renderDetail() {
 
   const [y,m,d] = selectedDate.split('-');
   const dayItems = items.filter(it => it.dueDate === selectedDate)
-    .sort((a,b) => (a.priority === 'high' ? -1 : 1));
+    .sort(cmpDay);
 
   titleEl.innerHTML = `${y}년 ${parseInt(m)}월 ${parseInt(d)}일` +
     (dayItems.length > 1 ? `<span class="conflict-badge">이 날 ${dayItems.length}건 겹침</span>` : '');
@@ -2324,7 +2379,7 @@ function renderWeekView() {
     const [y,m,d] = iso.split('-');
     const dow = WD_LABELS[new Date(iso + 'T00:00:00').getDay()];
     const dayItems = items.filter(it => it.dueDate === iso)
-      .sort((a,b) => (a.priority === 'high' ? -1 : 1));
+      .sort(cmpDay);
 
     const dayBox = document.createElement('div');
     dayBox.className = 'week-day' + (iso === today ? ' today' : '');
@@ -2876,6 +2931,8 @@ ${existingSummary}
     "shortLabel": "달력 칸 안에 표시할 아주 짧은 요약. 2~3어절 이내(예: '화학 보고서', '치과 예약', 'ALD 논문 초안'). title보다 훨씬 짧아야 하고, 칸이 좁으니 정말 핵심만 남겨.",
     "type": "보고서 | 발표자료 | 논문 | 과제 | 약속 | 개인 | 기타 중 하나 (학업 관련 아니면 약속 또는 개인 사용)",
     "dueDate": "YYYY-MM-DD 형식, 날짜를 알 수 없으면 null",
+    "dueTime": "HH:MM 24시간 형식(예: 15:30). 텍스트/이미지에 마감·약속 시각이 분명히 적혀 있을 때만, 없거나 불확실하면 null",
+    "durationMin": "예상 소요시간(분 단위 정수). 텍스트/이미지에 걸리는 시간·진행 시간이 분명히 적혀 있을 때만, 없으면 null",
     "priority": "high | medium | low",
     "notes": "간단한 메모, 없으면 빈 문자열",
     "aiComment": "정말 도움이 될 때만 작성하는 짧은 조언 (한 문장). 예: 마감이 촉박함, 기존 다른 일정과 같은 주에 몰려 있어 일정 조율이 필요함, 준비 기간이 필요한 성격의 작업이라 미리 시작하는 게 좋음 등. 딱히 코멘트할 게 없으면 빈 문자열로 둬. 억지로 만들어내지 마.",
@@ -2949,7 +3006,9 @@ document.getElementById('parseBtn').addEventListener('click', async () => {
         aiComment: p.aiComment || '',
         topicSuggestion: p.topicSuggestion || '',
         topicKeyword: p.topicSuggestion ? effectiveKeywordString : '',
-        done: false
+        done: false,
+        ...(normTime(p.dueTime) ? { dueTime: normTime(p.dueTime) } : {}),
+        ...(normDuration(p.durationMin) ? { durationMin: normDuration(p.durationMin) } : {})
       }));
 
     items = items.concat(newItems);
@@ -3369,7 +3428,7 @@ function renderBoard() {
   const today = todayISO();
 
   boardColumns().forEach(col => {
-    const colItems = items.filter(col.match).sort((a, b) => (a.done - b.done) || a.dueDate.localeCompare(b.dueDate));
+    const colItems = items.filter(col.match).sort((a, b) => (a.done - b.done) || cmpDue(a, b));
     const colEl = document.createElement('div');
     colEl.className = 'board-col';
     const head = document.createElement('div');
@@ -3397,7 +3456,7 @@ function renderBoard() {
       card.innerHTML = `
         <div class="bc-title">${escapeHtml(it.title)}</div>
         <div class="bc-meta">
-          <span class="bc-date ${overdue ? 'overdue' : ''}">${overdue ? ic('alert', 'ic sm') + ' ' : ''}${formatShortDate(it.dueDate)}</span>${ddayHtml(it)}
+          <span class="bc-date ${overdue ? 'overdue' : ''}">${overdue ? ic('alert', 'ic sm') + ' ' : ''}${formatShortDate(it.dueDate)}</span>${ddayHtml(it)}${timeChipHtml(it)}
           ${boardGroup === 'status' ? `<span class="type-tag t-${escapeHtml(it.type || '기타')}">${escapeHtml(it.type || '기타')}</span>` : ''}
           ${it.priority === 'high' ? '<span class="bc-pri">높음</span>' : ''}
           ${it.recurringId ? `<span>${ic('repeat', 'ic sm')}</span>` : ''}
@@ -3451,6 +3510,8 @@ function renderPeek() {
   body.innerHTML = `
     <input type="text" class="peek-title" value="${escapeHtml(it.title)}" aria-label="제목">
     <div class="peek-row"><span class="peek-key">마감일</span><input type="date" class="peek-date" value="${it.dueDate}"></div>
+    <div class="peek-row"><span class="peek-key">마감 시각</span><span class="peek-time-wrap"><input type="time" class="peek-time" value="${normTime(it.dueTime)}" aria-label="마감 시각(선택)">${it.dueTime ? '<button type="button" class="peek-time-clear" aria-label="시각 지우기">지우기</button>' : ''}</span></div>
+    <div class="peek-row"><span class="peek-key">예상 소요</span><select class="peek-dur" aria-label="예상 소요시간(선택)">${durationOptionsHtml(it.durationMin)}</select></div>
     <div class="peek-row"><span class="peek-key">유형</span>
       <select class="cell-type peek-type t-${escapeHtml(type)}">${TYPE_OPTIONS.map(t => `<option value="${t}" ${type === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
     <div class="peek-row"><span class="peek-key">우선순위</span>
@@ -3478,6 +3539,24 @@ function renderPeek() {
   q('.peek-date').addEventListener('change', async (e) => {
     if (!e.target.value) { e.target.value = it.dueDate; return; }
     it.dueDate = e.target.value;
+    await saveItems();
+    refreshAll();
+  });
+  q('.peek-time').addEventListener('change', async (e) => {
+    setItemTime(it, e.target.value);
+    await saveItems();
+    refreshAll();
+    if (peekId === it.id) renderPeek();          // 지우기 버튼이 나타나거나 사라짐
+  });
+  const timeClear = q('.peek-time-clear');
+  if (timeClear) timeClear.addEventListener('click', async () => {
+    setItemTime(it, '');
+    await saveItems();
+    refreshAll();
+    if (peekId === it.id) renderPeek();
+  });
+  q('.peek-dur').addEventListener('change', async (e) => {
+    setItemDuration(it, e.target.value);
     await saveItems();
     refreshAll();
   });
@@ -3549,7 +3628,7 @@ function paletteEntries(query) {
   const found = q
     ? items.filter(it => (it.title || '').toLowerCase().includes(q) || (it.notes || '').toLowerCase().includes(q))
         .sort((a, b) => a.dueDate.localeCompare(b.dueDate)).slice(0, 8)
-        .map(it => ({ icon: 'doc', label: it.title, hint: `${formatShortDate(it.dueDate)} · ${it.type || '기타'}`, group: '일정', run: () => openPeek(it.id) }))
+        .map(it => ({ icon: 'doc', label: it.title, hint: `${formatShortDate(it.dueDate)}${normTime(it.dueTime) ? ' ' + fmtTime(normTime(it.dueTime)) : ''} · ${it.type || '기타'}`, group: '일정', run: () => openPeek(it.id) }))
     : [];
   return [...found, ...cmds];
 }
@@ -4093,6 +4172,26 @@ function waitCloudSignedIn(ms) {
   });
 }
 // 주소로 일정 추가: ...deadline-planner.html?add=제목&due=...  (아이폰 단축어·Siri, 다른 앱의 링크용)
+// 주소의 time= 값: 15:30 · 1530 · 15시 · 15시30분 · 오후 3시 · 3pm 을 읽고, 못 읽으면 빈 값(시각 없음)
+function parseTimeParam(v) {
+  let s = String(v == null ? '' : v).trim().toLowerCase();
+  if (!s) return '';
+  const pm = /오후|pm|p\.m/.test(s), am = /오전|am|a\.m/.test(s);
+  s = s.replace(/오전|오후|a\.m\.?|p\.m\.?|am|pm/g, '').trim();
+  let m = s.match(/^(\d{1,2})\s*(?:[:시]\s*(\d{1,2})?\s*분?)?$/) || s.match(/^(\d{1,2})(\d{2})$/);
+  if (!m) return '';
+  let h = +m[1]; const mi = m[2] == null ? 0 : +m[2];
+  if (pm && h < 12) h += 12;
+  if (am && h === 12) h = 0;
+  return normTime(`${h}:${String(mi).padStart(2, '0')}`);
+}
+// 주소의 min= 값: 90 · 30분 · 2시간 · 1.5h
+function parseDurationParam(v) {
+  const s = String(v == null ? '' : v).trim().toLowerCase();
+  const m = s.match(/^(\d+(?:\.\d+)?)\s*(h|시간|분|m|min)?$/);
+  if (!m) return 0;
+  return normDuration(/^(h|시간)$/.test(m[2] || '') ? Number(m[1]) * 60 : Number(m[1]));
+}
 async function handleUrlAdd() {
   let q; try { q = new URLSearchParams(location.search); } catch (e) { return; }
   if (!q.has('add')) return;
@@ -4103,11 +4202,14 @@ async function handleUrlAdd() {
   const { date, guessed } = quickDateFromParam(dueParam);
   const pri = { high: 'high', '높음': 'high', medium: 'medium', '보통': 'medium', low: 'low', '낮음': 'low' }[priParam] || 'medium';
   const item = { id: uid(), title, shortLabel: '', type: TYPE_OPTIONS.includes(typeParam) ? typeParam : '기타', dueDate: date, priority: pri, notes, aiComment: '', topicSuggestion: '', topicKeyword: '', done: false };
+  const timeOk = parseTimeParam(q.get('time')), durOk = parseDurationParam(q.get('min'));
+  if (timeOk) item.dueTime = timeOk;
+  if (durOk) item.durationMin = durOk;
   items.push(item);
   await saveItems();
   refreshAll();
   const shown = title.length > 24 ? title.slice(0, 24) + '…' : title;
-  showToast(`"${shown}" 추가했어 · ${formatShortDate(date)}${guessed ? ' (날짜를 못 읽어서 오늘로)' : ''}`, '되돌리기', async () => {
+  showToast(`"${shown}" 추가했어 · ${formatShortDate(date)}${timeOk ? ' ' + fmtTime(timeOk) : ''}${guessed ? ' (날짜를 못 읽어서 오늘로)' : ''}`, '되돌리기', async () => {
     items = items.filter(x => x.id !== item.id); await saveItems(); refreshAll();
   }, 6000);
   waitCloudSignedIn(6000).then((ok) => { if (!ok) showToast('이 브라우저는 로그인 전이라 이 기기에만 저장돼. 설정에서 로그인하면 다른 기기에도 보여', null, null, 9000); });   // 되돌리기 알림(6초)이 끝난 뒤에 표시
@@ -4117,7 +4219,7 @@ async function handleUrlAdd() {
 function traySummary() {
   const t = todayISO();
   const active = items.filter(x => !x.done);
-  const byDate = (a, b) => a.dueDate.localeCompare(b.dueDate) || ((PRIORITY_RANK[a.priority] ?? 1) - (PRIORITY_RANK[b.priority] ?? 1));
+  const byDate = cmpDue;
   const overdue = active.filter(x => daysUntil(x.dueDate) < 0).sort(byDate);
   const today = active.filter(x => daysUntil(x.dueDate) === 0).sort(byDate);
   const tomorrow = active.filter(x => daysUntil(x.dueDate) === 1).sort(byDate);
@@ -4269,16 +4371,17 @@ function renderSplitReview(it, steps, tok) {
 async function planWeekWithAI() {
   const today = todayISO(), days = [...Array(7)].map((_, i) => isoAddDays(today, i)), horizon = isoAddDays(today, 13);
   const tok = openPlanModal('이번 주 계획', `${formatShortDate(days[0])}(${weekdayKo(days[0])}) ~ ${formatShortDate(days[6])}(${weekdayKo(days[6])}) · 오늘부터 7일`);
-  const byDate = (a, b) => a.dueDate.localeCompare(b.dueDate) || ((PRIORITY_RANK[a.priority] ?? 1) - (PRIORITY_RANK[b.priority] ?? 1));
+  const byDate = cmpDue;
   const pool = items.filter(x => !x.done && x.dueDate <= horizon).sort(byDate).slice(0, 40);
   if (!pool.length) { planEl('planBody').innerHTML = '<div class="plan-sub">앞으로 2주 안에 마감인 일정이 없어. 여유로운 한 주야.</div>'; addPlanButton('닫기', 'btn-ghost', closePlanModal); return; }
   await runWeekPlan(pool, days, tok);
 }
 async function runWeekPlan(pool, days, tok) {
   planLoading('AI가 일주일을 짜는 중…');
+  planEl('planCaption').textContent = pool.some(x => normTime(x.dueTime) || normDuration(x.durationMin)) ? '일정의 제목·유형·마감일·시각·예상 소요시간이 AI에 전달돼. 메모와 키는 보내지 않아.' : PLAN_CAPTION_DEFAULT;
   const today = days[0];
   const dtext = (d) => { const n = daysUntil(d); return n < 0 ? `지난 마감 D+${-n}` : n === 0 ? '오늘 마감' : `D-${n}`; };
-  const list = pool.map((x, i) => `${i + 1}. ${x.title} | ${x.type || '기타'} | 마감 ${x.dueDate}(${weekdayKo(x.dueDate)}, ${dtext(x.dueDate)}) | 우선순위 ${priorityLabel(x.priority)}`).join('\n');
+  const list = pool.map((x, i) => `${i + 1}. ${x.title} | ${x.type || '기타'} | 마감 ${x.dueDate}(${weekdayKo(x.dueDate)}, ${dtext(x.dueDate)}) | 우선순위 ${priorityLabel(x.priority)}${normTime(x.dueTime) ? ' | 마감 시각 ' + normTime(x.dueTime) : ''}${normDuration(x.durationMin) ? ' | 예상 소요 ' + fmtDuration(normDuration(x.durationMin)) : ''}`).join('\n');
   const system = `너는 학업·업무 일정을 현실적으로 배분해주는 도우미야. 아래 일정 목록을 보고, 오늘부터 7일 동안 하루하루 무엇에 집중할지 계획을 짜줘.
 
 오늘: ${today} (${weekdayKo(today)})
@@ -4291,6 +4394,7 @@ ${list}
 - 반드시 위 목록의 번호(ref)만 써. 목록에 없는 일정을 만들지 마.
 - 일정은 그 마감일이 지나기 전 날짜에만 배정해. 이미 지난 마감은 오늘 먼저 배정해.
 - 하루에 최대 3건. 큰 일은 마감 전 여러 날에 나눠 배정해도 되고(같은 ref를 다른 날 또 써도 됨), 마감이 아주 급한 것과 우선순위 높음을 앞쪽 날짜에 둬.
+- 예상 소요가 적힌 일정은 그 시간을 고려해서, 하루 총합이 6시간을 넘지 않게 나눠 배정해(소요가 없는 일정은 신경 쓰지 마). 큰 일이라면 마감 전 여러 날에 나눠도 돼.
 - 마감이 특정 날에 몰려 있거나 무리한 배분이면 warnings에 짧게 알려줘.
 - JSON 객체만 반환해. 다른 설명, 마크다운, 코드 블록 없이. 형식: {"summary":"두 문장 이내 요약","days":[{"date":"YYYY-MM-DD","tasks":[{"ref":1,"why":"짧은 이유"}]}],"warnings":["..."]}`;
   try {
