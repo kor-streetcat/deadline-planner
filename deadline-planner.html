@@ -392,10 +392,6 @@
   .briefing-text { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); color: var(--ink); font-size: 0.88rem; line-height: 1.55; }
 
   /* ===== 뷰 탭 + 달력 헤더 ===== */
-  .view-tabs { display: flex; gap: 2px; margin: 24px 0 0; border-bottom: 1px solid var(--border); overflow-x: auto; }
-  .view-tab { display: inline-flex; align-items: center; gap: 6px; background: none; color: var(--ink-dim); border-radius: 0; padding: 8px 12px; font-weight: 500; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
-  .view-tab:hover { background: var(--hover); border-radius: var(--radius) var(--radius) 0 0; }
-  .view-tab.active { color: var(--ink); border-bottom-color: var(--ink); font-weight: 600; }
   .cal-head { display: flex; align-items: center; justify-content: space-between; margin: 16px 0 12px; flex-wrap: wrap; gap: 8px; }
   .cal-head .label { font-size: 1.05rem; font-weight: 600; }
   .cal-nav { display: flex; gap: 4px; }
@@ -739,10 +735,8 @@
   .toast.show { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
   .toast button { background: transparent; color: var(--toast-action); font-weight: 700; padding: 2px 4px; white-space: nowrap; }
   @media (max-width: 480px) {
-    .view-tab { padding: 8px 8px; font-size: 0.8rem; }
     .toast { bottom: calc(84px + env(safe-area-inset-bottom)); }   /* 오른쪽 아래 AI 버튼과 안 겹치게 위로 */
   }
-  @media (max-width: 900px) { .view-tabs { display: none; } }   /* 폰·태블릿 세로에서는 상단 바의 알약 버튼이 같은 역할 */
 
   /* ===== 앱처럼 느껴지게: 더블탭 확대와, 길게 눌러 글자 선택·복사 메뉴가 뜨는 것을 끔 ===== */
   /* manipulation: 이동·핀치 확대는 그대로 두고 "두 번 눌러 확대"만 막음. 빠르게 두 번 누르는 클릭은 그대로 두 번 인식됨. */
@@ -912,14 +906,6 @@
           <div class="status" id="rStatus"></div>
         </div>
       </div>
-    </div>
-
-    <div class="view-tabs">
-      <button class="view-tab" data-view="today"><svg class="ic sm" aria-hidden="true"><use href="#i-home"/></svg>오늘</button>
-      <button class="view-tab" data-view="month"><svg class="ic sm" aria-hidden="true"><use href="#i-month"/></svg>달력</button>
-      <button class="view-tab" data-view="week"><svg class="ic sm" aria-hidden="true"><use href="#i-week"/></svg>이번 주</button>
-      <button class="view-tab" data-view="list"><svg class="ic sm" aria-hidden="true"><use href="#i-list"/></svg>전체 표</button>
-      <button class="view-tab" data-view="board"><svg class="ic sm" aria-hidden="true"><use href="#i-board"/></svg>보드</button>
     </div>
 
     <div class="cal-head" id="calHead">
@@ -1155,7 +1141,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v24';
+const APP_VERSION = 'v25';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -3067,7 +3053,7 @@ function closeSidebar() {
     // 브라우저가 화면 가장자리 터치를 근처 입력칸으로 자동 보정하기 때문에, 입력칸이 있는 줄에서도 가장자리 스와이프가 되게 함.
     if (e.target.closest && e.target.closest('input, textarea, select') && t.clientX > 30) return;
     if (e.target.closest && e.target.closest('.chat-panel')) return;
-    const tabs = e.target.closest && e.target.closest('.view-tabs, .tb-nav');
+    const tabs = e.target.closest && e.target.closest('.tb-nav');
     if (tabs && tabs.scrollWidth > tabs.clientWidth + 1) return;          // 가로로 스크롤되는 탭 줄은 스크롤이 우선
     const open = sidebar.classList.contains('open');
     if (!open && t.clientX > window.innerWidth * OPEN_ZONE) return;          // 메뉴 열기는 화면 왼쪽 절반에서 시작한 스와이프만 (사용자 요청)
