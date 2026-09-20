@@ -366,14 +366,14 @@
   textarea:focus, input:focus, select:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
 
   /* ===== 빠른 입력 + 새 일정 카드 ===== */
-  .quick-wrap {
+  .quick-bar {
     border: 1px solid var(--border);
     border-radius: 16px;
     box-shadow: 0 1px 2px rgba(15,15,15,0.04);
     background: var(--bg);
     transition: border-color 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out);
   }
-  .quick-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .quick-bar:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
   .quick-bar { display: flex; align-items: flex-start; gap: 8px; padding: 6px 6px 6px 12px; }
   .quick-bar .qicon { color: var(--accent); display: inline-flex; margin-top: 8px; }
   .quick-bar textarea { flex: 1; min-width: 0; border: none; outline: none !important; box-shadow: none !important; background: transparent; font-size: 0.92rem; line-height: 1.5; padding: 6px 0; resize: none; overflow-y: auto; max-height: 168px; min-height: 0; margin: 0; }
@@ -385,13 +385,12 @@
   .quick-bar .qmore:hover { background: var(--hover); }
   .quick-bar .qmore.active { color: var(--accent); background: var(--accent-soft); }
 
-  /* 옵션 칸: 위 입력창 카드에서 아래로 펼쳐지는 한 덩어리 (따로 뜨는 카드가 아님) */
+  /* 옵션 칸: 입력창과 구분된 별도 카드. 옵션 버튼을 누르면 입력창 아래로 펼쳐진다 */
   .quick-opts { display: grid; grid-template-rows: 0fr; visibility: hidden; transition: grid-template-rows 0.42s var(--ease-out), visibility 0s 0.42s; }
   .quick-opts.open { grid-template-rows: 1fr; visibility: visible; transition: grid-template-rows 0.42s var(--ease-out), visibility 0s; }
-  .quick-opts-inner { overflow: hidden; min-height: 0; margin: 0 12px; opacity: 0; transform: translateY(-4px); transition: opacity 0.3s var(--ease-out), transform 0.42s var(--ease-out); }
+  .quick-opts-clip { overflow: hidden; min-height: 0; }
+  .quick-opts-inner { margin-top: 10px; padding: 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--sidebar); opacity: 0; transform: translateY(-6px); transition: opacity 0.3s var(--ease-out), transform 0.42s var(--ease-out); }
   .quick-opts.open .quick-opts-inner { opacity: 1; transform: none; transition-delay: 0.05s; }
-  .quick-opts-inner::before { content: ""; display: block; height: 1px; background: var(--border); margin-bottom: 10px; }
-  .quick-opts-inner > :last-child { margin-bottom: 14px; }
   .quick-opts-inner .panel-role { margin: 0 0 4px; line-height: 1.5; }
   .panel-role { font-size: 0.78rem; color: var(--ink-dim); margin: 0 0 12px; }
   .filebox { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 0.78rem; color: var(--ink-dim); }
@@ -952,7 +951,7 @@
       <button class="qmore" id="quickMoreBtn" title="이미지·키워드·반복 일정 옵션" aria-expanded="false" aria-controls="newCard">옵션</button>
       <button class="qbtn" id="parseBtn">AI 정리</button>
     </div>
-    <div class="quick-opts" id="newCard"><div class="quick-opts-inner">
+    <div class="quick-opts" id="newCard"><div class="quick-opts-clip"><div class="quick-opts-inner">
       <p class="panel-role">여러 건은 쉼표로 이어 적거나(컴퓨터는 Shift+Enter로 줄바꿈) 한꺼번에 적을 수 있어. 아래 스크린샷과 주제 방향은 위 입력과 함께 AI 정리에 쓰여.</p>
       <div class="filebox">
         일정 스크린샷 (선택)
@@ -1002,7 +1001,7 @@
           <div class="status" id="rStatus"></div>
         </div>
       </div>
-    </div></div>
+    </div></div></div>
     </div>
     <div class="status" id="status"></div>
 
@@ -1274,7 +1273,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v35';
+const APP_VERSION = 'v36';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
