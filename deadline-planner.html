@@ -713,6 +713,28 @@
   .peek-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
   .peek-body .tbl-extras { padding: 14px 0 0; }
   .peek-actions { margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .peek-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .peek-split { display: inline-flex; align-items: center; gap: 5px; background: var(--accent-soft); border: 1px solid transparent; color: var(--accent); }
+  .peek-split:hover { background: var(--accent); color: #fff; }
+  .plan-modal { width: min(620px, 100%); }
+  .plan-sub { font-size: 0.82rem; color: var(--ink-dim); margin: -2px 0 10px; line-height: 1.5; }
+  .plan-caption { font-size: 0.7rem; color: var(--ink-faint); margin-top: 12px; }
+  .plan-loading { padding: 30px 8px; text-align: center; color: var(--ink-dim); font-size: 0.88rem; animation: planPulse 1.4s ease-in-out infinite; }
+  @keyframes planPulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+  .plan-error { padding: 14px 12px; border-radius: 12px; background: var(--danger-soft); color: var(--danger); font-size: 0.85rem; line-height: 1.5; }
+  .plan-step { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .plan-step input[type=text], .plan-step input[type=date] { margin: 0; font-size: 0.85rem; padding: 6px 8px; }
+  .plan-step .plan-note { grid-column: 2 / 4; font-size: 0.74rem; color: var(--ink-faint); line-height: 1.45; }
+  .plan-step .plan-warn { color: var(--danger); font-weight: 600; }
+  .plan-summary { font-size: 0.9rem; line-height: 1.6; margin: 0 0 4px; }
+  .plan-day { margin-top: 14px; }
+  .plan-day h4 { font-size: 0.84rem; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+  .plan-day h4 .plan-today { font-size: 0.68rem; font-weight: 600; color: var(--accent); background: var(--accent-soft); padding: 1px 8px; border-radius: 999px; }
+  .plan-task { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; padding: 7px 8px; margin: 0 -8px; border-radius: 10px; cursor: pointer; transition: background-color 0.22s var(--ease-out); }
+  .plan-task:hover { background: var(--hover); }
+  .plan-task .why { flex-basis: 100%; color: var(--ink-dim); font-size: 0.78rem; line-height: 1.45; }
+  .plan-warnings { margin-top: 14px; padding: 10px 12px; border-radius: 12px; background: var(--danger-soft); color: var(--danger); font-size: 0.8rem; line-height: 1.6; }
+  .plan-unsched { margin-top: 14px; font-size: 0.8rem; color: var(--ink-dim); }
   .peek-del { background: transparent; border: 1px solid var(--border); color: var(--danger); }
   .peek-del:hover { background: var(--danger-soft); }
   .item .title { cursor: pointer; }
@@ -1011,6 +1033,7 @@
           <div class="today-date" id="todayDate"></div>
           <div class="today-progress-text" id="todayProgressText"></div>
         </div>
+        <button class="briefing-btn" id="weekPlanBtn" title="오늘부터 7일 동안 무엇을 언제 할지 AI가 짜줘"><svg class="ic sm" aria-hidden="true"><use href="#i-sparkle"/></svg><span>이번 주 계획</span></button>
       </div>
       <div class="today-progress"><div class="today-progress-bar" id="todayProgressBar"></div></div>
       <div id="todaySections"></div>
@@ -1145,6 +1168,17 @@
   </div>
 </div>
 
+<div id="planOverlay" class="ai-modal-overlay">
+  <div class="ai-modal plan-modal" role="dialog" aria-modal="true" aria-labelledby="planTitle">
+    <h3 id="planTitle"></h3>
+    <div class="plan-sub" id="planSub"></div>
+    <div id="planBody"></div>
+    <div class="status" id="planStatus"></div>
+    <div class="ai-modal-actions" id="planActions"></div>
+    <div class="plan-caption">일정의 제목·유형·마감일이 AI에 전달돼. 메모와 키는 보내지 않아.</div>
+  </div>
+</div>
+
 <div id="aiModalOverlay" class="ai-modal-overlay">
   <div class="ai-modal">
     <h3 id="aiModalTitle">AI에게 물어보기</h3>
@@ -1220,7 +1254,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v29';
+const APP_VERSION = 'v30';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -3115,7 +3149,7 @@ function closeSidebar() {
   const mq = window.matchMedia('(max-width: 900px)');
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
   const otherLayerOpen = () => ['peekPanel', 'drawerPanel'].some(id => document.getElementById(id).classList.contains('open'))
-    || ['cmdOverlay', 'aiModalOverlay'].some(id => document.getElementById(id).classList.contains('open'));
+    || ['cmdOverlay', 'aiModalOverlay', 'planOverlay'].some(id => document.getElementById(id).classList.contains('open'));
   const OPEN_ZONE = 0.5;                       // 열기 스와이프를 받는 영역: 화면 폭의 왼쪽 절반
   let g = null;
 
@@ -3388,7 +3422,7 @@ function renderPeek() {
   body.appendChild(buildItemExtras(it));
   const actions = document.createElement('div');
   actions.className = 'peek-actions';
-  actions.innerHTML = '<button class="peek-del" id="peekDelBtn">휴지통으로 이동</button>';
+  actions.innerHTML = (it.done ? '' : '<button class="peek-split" id="peekSplitBtn">' + ic('sparkle', 'ic sm') + ' AI로 쪼개기</button>') + '<button class="peek-del" id="peekDelBtn">휴지통으로 이동</button>';
   body.appendChild(actions);
 
   const q = (sel) => body.querySelector(sel);
@@ -3422,6 +3456,8 @@ function renderPeek() {
     await saveItems();
     refreshAll();
   });
+  const splitBtn = q('#peekSplitBtn');
+  if (splitBtn) splitBtn.addEventListener('click', () => splitItemWithAI(it));
   q('#peekDelBtn').addEventListener('click', async () => {
     const moved = await deleteItemWithGroupCheck(it);
     closePeek();
@@ -3456,6 +3492,7 @@ function paletteEntries(query) {
   const q = query.trim().toLowerCase();
   const cmds = [
     { icon: 'panel-left', label: '사이드바 접기 · 펴기 (⌘\\)', run: toggleSidebarCollapsed },
+    { icon: 'sparkle', label: 'AI 이번 주 계획', run: () => { setViewMode('today'); planWeekWithAI(); } },
     { icon: 'month', label: '달력 보기', run: () => setViewMode('month', true) },
     { icon: 'week', label: '이번 주 보기', run: () => setViewMode('week', true) },
     { icon: 'list', label: '전체 표 보기', run: () => setViewMode('list', true) },
@@ -3548,7 +3585,8 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   if (e.key !== 'Escape') return;
-  if (document.getElementById('cmdOverlay').classList.contains('open')) closePalette();
+  if (document.getElementById('planOverlay').classList.contains('open')) closePlanModal();
+  else if (document.getElementById('cmdOverlay').classList.contains('open')) closePalette();
   else if (peekId) closePeek();
   else if (document.getElementById('drawerPanel').classList.contains('open')) closeDrawer();
   else if (document.getElementById('chatPanel').classList.contains('open')) toggleChat(false);
@@ -4044,6 +4082,232 @@ function traySummary() {
   const list = [...overdue, ...today, ...tomorrow, ...soon].slice(0, 8).map(x => ({ id: x.id, title: String(x.title || '').slice(0, 40), dueDate: x.dueDate, dday: daysUntil(x.dueDate), high: x.priority === 'high' }));
   return { overdue: overdue.length, today: today.length, tomorrow: tomorrow.length, urgent: overdue.length + today.length, list };
 }
+
+// ---- AI로 큰 마감 쪼개기 · 이번 주 계획 ----
+// 둘 다 runAI를 거친다(키가 있으면 바로 호출, 없으면 복사·붙여넣기 창). 결과는 바로 반영하지 않고 확인 창에서 사용자가 고른 뒤에 반영한다.
+const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'];
+const isoAddDays = (iso, n) => { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const weekdayKo = (iso) => WEEKDAY_KO[new Date(iso + 'T12:00:00').getDay()];
+function isValidISO(v) {
+  if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+  const [y, m, d] = v.split('-').map(Number), dt = new Date(y, m - 1, d);
+  return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
+}
+const cleanText = (v, n) => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, n);
+function extractJsonObject(raw) {
+  const cleaned = String(raw).replace(/```json|```/g, '').trim();
+  try { const v = JSON.parse(cleaned); if (v && typeof v === 'object' && !Array.isArray(v)) return v; } catch (e) {}
+  const a = cleaned.indexOf('{'), b = cleaned.lastIndexOf('}');
+  if (a >= 0 && b > a) { try { return JSON.parse(cleaned.slice(a, b + 1)); } catch (e) {} }
+  return null;
+}
+
+let planToken = 0;                       // 창을 닫거나 다시 열면 값이 바뀌어서, 늦게 도착한 AI 답이 엉뚱하게 그려지는 것을 막음
+const planEl = (id) => document.getElementById(id);
+function openPlanModal(title, sub) {
+  planToken++;
+  planEl('planTitle').textContent = title; planEl('planSub').textContent = sub || '';
+  planEl('planBody').innerHTML = ''; planEl('planStatus').textContent = ''; planEl('planStatus').className = 'status'; planEl('planActions').innerHTML = '';
+  planEl('planOverlay').classList.add('open');
+  return planToken;
+}
+function closePlanModal() { planToken++; planEl('planOverlay').classList.remove('open'); }
+planEl('planOverlay').addEventListener('click', (e) => { if (e.target.id === 'planOverlay') closePlanModal(); });
+function planLoading(text) { planEl('planBody').innerHTML = `<div class="plan-loading">${escapeHtml(text)}</div>`; planEl('planActions').innerHTML = ''; addPlanButton('취소', 'btn-ghost', closePlanModal); }
+function addPlanButton(label, cls, onClick) {
+  const b = document.createElement('button'); b.className = cls; b.textContent = label; b.addEventListener('click', onClick);
+  planEl('planActions').appendChild(b); return b;
+}
+function showPlanError(msg, retry) {
+  planEl('planBody').innerHTML = `<div class="plan-error">${escapeHtml(msg)}</div>`; planEl('planActions').innerHTML = '';
+  if (retry) addPlanButton('다시 시도', 'btn-main', retry);
+  addPlanButton('닫기', 'btn-ghost', closePlanModal);
+}
+
+// (1) 큰 마감 쪼개기: 오늘~마감일 사이의 중간 단계를 제안 → 확인 창에서 고르고 고쳐서 별도 일정으로 추가(원래 일정은 그대로)
+async function splitItemWithAI(it) {
+  if (it.done) return;
+  const left = daysUntil(it.dueDate);
+  if (left < 2) { showToast(left < 0 ? '이미 지난 마감이라 나눌 수 없어. 마감일을 먼저 고쳐줘' : '마감이 하루 이내라서 더 쪼갤 시간이 없어'); return; }
+  const tok = openPlanModal('AI로 쪼개기', `"${it.title}" · 마감 ${formatShortDate(it.dueDate)} (D-${left})`);
+  await runSplit(it, tok);
+}
+function sanitizeSplitSteps(raw, parent) {
+  let arr = null;
+  try { const v = extractJsonArray(raw); if (Array.isArray(v)) arr = v; } catch (e) {}
+  if (!arr) { const o = extractJsonObject(raw); if (o && Array.isArray(o.steps)) arr = o.steps; }
+  if (!Array.isArray(arr)) throw new Error('AI 답을 읽지 못했어');
+  const today = todayISO(), due = parent.dueDate, seen = new Set(), out = [];
+  const norm = (x) => String(x || '').replace(/\s+/g, '').toLowerCase();
+  for (const s of arr) {
+    if (!s || typeof s !== 'object') continue;
+    const title = cleanText(s.title, 60);
+    if (!title || !isValidISO(s.dueDate)) continue;
+    const date = s.dueDate < today ? today : s.dueDate > due ? due : s.dueDate;      // 범위 밖 날짜는 가장 가까운 날로
+    if (date === due && (norm(title).includes(norm(parent.title)) || norm(parent.title).includes(norm(title)))) continue;   // 원래 일정과 같은 마지막 단계는 원래 일정이 그 역할
+    const key = norm(title) + '|' + date;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ title, date, note: cleanText(s.note, 120) });
+  }
+  out.sort((a, b) => a.date.localeCompare(b.date));
+  return out.slice(0, 8);
+}
+async function runSplit(it, tok) {
+  planLoading('AI가 단계를 나누는 중…');
+  const today = todayISO(), left = daysUntil(it.dueDate);
+  const busy = {};                        // 같은 기간의 다른 일정이 몰린 날: 제목 없이 개수만 AI에 알려줌
+  items.forEach(x => { if (x.id !== it.id && !x.done && x.dueDate >= today && x.dueDate <= it.dueDate) busy[x.dueDate] = (busy[x.dueDate] || 0) + 1; });
+  const busyText = Object.keys(busy).sort().map(d => `${d}(${weekdayKo(d)}) ${busy[d]}건`).join(', ') || '없음';
+  const system = `너는 학업·업무 마감을 실행 가능한 단계로 나눠주는 도우미야. 큰 마감 하나를 받으면 오늘부터 마감일 사이에 끝내야 할 중간 단계를 제안해.
+
+오늘: ${today} (${weekdayKo(today)})
+마감 대상: ${it.title}
+유형: ${it.type || '기타'}
+마감일: ${it.dueDate} (${weekdayKo(it.dueDate)}), 오늘부터 ${left}일 남음
+이미 다른 일정이 있는 날: ${busyText}
+
+규칙:
+- 단계는 ${left <= 3 ? '2~3개' : '3~6개'}. 각 단계는 "무엇을 한다"가 보이는 짧은 행동으로 써(예: "선행 연구 5편 읽기").
+- dueDate는 ${today} 이상 ${it.dueDate} 이하의 YYYY-MM-DD. 날짜순으로 정렬하고, 다른 일정이 3건 이상 있는 날은 되도록 피해.
+- 마지막 단계는 마감 전날이나 당일의 최종 점검·제출 준비로 해도 돼.
+- JSON 배열만 반환해. 다른 설명, 마크다운, 코드 블록 없이. 형식: [{"title":"...","dueDate":"YYYY-MM-DD","note":"한 줄 설명(선택)"}]`;
+  try {
+    const raw = await runAI({ system, text: '이 마감을 단계로 나눠줘.', maxTokens: 1200, title: '마감 쪼개기' });
+    if (tok !== planToken) return;
+    const steps = sanitizeSplitSteps(raw, it);
+    if (!steps.length) throw new Error('AI가 쓸 수 있는 단계를 주지 못했어');
+    renderSplitReview(it, steps, tok);
+  } catch (err) {
+    if (tok !== planToken) return;
+    if (err.message === '취소함') { closePlanModal(); return; }
+    console.error(err);
+    showPlanError('단계를 만들지 못했어: ' + err.message, () => runSplit(it, tok));
+  }
+}
+function renderSplitReview(it, steps, tok) {
+  const today = todayISO(), body = planEl('planBody');
+  planEl('planActions').innerHTML = '';          // 로딩 중에 있던 취소 버튼을 비우고 다시 만든다(안 비우면 취소가 두 개 됨)
+  body.innerHTML = '<div class="plan-sub">추가할 단계를 고르고 제목·날짜를 고쳐줘. 원래 일정은 그대로 남아.</div>';
+  const rows = steps.map((s) => {
+    const row = document.createElement('div'); row.className = 'plan-step';
+    row.innerHTML = `<input type="checkbox" class="ps-chk" checked aria-label="추가"><input type="text" class="ps-title" maxlength="60" value="${escapeHtml(s.title)}" aria-label="단계 제목"><input type="date" class="ps-date" min="${today}" max="${it.dueDate}" value="${s.date}" aria-label="단계 날짜"><div class="plan-note"><span class="ps-note">${escapeHtml(s.note)}</span> <span class="plan-warn"></span></div>`;
+    body.appendChild(row); return row;
+  });
+  const others = {}; items.forEach(x => { if (x.id !== it.id && !x.done) others[x.dueDate] = (others[x.dueDate] || 0) + 1; });
+  const addBtn = addPlanButton('추가', 'btn-main', () => {});
+  const read = () => rows.filter(r => r.querySelector('.ps-chk').checked).map(r => ({ title: cleanText(r.querySelector('.ps-title').value, 60), date: r.querySelector('.ps-date').value, note: r.querySelector('.ps-note').textContent })).filter(x => x.title && isValidISO(x.date) && x.date >= today && x.date <= it.dueDate);
+  const refresh = () => {
+    const chosen = rows.filter(r => r.querySelector('.ps-chk').checked);
+    const perDay = {}; chosen.forEach(r => { const d = r.querySelector('.ps-date').value; perDay[d] = (perDay[d] || 0) + 1; });
+    rows.forEach(r => { const d = r.querySelector('.ps-date').value, n = (others[d] || 0) + (perDay[d] || 0) - (r.querySelector('.ps-chk').checked ? 1 : 0); r.querySelector('.plan-warn').textContent = n >= 3 ? `이 날 이미 ${n}건 있어` : ''; r.style.opacity = r.querySelector('.ps-chk').checked ? '' : '0.5'; });
+    const n = read().length; addBtn.textContent = n ? `선택한 ${n}건 추가` : '추가할 단계를 골라줘'; addBtn.disabled = n === 0;
+  };
+  rows.forEach(r => r.addEventListener('input', refresh)); rows.forEach(r => r.addEventListener('change', refresh));
+  refresh();
+  addBtn.onclick = async () => {
+    if (tok !== planToken) return;
+    const chosen = read(); if (!chosen.length) return;
+    const created = chosen.map(s => ({ id: uid(), title: s.title, shortLabel: '', type: it.type || '기타', dueDate: s.date, priority: it.priority || 'medium', notes: `「${it.title}」의 단계` + (s.note ? ' · ' + s.note : ''), aiComment: '', topicSuggestion: '', topicKeyword: '', done: false }));
+    items.push(...created); await saveItems(); refreshAll(); closePlanModal();
+    showToast(`${created.length}건 추가했어`, '되돌리기', async () => { const ids = new Set(created.map(c => c.id)); items = items.filter(x => !ids.has(x.id)); await saveItems(); refreshAll(); }, 7000);
+  };
+  addPlanButton('취소', 'btn-ghost', closePlanModal);
+}
+
+// (2) 이번 주 계획: 오늘부터 7일 동안 무엇을 언제 할지 제안(일정은 바꾸지 않고 보여주기만 함)
+async function planWeekWithAI() {
+  const today = todayISO(), days = [...Array(7)].map((_, i) => isoAddDays(today, i)), horizon = isoAddDays(today, 13);
+  const tok = openPlanModal('이번 주 계획', `${formatShortDate(days[0])}(${weekdayKo(days[0])}) ~ ${formatShortDate(days[6])}(${weekdayKo(days[6])}) · 오늘부터 7일`);
+  const byDate = (a, b) => a.dueDate.localeCompare(b.dueDate) || ((PRIORITY_RANK[a.priority] ?? 1) - (PRIORITY_RANK[b.priority] ?? 1));
+  const pool = items.filter(x => !x.done && x.dueDate <= horizon).sort(byDate).slice(0, 40);
+  if (!pool.length) { planEl('planBody').innerHTML = '<div class="plan-sub">앞으로 2주 안에 마감인 일정이 없어. 여유로운 한 주야.</div>'; addPlanButton('닫기', 'btn-ghost', closePlanModal); return; }
+  await runWeekPlan(pool, days, tok);
+}
+async function runWeekPlan(pool, days, tok) {
+  planLoading('AI가 일주일을 짜는 중…');
+  const today = days[0];
+  const dtext = (d) => { const n = daysUntil(d); return n < 0 ? `지난 마감 D+${-n}` : n === 0 ? '오늘 마감' : `D-${n}`; };
+  const list = pool.map((x, i) => `${i + 1}. ${x.title} | ${x.type || '기타'} | 마감 ${x.dueDate}(${weekdayKo(x.dueDate)}, ${dtext(x.dueDate)}) | 우선순위 ${priorityLabel(x.priority)}`).join('\n');
+  const system = `너는 학업·업무 일정을 현실적으로 배분해주는 도우미야. 아래 일정 목록을 보고, 오늘부터 7일 동안 하루하루 무엇에 집중할지 계획을 짜줘.
+
+오늘: ${today} (${weekdayKo(today)})
+계획 기간: ${days.map(d => `${d}(${weekdayKo(d)})`).join(', ')}
+
+일정 목록(번호로만 가리켜):
+${list}
+
+규칙:
+- 반드시 위 목록의 번호(ref)만 써. 목록에 없는 일정을 만들지 마.
+- 일정은 그 마감일이 지나기 전 날짜에만 배정해. 이미 지난 마감은 오늘 먼저 배정해.
+- 하루에 최대 3건. 큰 일은 마감 전 여러 날에 나눠 배정해도 되고(같은 ref를 다른 날 또 써도 됨), 마감이 아주 급한 것과 우선순위 높음을 앞쪽 날짜에 둬.
+- 마감이 특정 날에 몰려 있거나 무리한 배분이면 warnings에 짧게 알려줘.
+- JSON 객체만 반환해. 다른 설명, 마크다운, 코드 블록 없이. 형식: {"summary":"두 문장 이내 요약","days":[{"date":"YYYY-MM-DD","tasks":[{"ref":1,"why":"짧은 이유"}]}],"warnings":["..."]}`;
+  try {
+    const raw = await runAI({ system, text: '이번 주 계획 짜줘.', maxTokens: 1600, title: '이번 주 계획' });
+    if (tok !== planToken) return;
+    const plan = sanitizeWeekPlan(raw, pool, days);
+    renderWeekPlan(plan, pool, days, tok);
+  } catch (err) {
+    if (tok !== planToken) return;
+    if (err.message === '취소함') { closePlanModal(); return; }
+    console.error(err);
+    showPlanError('계획을 만들지 못했어: ' + err.message, () => runWeekPlan(pool, days, tok));
+  }
+}
+function sanitizeWeekPlan(raw, pool, days) {
+  const obj = extractJsonObject(raw);
+  if (!obj || !Array.isArray(obj.days)) throw new Error('AI 답을 읽지 못했어');
+  const daySet = new Set(days), perDay = new Map(), used = new Set();
+  for (const d of obj.days) {
+    if (!d || !daySet.has(d.date) || !Array.isArray(d.tasks)) continue;
+    for (const t of d.tasks) {
+      const ref = Number(t && t.ref);
+      if (!Number.isInteger(ref) || ref < 1 || ref > pool.length) continue;      // 목록에 없는 번호는 무시(지어낸 일정 방지)
+      const item = pool[ref - 1];
+      if (item.dueDate >= days[0] && item.dueDate < d.date) continue;             // 마감 뒤 날짜로 미룬 것은 무시(이미 지난 마감은 오늘 이후 언제든 배정 가능)
+      const arr = perDay.get(d.date) || [];
+      if (arr.length >= 5 || arr.some(x => x.item === item)) continue;
+      arr.push({ item, why: cleanText(t.why, 100) }); perDay.set(d.date, arr); used.add(item.id);
+    }
+  }
+  if (!perDay.size) throw new Error('AI가 쓸 수 있는 계획을 주지 못했어');
+  const warnings = (Array.isArray(obj.warnings) ? obj.warnings : []).slice(0, 5).map(w => cleanText(w, 150)).filter(Boolean);
+  const unscheduled = pool.filter(x => !used.has(x.id) && x.dueDate <= days[6]);   // 이번 주 안에 마감인데 AI가 배정하지 않은 일정
+  return { summary: cleanText(obj.summary, 300), perDay, warnings, unscheduled };
+}
+function weekPlanText(plan, days) {
+  const L = [`Δuenoτe 이번 주 계획 (${formatShortDate(days[0])}~${formatShortDate(days[6])})`];
+  if (plan.summary) L.push(plan.summary);
+  days.forEach(d => { const arr = plan.perDay.get(d); if (!arr) return; L.push('', `${formatShortDate(d)}(${weekdayKo(d)})${d === days[0] ? ' 오늘' : ''}`); arr.forEach(x => L.push(`- ${x.item.title} (${x.item.type || '기타'}, 마감 ${formatShortDate(x.item.dueDate)})${x.why ? ' — ' + x.why : ''}`)); });
+  if (plan.warnings.length) { L.push('', '주의'); plan.warnings.forEach(w => L.push('- ' + w)); }
+  if (plan.unscheduled.length) { L.push('', '배정 안 된 이번 주 마감'); plan.unscheduled.forEach(x => L.push(`- ${x.title} (마감 ${formatShortDate(x.dueDate)})`)); }
+  return L.join('\n');
+}
+function renderWeekPlan(plan, pool, days, tok) {
+  const body = planEl('planBody'); body.innerHTML = '';
+  if (plan.summary) { const p = document.createElement('p'); p.className = 'plan-summary'; p.textContent = plan.summary; body.appendChild(p); }
+  days.forEach(d => {
+    const arr = plan.perDay.get(d); if (!arr) return;
+    const sec = document.createElement('div'); sec.className = 'plan-day';
+    sec.innerHTML = `<h4>${formatShortDate(d)}(${weekdayKo(d)})${d === days[0] ? '<span class="plan-today">오늘</span>' : ''}</h4>`;
+    arr.forEach(x => {
+      const row = document.createElement('div'); row.className = 'plan-task'; row.dataset.id = x.item.id; row.tabIndex = 0; row.setAttribute('role', 'button');
+      row.innerHTML = `<span>${escapeHtml(x.item.title)}</span><span class="type-tag t-${escapeHtml(x.item.type || '기타')}">${escapeHtml(x.item.type || '기타')}</span>${ddayHtml(x.item)}${x.why ? `<span class="why">${escapeHtml(x.why)}</span>` : ''}`;
+      const open = () => { closePlanModal(); openPeek(x.item.id); };
+      row.addEventListener('click', open); row.addEventListener('keydown', (e) => { if (e.key === 'Enter') open(); });
+      sec.appendChild(row);
+    });
+    body.appendChild(sec);
+  });
+  if (plan.warnings.length) { const w = document.createElement('div'); w.className = 'plan-warnings'; w.innerHTML = plan.warnings.map(x => '· ' + escapeHtml(x)).join('<br>'); body.appendChild(w); }
+  if (plan.unscheduled.length) { const u = document.createElement('div'); u.className = 'plan-unsched'; u.innerHTML = '<b>AI가 배정하지 않은 이번 주 마감</b><br>' + plan.unscheduled.map(x => `${escapeHtml(x.title)} (${formatShortDate(x.dueDate)})`).join(' · '); body.appendChild(u); }
+  planEl('planActions').innerHTML = '';
+  const copyBtn = addPlanButton('계획 복사', 'btn-main', async () => { const ok = await copyToClipboard(weekPlanText(plan, days)); planEl('planStatus').className = 'status' + (ok ? '' : ' err'); planEl('planStatus').textContent = ok ? '복사했어.' : '자동 복사가 안 됐어.'; });
+  addPlanButton('다시 짜기', 'btn-ghost', () => runWeekPlan(pool, days, tok));
+  addPlanButton('닫기', 'btn-ghost', closePlanModal);
+}
+document.getElementById('weekPlanBtn').addEventListener('click', planWeekWithAI);
 
 (async function init() {
   const d = new Date();
