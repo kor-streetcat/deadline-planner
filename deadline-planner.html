@@ -815,6 +815,47 @@
   .peek-dur-ai:disabled { opacity: 0.6; cursor: default; }
   .peek-time-clear, .peek-mini { border: none; background: transparent; color: var(--ink-dim); font-size: 0.74rem; padding: 3px 7px; border-radius: var(--radius); cursor: pointer; font-family: inherit; }
   .peek-time-clear:hover, .peek-mini:hover { background: var(--hover); color: var(--ink); }
+
+  /* v51: 타이머 바 · 체크리스트 · 미루기 · 오늘 요약 */
+  .timer-bar { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; padding: 9px 12px; background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 16px; font-size: 0.86rem; }
+  .timer-bar[hidden] { display: none; }
+  .timer-bar .tm-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; animation: tmPulse 1.6s ease-in-out infinite; }
+  .timer-bar.paused .tm-dot { animation: none; opacity: 0.4; }
+  @keyframes tmPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .timer-bar .tm-title { flex: 1; min-width: 0; text-align: left; background: none; border: none; color: var(--ink); font: inherit; font-weight: 600; padding: 0; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .timer-bar .tm-clock { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--accent); flex-shrink: 0; }
+  .timer-bar .tm-btn { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; border: 1px solid var(--border); background: var(--bg); color: var(--ink); font: inherit; font-size: 0.78rem; padding: 4px 10px; border-radius: 999px; cursor: pointer; }
+  .timer-bar .tm-btn:hover { background: var(--hover); }
+  .timer-bar .tm-end { color: var(--danger); }
+  .peek-timer { display: inline-flex; align-items: center; gap: 2px; }
+  .peek-timer-clock { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 0.8rem; color: var(--accent); padding: 0 4px; }
+  .peek-row select.peek-actual { border: 1px solid transparent; background: transparent; border-radius: var(--radius); font-size: 0.86rem; padding: 4px 6px; justify-self: start; color: var(--ink); transition: background 0.2s var(--ease-out); }
+  .peek-row select.peek-actual:hover { background: var(--hover); }
+  .peek-mini .ic { margin-right: 3px; vertical-align: -2px; }
+  .peek-checklist { margin: 12px 0 4px; }
+  .cl-head { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 600; color: var(--ink-dim); margin-bottom: 4px; }
+  .cl-count { font-weight: 500; color: var(--ink-faint); }
+  .cl-row { display: grid; grid-template-columns: 18px 1fr 24px; align-items: center; gap: 6px; padding: 2px 0; }
+  .cl-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
+  .cl-text, .cl-add { width: 100%; border: 1px solid transparent; background: transparent; color: var(--ink); font: inherit; font-size: 0.86rem; padding: 4px 6px; border-radius: var(--radius); }
+  .cl-add { margin-top: 2px; }
+  .cl-text:hover, .cl-add:hover { background: var(--hover); }
+  .cl-text:focus, .cl-add:focus { outline: none; border-color: var(--accent); background: var(--bg); }
+  .cl-row.is-done .cl-text { text-decoration: line-through; color: var(--ink-faint); }
+  .cl-del { border: none; background: transparent; color: var(--ink-faint); font-size: 1rem; line-height: 1; cursor: pointer; border-radius: var(--radius); padding: 2px 0; }
+  .cl-del:hover { background: var(--hover); color: var(--danger); }
+  .chk-chip { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; font-size: 0.68rem; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--hover); color: var(--ink-dim); }
+  .chk-chip .ic { width: 11px; height: 11px; }
+  .chk-chip.all { background: var(--accent-soft); color: var(--accent); }
+  .today-stats { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; font-size: 0.78rem; color: var(--ink-dim); }
+  .today-stats span { display: inline-flex; align-items: center; gap: 4px; }
+  .today-stats .ic { width: 13px; height: 13px; }
+  .today-stats.over { color: var(--danger); }
+  .sec-actions { margin-left: auto; display: inline-flex; gap: 4px; }
+  .sec-btn { display: inline-flex; align-items: center; gap: 3px; border: none; background: var(--hover); color: var(--ink-dim); font: inherit; font-size: 0.72rem; font-weight: 500; padding: 3px 9px; border-radius: 999px; cursor: pointer; }
+  .sec-btn:hover { color: var(--ink); background: var(--border); }
+  .sec-btn .ic { width: 11px; height: 11px; }
+  @media (prefers-reduced-motion: reduce) { .timer-bar .tm-dot { animation: none; } }
   .time-chip { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; font-size: 0.68rem; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--hover); color: var(--ink-dim); font-variant-numeric: tabular-nums; line-height: 1.5; white-space: nowrap; }
   .time-chip .ic { width: 11px; height: 11px; }
   .ai-busy { display: inline-flex; align-items: center; flex-shrink: 0; font-size: 0.68rem; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); line-height: 1.5; white-space: nowrap; animation: planPulse 1.2s ease-in-out infinite; }
@@ -875,7 +916,7 @@
   .sync-dot.wait { background: #e0a030; }
   @media (max-width: 900px) {
     /* iOS는 글자 크기가 16px 미만인 입력칸에 포커스하면 화면이 확대됨 */
-    input[type="text"], input[type="email"], input[type="password"], input[type="date"], input[type="time"], select.peek-dur, textarea { font-size: 16px !important; }
+    input[type="text"], input[type="email"], input[type="password"], input[type="date"], input[type="time"], select.peek-dur, select.peek-actual, textarea { font-size: 16px !important; }
   }
 
   /* ===== 서랍: 접이식 섹션 (로그인·API 키) ===== */
@@ -979,6 +1020,11 @@
 <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l.8 12a1.5 1.5 0 0 0 1.5 1.5h6.4a1.5 1.5 0 0 0 1.5-1.5l.8-12M10 11v6M14 11v6"/></symbol>
 <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18.5a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 17.9 9.6 4.5 4.5 0 0 1 17 18.5z"/></symbol>
 <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v10m0 0-3.5-3.5M12 14l3.5-3.5"/><path d="M5 16.5v1.5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1.5"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M8.5 5.8v12.4l10-6.2z"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 5.5v13M15 5.5v13"/></symbol>
+<symbol id="i-stop" viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/></symbol>
+<symbol id="i-checklist" viewBox="0 0 24 24"><path d="M11 6.5h9M11 12h9M11 17.5h9"/><path d="m4 6.5 1.2 1.2L7.6 5.3M4 12l1.2 1.2 2.4-2.4M4 17.5l1.2 1.2 2.4-2.4"/></symbol>
+<symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
 <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.8 19.5c1-3.6 3.9-5.4 7.2-5.4s6.2 1.8 7.2 5.4"/></symbol>
 <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4.5 7h15M4.5 12h15M4.5 17h15"/></symbol>
 <symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 6 8.5 12l6 6"/></symbol>
@@ -1039,6 +1085,8 @@
   <div class="page">
     <h1 class="page-title"><span class="page-emoji"><svg class="ic" aria-hidden="true"><use href="#i-notebook"/></svg></span>Δuenoτe</h1>
     <p class="page-sub">마감일과 일정을 한곳에서 정리합니다.</p>
+
+    <div class="timer-bar" id="timerBar" role="status" hidden></div>
 
     <div id="summaryBanner" class="summary-banner" style="display:none;">
       <div class="summary-banner-row">
@@ -1239,6 +1287,7 @@
         <div>
           <div class="today-date" id="todayDate"></div>
           <div class="today-progress-text" id="todayProgressText"></div>
+          <div class="today-stats" id="todayStats" style="display:none;"></div>
         </div>
         <button class="briefing-btn" id="weekPlanBtn" title="AI가 오늘부터 7일 계획을 짜 드립니다"><svg class="ic sm" aria-hidden="true"><use href="#i-sparkle"/></svg><span>이번 주 계획</span></button>
       </div>
@@ -1417,7 +1466,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v50';
+const APP_VERSION = 'v51';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -1987,17 +2036,26 @@ function durationLearningBlock() {
   const dm = (x) => normDuration(x.durationMin), da = (x) => normDuration(x.durationAi);
   const fixed = items.filter(x => dm(x) && da(x) && da(x) !== dm(x));
   const own = items.filter(x => dm(x) && !da(x));
-  if (!fixed.length && !own.length) return '';
+  const act = items.filter(x => normActual(x.actualMin) && (dm(x) || da(x)));
+  if (!fixed.length && !own.length && !act.length) return '';
   const byType = {};
   fixed.forEach(x => { const t = x.type || '기타'; (byType[t] = byType[t] || []).push(dm(x) / da(x)); });
   const med = (a) => { const v = [...a].sort((p, q) => p - q), m = v.length >> 1; return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2; };
   const ratio = Object.entries(byType).filter(([, r]) => r.length >= 2).map(([t, r]) => `- ${t}: 사용자는 네 추정의 중앙값 ×${med(r).toFixed(1)}로 고침 (${r.length}건)`);
   const nm = (x) => `${cleanText(x.title, 40)} | ${x.type || '기타'}`;
   const lines = [];
+  if (act.length) {
+    const est = (x) => dm(x) || da(x), byA = {};
+    act.forEach(x => { const t = x.type || '기타'; (byA[t] = byA[t] || []).push(normActual(x.actualMin) / est(x)); });
+    const aRatio = Object.entries(byA).filter(([, r]) => r.length >= 2).map(([t, r]) => `- ${t}: 실제로는 예상의 중앙값 ×${med(r).toFixed(1)}가 걸림 (${r.length}건)`);
+    lines.push('실제로 걸린 시간 기록(가장 믿을 만한 자료):');
+    if (aRatio.length) lines.push(...aRatio);
+    lines.push('최근 사례(제목 | 유형 | 예상 → 실제):', ...act.slice(-8).map(x => `- ${nm(x)} | ${fmtDuration(est(x))} → ${fmtActual(normActual(x.actualMin))}`));
+  }
   if (ratio.length) lines.push('유형별 경향:', ...ratio);
   if (fixed.length) lines.push('최근에 네 추정을 고친 사례(제목 | 유형 | 네 추정 → 사용자가 고친 값):', ...fixed.slice(-8).map(x => `- ${nm(x)} | ${fmtDuration(da(x))} → ${fmtDuration(dm(x))}`));
   if (own.length) lines.push('사용자가 직접 정한 소요시간 사례(제목 | 유형 | 시간):', ...own.slice(-6).map(x => `- ${nm(x)} | ${fmtDuration(dm(x))}`));
-  return `\n\n[이 사용자의 시간 감각 — 지난 추정을 사용자가 고친 기록. 비슷한 일이면 이 값에 맞춰 추정하고, 유형별 경향이 있으면 그 비율을 반영해. 기록에 없는 종류는 일반적인 값으로 추정해.]\n${lines.join('\n')}`;
+  return `\n\n[이 사용자의 시간 감각 — 지난 추정을 사용자가 고친 기록과 실제로 걸린 시간. 비슷한 일이면 이 값에 맞춰 추정하고, 유형별 경향이 있으면 그 비율을 반영해. 기록에 없는 종류는 일반적인 값으로 추정해.]\n${lines.join('\n')}`;
 }
 // AI로 예상 소요시간 추정(상세 패널의 버튼): 제목·유형·마감일·우선순위만 보내고 메모는 보내지 않는다
 async function estimateDurationWithAI(it) {
@@ -2021,6 +2079,173 @@ JSON 객체만 반환해. 다른 설명, 마크다운, 코드 블록 없이. 형
     await saveItems(); refreshAll(); if (peekId === it.id) renderPeek();
   }, 7000);
 }
+
+// ---- v51: 완료 기록 · 체크리스트 · 실제 소요 · 미루기 · 작업 타이머 ----
+// 완료 처리는 항상 markDone을 거친다(완료한 시각 doneAt을 남겨 "이번 주 N건 · N일 연속"을 계산). 완료하면 진행 중인 타이머도 그 일정에 기록하고 끈다.
+function markDone(it, done) {
+  it.done = !!done;
+  if (it.done) it.doneAt = new Date().toISOString(); else delete it.doneAt;
+  if (it.done && timer && timer.id === it.id) finishTimerSync(it);
+}
+function doneDayOf(it) {
+  if (!it.done || !it.doneAt) return '';
+  const d = new Date(it.doneAt);
+  return isNaN(d) ? '' : isoOfDate(d);
+}
+function completionStats() {
+  const days = new Set(items.map(doneDayOf).filter(Boolean));
+  const d = new Date(); d.setHours(12, 0, 0, 0);
+  if (!days.has(isoOfDate(d))) d.setDate(d.getDate() - 1);   // 오늘 아직 없으면 어제부터 이어 센다
+  let streak = 0;
+  while (days.has(isoOfDate(d))) { streak++; d.setDate(d.getDate() - 1); }
+  const weekStart = getThisWeekDates()[0];
+  const week = items.filter(x => { const k = doneDayOf(x); return k && k >= weekStart; }).length;
+  return { streak, week };
+}
+function normActual(v) { const n = Math.round(Number(v)); return n >= 1 && n <= 4320 ? n : 0; }
+function fmtActual(min) {
+  if (!min) return '';
+  return min < 60 ? `${min}분` : fmtDuration(min);
+}
+function actualOptionsHtml(cur) {
+  const c = normActual(cur), list = c && !DURATION_PRESETS.includes(c) ? [...DURATION_PRESETS, c].sort((x, y) => x - y) : DURATION_PRESETS;
+  return `<option value="0">기록 없음</option>` + list.map(n => `<option value="${n}" ${n === c ? 'selected' : ''}>${fmtActual(n)}</option>`).join('');
+}
+function setItemActual(it, v) { const n = normActual(v); if (n) it.actualMin = n; else delete it.actualMin; }
+
+// 체크리스트: [{t: 글, d: 완료 여부}] 최대 30개
+function normChecklist(arr) {
+  if (!Array.isArray(arr)) return [];
+  return arr.map(x => ({ t: cleanText(x && x.t, 120), d: !!(x && x.d) })).filter(x => x.t).slice(0, 30);
+}
+function checkChipHtml(it) {
+  const cl = normChecklist(it.checklist);
+  if (!cl.length) return '';
+  const n = cl.filter(x => x.d).length;
+  return `<span class="chk-chip${n === cl.length ? ' all' : ''}" title="체크리스트">${ic('checklist', 'ic sm')}${n}/${cl.length}</span>`;
+}
+
+// 미루기
+function addDaysISO(iso, n) {
+  const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n);
+  return isoOfDate(d);
+}
+function nextMondayISO() {
+  const d = new Date(); d.setHours(12, 0, 0, 0);
+  d.setDate(d.getDate() + ((8 - d.getDay()) % 7 || 7));
+  return isoOfDate(d);
+}
+async function postponeItems(list, targetISO, label) {
+  const targets = list.filter(x => items.includes(x) && !x.done && x.dueDate !== targetISO);
+  if (!targets.length) return;
+  const prev = targets.map(x => ({ it: x, d: x.dueDate }));
+  targets.forEach(x => { x.dueDate = targetISO; });
+  await saveItems();
+  refreshAll();
+  if (peekId && targets.some(x => x.id === peekId)) renderPeek();
+  showToast(`${targets.length}건을 ${label} 미뤘습니다`, '되돌리기', async () => {
+    prev.forEach(p => { if (items.includes(p.it)) p.it.dueDate = p.d; });
+    await saveItems();
+    refreshAll();
+    if (peekId) renderPeek();
+  }, 6000);
+}
+
+// 작업 타이머: {id, startedAt(ms, 멈춘 동안 0), accMs}. 이 기기에만 저장하고 동기화하지 않는다.
+let timer = null;
+function loadTimer() {
+  try {
+    const o = JSON.parse(localStorage.getItem('planner:timer') || 'null');
+    if (o && typeof o.id === 'string' && Number.isFinite(o.accMs) && Number.isFinite(o.startedAt)) {
+      timer = { id: o.id, startedAt: o.startedAt, accMs: Math.max(0, o.accMs) };
+      if (timer.startedAt && Date.now() - timer.startedAt > 12 * 3600 * 1000) {   // 12시간 넘게 켜져 있던 것은 멈춰 두고 확인하게 한다
+        timer.startedAt = 0; saveTimer();
+        setTimeout(() => showToast('오래 켜져 있던 타이머를 일시정지했습니다. 시간을 확인하시기 바랍니다', null, null, 7000), 1500);
+      }
+    }
+  } catch (e) { timer = null; }
+}
+function saveTimer() {
+  try { if (timer) localStorage.setItem('planner:timer', JSON.stringify(timer)); else localStorage.removeItem('planner:timer'); } catch (e) {}
+}
+function timerElapsedMs() { return timer ? timer.accMs + (timer.startedAt ? Date.now() - timer.startedAt : 0) : 0; }
+function fmtClock(ms) {
+  const t = Math.floor(ms / 1000), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), sec = t % 60;
+  const p = (n) => String(n).padStart(2, '0');
+  return h ? `${h}:${p(m)}:${p(sec)}` : `${p(m)}:${p(sec)}`;
+}
+// 경과 시간을 일정의 실제 소요에 더한다(누적). 1분 미만은 기록하지 않는다.
+function commitTimerTo(it) {
+  const min = Math.round(timerElapsedMs() / 60000);
+  if (min >= 1) it.actualMin = Math.min(4320, (normActual(it.actualMin) || 0) + min);
+  return min;
+}
+function finishTimerSync(it) {
+  commitTimerTo(it);
+  timer = null; saveTimer();
+}
+function startTimer(it) {
+  if (timer && timer.id !== it.id) {
+    const prevIt = items.find(x => x.id === timer.id);
+    if (prevIt) { const m = commitTimerTo(prevIt); if (m) showToast(`"${cleanText(prevIt.title, 24)}" ${fmtActual(m)}을 기록했습니다`); }
+    timer = null;
+  }
+  if (timer && timer.id === it.id) { if (!timer.startedAt) timer.startedAt = Date.now(); }
+  else timer = { id: it.id, startedAt: Date.now(), accMs: 0 };
+  saveTimer(); saveItems(); renderTimerBar();
+  if (peekId === it.id) renderPeek();
+}
+function pauseTimer() {
+  if (!timer || !timer.startedAt) return;
+  timer.accMs += Date.now() - timer.startedAt; timer.startedAt = 0;
+  saveTimer(); renderTimerBar(); if (peekId === timer.id) renderPeek();
+}
+async function finishTimer() {
+  if (!timer) return;
+  const it = items.find(x => x.id === timer.id);
+  const id = timer.id;
+  if (!it) { timer = null; saveTimer(); renderTimerBar(); return; }
+  const min = commitTimerTo(it);
+  timer = null; saveTimer();
+  if (!min) { renderTimerBar(); if (peekId === id) renderPeek(); showToast('1분 미만이라 기록하지 않았습니다'); return; }
+  await saveItems();
+  refreshAll();
+  if (peekId === id) renderPeek();
+  if (it.done) return;
+  const est = normDuration(it.durationMin);
+  const r = await askDialog({
+    message: `"${cleanText(it.title, 40)}" 작업 ${fmtActual(normActual(it.actualMin))}을 기록했습니다${est ? ` (예상 ${fmtDuration(est)})` : ''}.\n일정을 완료로 표시하시겠습니까?`,
+    actions: [{ label: '완료로 표시', value: 'done', kind: 'default' }, { label: '기록만 저장', value: 'keep', kind: 'cancel' }]
+  });
+  if (r === 'done' && items.includes(it)) {
+    markDone(it, true); await saveItems(); refreshAll(); if (peekId === id) renderPeek();
+  }
+}
+function renderTimerBar() {
+  const bar = document.getElementById('timerBar');
+  if (!bar) return;
+  const it = timer && items.find(x => x.id === timer.id);
+  if (!it) { bar.hidden = true; return; }
+  const running = !!timer.startedAt;
+  bar.hidden = false;
+  bar.classList.toggle('paused', !running);
+  bar.innerHTML = `<span class="tm-dot"></span><button type="button" class="tm-title" title="상세 열기"></button><span class="tm-clock" id="timerClock"></span>` +
+    `<button type="button" class="tm-btn" id="timerPauseBtn">${ic(running ? 'pause' : 'play', 'ic sm')}${running ? '일시정지' : '계속'}</button>` +
+    `<button type="button" class="tm-btn tm-end" id="timerEndBtn">${ic('stop', 'ic sm')}끝내기</button>`;
+  bar.querySelector('.tm-title').textContent = it.title;
+  bar.querySelector('.tm-title').addEventListener('click', () => openPeek(it.id));
+  bar.querySelector('#timerPauseBtn').addEventListener('click', () => { if (timer.startedAt) pauseTimer(); else startTimer(it); });
+  bar.querySelector('#timerEndBtn').addEventListener('click', finishTimer);
+  tickTimer();
+}
+function tickTimer() {
+  if (!timer) return;
+  const t = fmtClock(timerElapsedMs());
+  const c = document.getElementById('timerClock'); if (c) c.textContent = t;
+  const pc = document.querySelector('.peek-timer-clock'); if (pc) pc.textContent = t;
+}
+setInterval(tickTimer, 1000);
+loadTimer();
 const DURATION_PRESETS = [15, 30, 45, 60, 90, 120, 180, 240, 360, 480];
 function durationOptionsHtml(cur) {
   const c = normDuration(cur), list = c && !DURATION_PRESETS.includes(c) ? [...DURATION_PRESETS, c].sort((x, y) => x - y) : DURATION_PRESETS;
@@ -2141,13 +2366,21 @@ function renderTodayView() {
     (todayAll.length ? `오늘 마감 ${todayAll.length}건 중 ${todayDone.length}건 완료` : '오늘 마감인 일정이 없습니다') + (overdueN ? ` · 밀린 일정 ${overdueN}건` : '');
   document.getElementById('todayProgressBar').style.width = todayAll.length ? Math.round(todayDone.length / todayAll.length * 100) + '%' : '0%';
 
+  renderTodayStats(active);
   const box = document.getElementById('todaySections');
   box.innerHTML = '';
   groups.forEach(g => {
     if (!g.list.length) return;
     const sec = document.createElement('div');
     sec.className = 'today-section ' + g.cls;
-    sec.innerHTML = `<h3>${g.title}<span class="count">${g.list.length}</span></h3>`;
+    const bulk = g.cls === 'overdue'
+      ? [['오늘로', t], ['내일로', addDaysISO(t, 1)]]
+      : g.cls === 'today' && g.list.length > 1 ? [['모두 내일로', addDaysISO(t, 1)]] : [];
+    sec.innerHTML = `<h3>${g.title}<span class="count">${g.list.length}</span>${bulk.length ? '<span class="sec-actions">' + bulk.map(([l], i) => `<button type="button" class="sec-btn" data-i="${i}">${ic('arrow-right', 'ic sm')}${g.cls === 'overdue' ? '모두 ' : ''}${l}</button>`).join('') + '</span>' : ''}</h3>`;
+    sec.querySelectorAll('.sec-btn').forEach(b => b.addEventListener('click', () => {
+      const [l, d] = bulk[+b.dataset.i];
+      postponeItems(g.list, d, l.replace('모두 ', ''));
+    }));
     g.list.forEach(it => sec.appendChild(renderItemRow(it, { showDate: true })));
     box.appendChild(sec);
   });
@@ -2169,6 +2402,23 @@ function renderTodayView() {
     todayDone.forEach(it => det.appendChild(renderItemRow(it, { showDate: true })));
     box.appendChild(det);
   }
+}
+
+
+// 오늘 화면의 한 줄 요약: 오늘 해야 할 일의 예상 시간, 이번 주 완료 건수, 연속 일수
+function renderTodayStats(active) {
+  const el = document.getElementById('todayStats');
+  if (!el) return;
+  const t = todayISO(), due = active.filter(x => x.dueDate <= t);
+  const parts = [];
+  const sum = due.reduce((a, x) => a + (normDuration(x.durationMin) || 0), 0), none = due.filter(x => !normDuration(x.durationMin)).length;
+  el.classList.toggle('over', sum > 480);
+  if (due.length && sum) parts.push(`${ic('clock', 'ic sm')}오늘 할 일 예상 ${fmtDuration(sum)}${none ? ` (시간 없는 ${none}건 제외)` : ''}${sum > 480 ? ' · 하루 8시간을 넘습니다' : ''}`);
+  const st = completionStats();
+  if (st.week) parts.push(`${ic('check', 'ic sm')}이번 주 ${st.week}건 완료`);
+  if (st.streak >= 2) parts.push(`${st.streak}일 연속`);
+  el.innerHTML = parts.map(x => `<span>${x}</span>`).join('');
+  el.style.display = parts.length ? 'flex' : 'none';
 }
 
 // ---- Item row renderer (shared by detail panel, week view, list view) ----
@@ -2193,7 +2443,7 @@ function renderItemRow(it, opts) {
     <div class="bar ${isOverdue ? 'high' : it.priority}"></div>
     <div class="body">
       <div class="title ${it.done ? 'done' : ''}">${escapeHtml(it.title)}${it.recurringId ? `<span class="recurring-tag">${ic('repeat')}반복</span>` : ''}</div>
-      <div class="meta">${dateLabel ? `<span>${dateLabel}</span>` : ''}${ddayHtml(it)}${timeChipHtml(it)}${aiBusyHtml(it)}<span class="type-tag t-${escapeHtml(it.type || '기타')}">${escapeHtml(it.type || '기타')}</span><span>우선순위 ${priorityLabel(it.priority)}</span></div>
+      <div class="meta">${dateLabel ? `<span>${dateLabel}</span>` : ''}${ddayHtml(it)}${timeChipHtml(it)}${checkChipHtml(it)}${aiBusyHtml(it)}<span class="type-tag t-${escapeHtml(it.type || '기타')}">${escapeHtml(it.type || '기타')}</span><span>우선순위 ${priorityLabel(it.priority)}</span></div>
       ${it.notes ? `<div class="notes">${escapeHtml(it.notes)}</div>` : ''}
       ${it.aiComment ? `<div class="ai-comment"><span class="icon">${ic('bulb')}</span><span>${escapeHtml(it.aiComment)}</span></div>` : ''}
       ${it.topicSuggestion ? `
@@ -2212,7 +2462,7 @@ function renderItemRow(it, opts) {
     });
   }
   row.querySelector('.check').addEventListener('change', async (e) => {
-    it.done = e.target.checked;
+    markDone(it, e.target.checked);
     await saveItems();
     refreshAll();
   });
@@ -2338,7 +2588,7 @@ function renderTableRow(it, opts) {
     <input type="checkbox" class="check cell-done" ${it.done ? 'checked' : ''} aria-label="완료">
     <div class="cell-title-wrap">
       <input type="text" class="cell-title" value="${escapeHtml(it.title)}" aria-label="제목">
-      ${ddayHtml(it)}${timeChipHtml(it)}${aiBusyHtml(it)}${it.recurringId ? `<span class="recurring-tag">${ic('repeat')}</span>` : ''}
+      ${ddayHtml(it)}${timeChipHtml(it)}${checkChipHtml(it)}${aiBusyHtml(it)}${it.recurringId ? `<span class="recurring-tag">${ic('repeat')}</span>` : ''}
     </div>
     <div class="cell-meta">
       <input type="date" class="cell-date ${overdue ? 'overdue' : ''}" value="${it.dueDate}" aria-label="마감일">
@@ -2363,7 +2613,7 @@ function renderTableRow(it, opts) {
     });
   }
   q('.cell-done').addEventListener('change', async (e) => {
-    it.done = e.target.checked;
+    markDone(it, e.target.checked);
     await saveItems();
     refreshAll();
   });
@@ -2673,6 +2923,7 @@ document.getElementById('briefingBtn').addEventListener('click', async () => {
 
 function refreshAll() {
   updateBackupSummary();
+  renderTimerBar();
   renderCalendar();
   renderSummaryBanner();
   if (viewMode === 'today') renderTodayView();
@@ -2839,7 +3090,7 @@ document.getElementById('selectModeBtn').addEventListener('click', () => {
 
 document.getElementById('bulkCompleteBtn').addEventListener('click', async () => {
   if (!selectedIds.size) return;
-  items.forEach(it => { if (selectedIds.has(it.id)) it.done = true; });
+  items.forEach(it => { if (selectedIds.has(it.id)) markDone(it, true); });
   await saveItems();
   selectedIds.clear();
   selectMode = false;
@@ -3769,11 +4020,11 @@ async function applyChatActions(actions) {
   for (const act of actions) {
     if (act.action === 'complete' && act.id) {
       const found = items.find(it => it.id === act.id);
-      if (found) { found.done = true; results.push(`✅ "${found.title}" 완료 처리했습니다`); changed = true; }
+      if (found) { markDone(found, true); results.push(`✅ "${found.title}" 완료 처리했습니다`); changed = true; }
       else results.push(`⚠️ 해당 항목을 찾지 못했습니다`);
     } else if (act.action === 'uncomplete' && act.id) {
       const found = items.find(it => it.id === act.id);
-      if (found) { found.done = false; results.push(`↩️ "${found.title}" 완료를 취소했습니다`); changed = true; }
+      if (found) { markDone(found, false); results.push(`↩️ "${found.title}" 완료를 취소했습니다`); changed = true; }
       else results.push(`⚠️ 해당 항목을 찾지 못했습니다`);
     } else if (act.action === 'delete' && act.id) {
       const idx = items.findIndex(it => it.id === act.id);
@@ -3903,11 +4154,12 @@ document.getElementById('backupSaveBtn').addEventListener('click', () => {
     const url = URL.createObjectURL(blob), a = document.createElement('a');
     a.href = url; a.download = backupFileName(); document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
-    setBackupStatus(`일정 ${items.length}건을 파일로 저장했습니다. 저장이 안 되면 "클립보드로 복사"를 쓰면 됩니다.`);
+    markBackedUp(); setBackupStatus(`일정 ${items.length}건을 파일로 저장했습니다. 저장이 안 되면 "클립보드로 복사"를 쓰면 됩니다.`);
   } catch (e) { setBackupStatus('파일로 저장하지 못했습니다. "클립보드로 복사"를 쓰면 됩니다.', true); }
 });
 document.getElementById('backupCopyBtn').addEventListener('click', async () => {
   const ok = await copyToClipboard(JSON.stringify(buildBackup()));
+  if (ok) markBackedUp();
   setBackupStatus(ok ? `일정 ${items.length}건을 복사했습니다. 메모 앱 등에 붙여넣어 보관하면 됩니다.` : '자동 복사에 실패했습니다. "파일로 저장"을 쓰면 됩니다.', !ok);
 });
 document.getElementById('backupFileInput').addEventListener('change', async (e) => {
@@ -4155,10 +4407,10 @@ function boardColumns() {
   const weekEnd = getThisWeekDates()[6];
   return [
     { key: 'overdue', label: '지난 마감', match: it => !it.done && it.dueDate < today, drop: null },
-    { key: 'today', label: '오늘', match: it => !it.done && it.dueDate === today, drop: it => { it.done = false; it.dueDate = today; } },
+    { key: 'today', label: '오늘', match: it => !it.done && it.dueDate === today, drop: it => { markDone(it, false); it.dueDate = today; } },
     { key: 'week', label: '이번 주', match: it => !it.done && it.dueDate > today && it.dueDate <= weekEnd, drop: null },
     { key: 'later', label: '이후', match: it => !it.done && it.dueDate > weekEnd, drop: null },
-    { key: 'done', label: '완료', match: it => it.done, drop: it => { it.done = true; } }
+    { key: 'done', label: '완료', match: it => it.done, drop: it => { markDone(it, true); } }
   ];
 }
 
@@ -4209,7 +4461,7 @@ function renderBoard() {
       card.innerHTML = `
         <div class="bc-title">${escapeHtml(it.title)}</div>
         <div class="bc-meta">
-          <span class="bc-date ${overdue ? 'overdue' : ''}">${overdue ? ic('alert', 'ic sm') + ' ' : ''}${formatShortDate(it.dueDate)}</span>${ddayHtml(it)}${timeChipHtml(it)}${aiBusyHtml(it)}
+          <span class="bc-date ${overdue ? 'overdue' : ''}">${overdue ? ic('alert', 'ic sm') + ' ' : ''}${formatShortDate(it.dueDate)}</span>${ddayHtml(it)}${timeChipHtml(it)}${checkChipHtml(it)}${aiBusyHtml(it)}
           ${boardGroup === 'status' ? `<span class="type-tag t-${escapeHtml(it.type || '기타')}">${escapeHtml(it.type || '기타')}</span>` : ''}
           ${it.priority === 'high' ? '<span class="bc-pri">높음</span>' : ''}
           ${it.recurringId ? `<span>${ic('repeat', 'ic sm')}</span>` : ''}
@@ -4255,6 +4507,54 @@ function closePeek() {
   document.getElementById('peekPanel').classList.remove('open');
 }
 
+
+function peekPostponeHtml(it) {
+  const t = todayISO(), opts = [['오늘', t], ['내일', addDaysISO(t, 1)], ['다음 주 월요일', nextMondayISO()]].filter(([, d]) => d !== it.dueDate);
+  if (!opts.length) return '';
+  return `<div class="peek-row"><span class="peek-key">미루기</span><span class="peek-time-wrap">${opts.map(([l, d]) => `<button type="button" class="peek-mini peek-snooze" data-d="${d}" data-l="${l}로">${ic('arrow-right', 'ic sm')}${l}</button>`).join('')}</span></div>`;
+}
+function buildChecklistBox(it) {
+  const box = document.createElement('div');
+  box.className = 'peek-checklist';
+  const cl = normChecklist(it.checklist), n = cl.filter(x => x.d).length;
+  box.innerHTML = `<div class="cl-head">${ic('checklist', 'ic sm')}체크리스트${cl.length ? `<span class="cl-count">${n}/${cl.length}</span>` : ''}</div>` +
+    cl.map((x, i) => `<div class="cl-row${x.d ? ' is-done' : ''}"><input type="checkbox" class="cl-check" data-i="${i}" ${x.d ? 'checked' : ''} aria-label="완료"><input type="text" class="cl-text" data-i="${i}" maxlength="120" value="${escapeHtml(x.t)}" aria-label="항목"><button type="button" class="cl-del" data-i="${i}" aria-label="항목 삭제">×</button></div>`).join('') +
+    (cl.length < 30 ? '<input type="text" class="cl-add" maxlength="120" placeholder="항목 추가 후 Enter" aria-label="체크리스트 항목 추가">' : '');
+  const save = async (list, rerender) => {
+    if (list.length) it.checklist = list; else delete it.checklist;
+    await saveItems(); refreshAll();
+    if (rerender && peekId === it.id) renderPeek();
+  };
+  box.querySelectorAll('.cl-check').forEach(c => c.addEventListener('change', async () => {
+    const list = normChecklist(it.checklist); list[+c.dataset.i].d = c.checked;
+    await save(list, true);
+    if (list.length && list.every(x => x.d) && !it.done) showToast('체크리스트를 모두 끝냈습니다', '일정도 완료', async () => {
+      if (!items.includes(it)) return;
+      markDone(it, true); await saveItems(); refreshAll(); if (peekId === it.id) renderPeek();
+    }, 6000);
+  }));
+  box.querySelectorAll('.cl-text').forEach(inp => inp.addEventListener('change', async () => {
+    const list = normChecklist(it.checklist), i = +inp.dataset.i, v = cleanText(inp.value, 120);
+    if (v) list[i].t = v; else list.splice(i, 1);
+    await save(list, !v);
+  }));
+  box.querySelectorAll('.cl-del').forEach(b => b.addEventListener('click', async () => {
+    const list = normChecklist(it.checklist); list.splice(+b.dataset.i, 1);
+    await save(list, true);
+  }));
+  const add = box.querySelector('.cl-add');
+  if (add) add.addEventListener('keydown', async (e) => {
+    if (e.key !== 'Enter' || e.isComposing) return;
+    e.preventDefault();
+    const v = cleanText(add.value, 120);
+    if (!v) return;
+    const list = normChecklist(it.checklist); list.push({ t: v, d: false });
+    await save(list, true);
+    const again = document.querySelector('#peekBody .cl-add'); if (again) again.focus();
+  });
+  return box;
+}
+
 function renderPeek() {
   const it = items.find(x => x.id === peekId);
   const body = document.getElementById('peekBody');
@@ -4266,6 +4566,9 @@ function renderPeek() {
     <div class="peek-row"><span class="peek-key">마감일</span><input type="date" class="peek-date" value="${it.dueDate}"></div>
     <div class="peek-row"><span class="peek-key">마감 시각</span><span class="peek-time-wrap"><input type="time" class="peek-time" value="${normTime(it.dueTime)}" aria-label="마감 시각(선택)">${it.dueTime ? '<button type="button" class="peek-time-clear" aria-label="시각 지우기">지우기</button>' : ''}</span></div>
     <div class="peek-row"><span class="peek-key">예상 소요</span><span class="peek-time-wrap"><select class="peek-dur" aria-label="예상 소요시간(선택)">${durationOptionsHtml(it.durationMin)}</select><button type="button" class="peek-mini peek-dur-ai">${it.durationMin ? 'AI로 다시 추정' : 'AI로 추정'}</button></span></div>
+    <div class="peek-row"><span class="peek-key">실제 소요</span><span class="peek-time-wrap"><select class="peek-actual" aria-label="실제로 걸린 시간(선택)">${actualOptionsHtml(it.actualMin)}</select>${timer && timer.id === it.id
+      ? `<span class="peek-timer"><span class="peek-timer-clock">${fmtClock(timerElapsedMs())}</span><button type="button" class="peek-mini peek-timer-pause">${timer.startedAt ? '일시정지' : '계속'}</button><button type="button" class="peek-mini peek-timer-end">끝내기</button></span>`
+      : (it.done ? '' : `<button type="button" class="peek-mini peek-timer-start">${ic('play', 'ic sm')}작업 시작</button>`)}</span></div>
     <div class="peek-row"><span class="peek-key">유형</span>
       <select class="cell-type peek-type t-${escapeHtml(type)}">${TYPE_OPTIONS.map(t => `<option value="${t}" ${type === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
     <div class="peek-row"><span class="peek-key">우선순위</span>
@@ -4275,7 +4578,9 @@ function renderPeek() {
         <option value="low" ${it.priority === 'low' ? 'selected' : ''}>낮음</option>
       </select></div>
     <div class="peek-row"><span class="peek-key">상태</span><label><input type="checkbox" class="peek-done" ${it.done ? 'checked' : ''}> 완료${it.recurringId ? ` <span class="recurring-tag">${ic('repeat')}반복</span>` : ''}</label></div>
+    ${it.done ? '' : peekPostponeHtml(it)}
   `;
+  body.appendChild(buildChecklistBox(it));
   body.appendChild(buildItemExtras(it));
   const actions = document.createElement('div');
   actions.className = 'peek-actions';
@@ -4319,6 +4624,15 @@ function renderPeek() {
     try { await estimateDurationWithAI(it); }
     catch (err) { if (!(err && err.message === '취소함')) showToast('추정하지 못했습니다: ' + ((err && err.message) || err)); if (peekId === it.id) renderPeek(); }
   });
+  q('.peek-actual').addEventListener('change', async (e) => {
+    setItemActual(it, e.target.value);
+    await saveItems();
+    refreshAll();
+  });
+  const tStart = q('.peek-timer-start'); if (tStart) tStart.addEventListener('click', () => startTimer(it));
+  const tPause = q('.peek-timer-pause'); if (tPause) tPause.addEventListener('click', () => { if (timer.startedAt) pauseTimer(); else startTimer(it); });
+  const tEnd = q('.peek-timer-end'); if (tEnd) tEnd.addEventListener('click', finishTimer);
+  body.querySelectorAll('.peek-snooze').forEach(b => b.addEventListener('click', () => postponeItems([it], b.dataset.d, b.dataset.l)));
   q('.peek-type').addEventListener('change', async (e) => {
     it.type = e.target.value;
     e.target.className = 'cell-type peek-type t-' + it.type;
@@ -4333,7 +4647,7 @@ function renderPeek() {
     refreshAll();
   });
   q('.peek-done').addEventListener('change', async (e) => {
-    it.done = e.target.checked;
+    markDone(it, e.target.checked);
     await saveItems();
     refreshAll();
   });
@@ -4852,9 +5166,14 @@ function setBackupStatus(text, isErr) {
   const el = document.getElementById('backupStatus');
   el.className = 'status' + (isErr ? ' err' : ''); el.textContent = text || '';
 }
+function lastBackupTime() { try { return Number(localStorage.getItem('planner:lastBackup')) || 0; } catch (e) { return 0; } }
+function markBackedUp() { try { localStorage.setItem('planner:lastBackup', String(Date.now())); } catch (e) {} updateBackupSummary(); }
 function updateBackupSummary() {
   const el = document.getElementById('backupState');
-  if (el) el.textContent = `일정 ${items.length}건`;
+  if (!el) return;
+  const last = lastBackupTime(), days = last ? Math.floor((Date.now() - last) / 86400000) : -1;
+  el.textContent = `일정 ${items.length}건 · ` + (!last ? '백업한 적 없음' : days < 1 ? '오늘 백업함' : `${days}일 전 백업`);
+  el.classList.toggle('warn', items.length >= 5 && (!last || days >= 30));
 }
 // 가져온 파일의 일정을 한 건씩 확인한다(형식이 틀린 것은 버린다). 저장·동기화되는 값만 통과시킨다.
 function sanitizeBackupItem(x) {
@@ -4875,6 +5194,9 @@ function sanitizeBackupItem(x) {
   if (normTime(x.dueTime)) it.dueTime = normTime(x.dueTime);
   if (normDuration(x.durationMin)) it.durationMin = normDuration(x.durationMin);
   if (normDuration(x.durationAi)) it.durationAi = normDuration(x.durationAi);
+  if (normActual(x.actualMin)) it.actualMin = normActual(x.actualMin);
+  if (it.done && typeof x.doneAt === 'string' && !isNaN(new Date(x.doneAt))) it.doneAt = x.doneAt.slice(0, 40);
+  const cl = normChecklist(x.checklist); if (cl.length) it.checklist = cl;
   if (typeof x.deletedAt === 'string') it.deletedAt = x.deletedAt.slice(0, 40);
   return it;
 }
@@ -5051,7 +5373,8 @@ function traySummary() {
   const tomorrow = active.filter(x => daysUntil(x.dueDate) === 1).sort(byDate);
   const soon = active.filter(x => { const n = daysUntil(x.dueDate); return n >= 2 && n <= 7; }).sort(byDate);
   const list = [...overdue, ...today, ...tomorrow, ...soon].slice(0, 8).map(x => ({ id: x.id, title: String(x.title || '').slice(0, 40), dueDate: x.dueDate, dday: daysUntil(x.dueDate), high: x.priority === 'high', time: normTime(x.dueTime) }));
-  return { overdue: overdue.length, today: today.length, tomorrow: tomorrow.length, urgent: overdue.length + today.length, list };
+  const timed = today.filter(x => normTime(x.dueTime)).slice(0, 20).map(x => ({ id: x.id, title: String(x.title || '').slice(0, 40), time: normTime(x.dueTime) }));   // Mac 마감 알림용: 오늘 마감 시각이 있는 미완료 일정
+  return { overdue: overdue.length, today: today.length, tomorrow: tomorrow.length, urgent: overdue.length + today.length, list, timed };
 }
 
 // ---- AI로 큰 마감 쪼개기 · 이번 주 계획 ----
@@ -5408,6 +5731,8 @@ function renderTopicChoices(it, topics, tok) {
   renderChatLog();
   renderPendingLane();
   renderProfileUi();
+  renderTimerBar();
+  updateBackupSummary();
   setupAddRow('detailAddInput', 'detailAddType', () => selectedDate);
   let startView = 'today';
   try { const v = await store.get('view'); if (v && ['today', 'month', 'week', 'list', 'board'].includes(v.value)) startView = v.value; } catch (e) {}
