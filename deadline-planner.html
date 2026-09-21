@@ -710,6 +710,11 @@
   .reference-card .ref-del { background: none; color: var(--ink-faint); font-size: 0.8rem; flex-shrink: 0; padding: 0 4px; }
   .reference-card .ref-del:hover { color: var(--danger); }
   .reference-card .ref-del.restore-btn { color: var(--accent); font-weight: 500; }
+  .reference-card .ref-del.perm-btn { margin-left: 2px; }
+  .reference-card .ref-del.armed, .trash-empty-btn.armed { color: var(--danger); font-weight: 600; }
+  .trash-head { display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem; color: var(--ink-dim); margin-bottom: 6px; }
+  .trash-empty-btn { border: none; background: none; color: var(--ink-faint); font: inherit; font-size: 0.78rem; padding: 3px 6px; border-radius: var(--radius); cursor: pointer; }
+  .trash-empty-btn:hover { color: var(--danger); background: var(--hover); }
   .reference-card .ref-del.restore-btn:hover { text-decoration: underline; }
   .reference-card .ref-summary { font-size: 0.74rem; color: var(--ink-dim); margin-top: 4px; white-space: pre-wrap; }
   
@@ -1257,7 +1262,7 @@
 
     <div class="drawer-section">
       <div class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>휴지통</div>
-      <p class="drawer-desc">마감일+2일 후 자동삭제</p>
+      <p class="drawer-desc">마감일+2일 후 자동삭제 · 바로 지우려면 "영구 삭제"(되돌릴 수 없어)</p>
       <div id="trashList" class="reference-list"></div>
     </div>
 
@@ -1364,7 +1369,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v39';
+const APP_VERSION = 'v40';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -1442,6 +1447,15 @@ async function moveToTrash(itemsToTrash) {
     trashedItems.push({ ...it, deletedAt: now });
   });
   await saveTrash();
+}
+
+// 휴지통에서 바로 완전 삭제(되돌릴 수 없음). 저장하면 동기화가 서버의 문서도 지운다(유예기간이 지나 자동 삭제되는 것과 같은 경로)
+async function deleteFromTrash(ids) {
+  const gone = new Set(ids);
+  const before = trashedItems.length;
+  trashedItems = trashedItems.filter(it => !gone.has(it.id));
+  if (trashedItems.length !== before) await saveTrash();
+  return before - trashedItems.length;
 }
 
 async function restoreFromTrash(id) {
@@ -1564,6 +1578,16 @@ function renderReferenceList() {
   });
 }
 
+// 되돌릴 수 없는 버튼은 두 번 눌러야 실행된다(첫 번째는 문구가 바뀌고, 3.5초 안에 다시 누르면 실행, 아니면 원래대로). confirm 창은 iOS 홈 화면 앱에서 거슬려서 쓰지 않는다.
+function armButton(btn, armedLabel, run) {
+  const label = btn.textContent;
+  let timer = null;
+  btn.addEventListener('click', async () => {
+    if (btn.dataset.armed === '1') { clearTimeout(timer); btn.disabled = true; await run(); return; }
+    btn.dataset.armed = '1'; btn.textContent = armedLabel; btn.classList.add('armed');
+    timer = setTimeout(() => { btn.dataset.armed = ''; btn.textContent = label; btn.classList.remove('armed'); }, 3500);
+  });
+}
 function renderTrashList() {
   const container = document.getElementById('trashList');
   container.innerHTML = '';
@@ -1575,6 +1599,16 @@ function renderTrashList() {
     return;
   }
 
+  const head = document.createElement('div');
+  head.className = 'trash-head';
+  head.innerHTML = `<span>${trashedItems.length}건</span><button class="trash-empty-btn" type="button">휴지통 비우기</button>`;
+  armButton(head.querySelector('.trash-empty-btn'), `${trashedItems.length}건 모두 삭제할까?`, async () => {
+    const n = await deleteFromTrash(trashedItems.map(x => x.id));
+    renderTrashList();
+    showToast(`${n}건을 완전히 삭제했어`);
+  });
+  container.appendChild(head);
+
   trashedItems
     .slice()
     .sort((a,b) => (b.deletedAt || '').localeCompare(a.deletedAt || ''))
@@ -1585,6 +1619,7 @@ function renderTrashList() {
         <div class="ref-name">
           <span>${escapeHtml(it.title)}</span>
           <button class="ref-del restore-btn" type="button">되돌리기</button>
+          <button class="ref-del perm-btn" type="button">영구 삭제</button>
         </div>
         <div class="ref-summary">${formatShortDate(it.dueDate)} · ${escapeHtml(it.type || '기타')}</div>
       `;
@@ -1592,6 +1627,11 @@ function renderTrashList() {
         await restoreFromTrash(it.id);
         renderTrashList();
         refreshAll();
+      });
+      armButton(card.querySelector('.perm-btn'), '정말 삭제?', async () => {
+        await deleteFromTrash([it.id]);
+        renderTrashList();
+        showToast('완전히 삭제했어');
       });
       container.appendChild(card);
     });
