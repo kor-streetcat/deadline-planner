@@ -1388,7 +1388,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v41';
+const APP_VERSION = 'v42';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -3800,19 +3800,27 @@ function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sbOverlay').classList.remove('open');
 }
-// 모바일: 오른쪽으로 밀면 메뉴가 열리고, 열린 메뉴를 왼쪽으로 밀면 닫힘. 손가락을 따라 메뉴가 같이 움직임.
-// - 왼쪽 가장자리(화면 폭의 22%, 최소 40px) 안에서 시작하면 관대하게 열림. iOS의 '뒤로 가기' 제스처 영역(맨 끝)을 피하려고 구역을 넉넉히 잡음.
-// - 그 밖의 아무 곳(빈 공간·글자·달력 칸 등)에서 시작해도 열리지만, 세로 스크롤과 헷갈리지 않게 더 뚜렷한 가로 방향(가로가 세로의 1.5배 이상)일 때만 열림.
-// - 입력칸, 채팅 패널, 가로로 스크롤되는 탭 줄에서 시작하면 동작하지 않음.
-(function setupSidebarSwipe() {
+// 모바일 스와이프(v42, 사용자 요청): 메뉴는 ☰ 버튼으로만 열고, 화면을 좌우로 밀면 탭(오늘·달력·이번 주·전체 표·보드)을 넘긴다.
+// (1) 탭 넘기기: 왼쪽으로 밀면 다음 탭, 오른쪽으로 밀면 이전 탭(양 끝에서는 그대로). 손을 뗄 때 판정한다: 60px 이상, 가로가 세로의 1.8배 이상, 0.9초 안.
+//     입력칸·채팅 패널·가로로 스크롤되는 영역(탭 줄·보드 등)·다른 창이 열려 있을 때·화면 맨 끝 16px(iOS 뒤로 가기 제스처)에서 시작한 것과 프로필 탭에서는 무시한다.
+// (2) 열려 있는 메뉴를 왼쪽으로 밀어 닫는 것은 그대로다(손가락을 따라 메뉴가 같이 움직임).
+(function setupSwipes() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sbOverlay');
   const mq = window.matchMedia('(max-width: 900px)');
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
   const otherLayerOpen = () => ['peekPanel', 'drawerPanel'].some(id => document.getElementById(id).classList.contains('open'))
-    || ['cmdOverlay', 'aiModalOverlay', 'planOverlay'].some(id => document.getElementById(id).classList.contains('open'));
-  const OPEN_ZONE = 0.5;                       // 열기 스와이프를 받는 영역: 화면 폭의 왼쪽 절반
-  let g = null;
+    || ['cmdOverlay', 'aiModalOverlay', 'planOverlay', 'dlgOverlay'].some(id => document.getElementById(id).classList.contains('open'));
+  const inHScroll = (el) => {                  // 가로로 스크롤되는 영역 안에서 시작한 터치는 그 스크롤이 우선
+    for (let n = el; n && n !== document.body; n = n.parentElement) {
+      const ox = getComputedStyle(n).overflowX;
+      if ((ox === 'auto' || ox === 'scroll') && n.scrollWidth > n.clientWidth + 1) return true;
+    }
+    return false;
+  };
+  const EDGE = 16, MIN_DX = 60, RATIO = 1.8, MAX_MS = 900;
+  let g = null;                                // 메뉴 닫기 드래그
+  let tab = null;                              // 탭 넘기기 후보
 
   const setDrag = (progress) => {              // 0 = 닫힘, 1 = 열림
     sidebar.style.transition = 'none';
@@ -3827,46 +3835,56 @@ function closeSidebar() {
   };
 
   document.addEventListener('touchstart', (e) => {
-    g = null;
+    g = null; tab = null;
     if (!mq.matches || e.touches.length !== 1 || otherLayerOpen()) return;
     const t = e.touches[0];
-    // 입력칸 안쪽에서 시작한 터치는 글자 선택·커서 이동일 수 있어서 무시. 다만 맨 왼쪽 30px는 예외:
-    // 브라우저가 화면 가장자리 터치를 근처 입력칸으로 자동 보정하기 때문에, 입력칸이 있는 줄에서도 가장자리 스와이프가 되게 함.
-    if (e.target.closest && e.target.closest('input, textarea, select') && t.clientX > 30) return;
-    if (e.target.closest && e.target.closest('.chat-panel')) return;
-    const tabs = e.target.closest && e.target.closest('.tb-nav');
-    if (tabs && tabs.scrollWidth > tabs.clientWidth + 1) return;          // 가로로 스크롤되는 탭 줄은 스크롤이 우선
-    const open = sidebar.classList.contains('open');
-    if (!open && t.clientX > window.innerWidth * OPEN_ZONE) return;          // 메뉴 열기는 화면 왼쪽 절반에서 시작한 스와이프만 (사용자 요청)
-    const inEdge = t.clientX <= Math.max(40, Math.round(window.innerWidth * 0.22));
-    g = { mode: open ? 'close' : 'open', strict: !open && !inEdge, x0: t.clientX, y0: t.clientY, t0: Date.now(), locked: false, progress: open ? 1 : 0, last: t.clientX, w: sidebar.getBoundingClientRect().width || 280 };
+    if (sidebar.classList.contains('open')) {
+      g = { x0: t.clientX, y0: t.clientY, t0: Date.now(), locked: false, progress: 1, last: t.clientX, w: sidebar.getBoundingClientRect().width || 280 };
+      return;
+    }
+    if (viewMode === 'profile') return;
+    const el = e.target;
+    if (el.closest && el.closest('input, textarea, select, [contenteditable="true"], .chat-panel')) return;
+    if (inHScroll(el)) return;
+    if (t.clientX < EDGE || t.clientX > window.innerWidth - EDGE) return;
+    tab = { x0: t.clientX, y0: t.clientY, t0: Date.now() };
   }, { passive: true });
 
   document.addEventListener('touchmove', (e) => {
+    if (tab && e.touches.length !== 1) tab = null;
     if (!g) return;
     const t = e.touches[0];
     const dx = t.clientX - g.x0, dy = t.clientY - g.y0;
     if (!g.locked) {
       if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;          // 아직 방향을 알 수 없음
-      if (Math.abs(dy) > Math.abs(dx)) { g = null; return; }        // 세로 스크롤이면 무시
-      if ((g.mode === 'open' && dx <= 0) || (g.mode === 'close' && dx >= 0)) { g = null; return; }
-      if (g.strict && Math.abs(dx) < Math.abs(dy) * 1.5) { g = null; return; }   // 가장자리 밖에서는 뚜렷한 가로 방향만 인정
+      if (Math.abs(dy) > Math.abs(dx) || dx >= 0) { g = null; return; }   // 세로 스크롤이거나 오른쪽으로 미는 것이면 무시
       g.locked = true;
     }
     e.preventDefault();                                             // 가로로 밀 때는 화면이 같이 스크롤되지 않게
-    g.progress = g.mode === 'open' ? clamp(dx / g.w, 0, 1) : clamp(1 + dx / g.w, 0, 1);
+    g.progress = clamp(1 + dx / g.w, 0, 1);
     g.last = t.clientX;
     setDrag(g.progress);
   }, { passive: false });
 
-  const finish = () => {
+  const finish = (e) => {
+    if (tab) {
+      const c = tab; tab = null;
+      const t = e.changedTouches && e.changedTouches[0];
+      if (e.type === 'touchend' && t) {
+        const dx = t.clientX - c.x0, dy = t.clientY - c.y0;
+        if (Date.now() - c.t0 <= MAX_MS && Math.abs(dx) >= MIN_DX && Math.abs(dx) >= Math.abs(dy) * RATIO) {
+          const i = VIEW_ORDER.indexOf(viewMode), ni = i + (dx < 0 ? 1 : -1);
+          if (i >= 0 && ni >= 0 && ni < VIEW_ORDER.length) setViewMode(VIEW_ORDER[ni], true);
+        }
+      }
+    }
     if (!g) return;
     const cur = g; g = null;
     if (!cur.locked) return;
     const velocity = (cur.last - cur.x0) / Math.max(1, Date.now() - cur.t0);   // px/ms, 오른쪽이 +
-    const shouldOpen = cur.mode === 'open' ? (cur.progress > 0.35 || velocity > 0.5) : !(cur.progress < 0.65 || velocity < -0.5);
+    const stayOpen = cur.progress >= 0.65 && velocity >= -0.5;
     clearDrag();
-    if (shouldOpen) openSidebar(); else closeSidebar();
+    if (stayOpen) openSidebar(); else closeSidebar();
   };
   document.addEventListener('touchend', finish);
   document.addEventListener('touchcancel', finish);
