@@ -816,6 +816,20 @@
   .peek-time-clear, .peek-mini { border: none; background: transparent; color: var(--ink-dim); font-size: 0.74rem; padding: 3px 7px; border-radius: var(--radius); cursor: pointer; font-family: inherit; }
   .peek-time-clear:hover, .peek-mini:hover { background: var(--hover); color: var(--ink); }
 
+
+  /* v52: 체크리스트 단계의 날짜·소요, 카드의 다음 단계 */
+  .cl-main { min-width: 0; }
+  .cl-sub { display: flex; align-items: center; gap: 8px; padding: 0 6px 2px; }
+  .cl-due { border: 1px solid transparent; background: transparent; color: var(--ink-dim); font: inherit; font-size: 0.74rem; padding: 1px 4px; border-radius: var(--radius); }
+  .cl-due:hover { background: var(--hover); }
+  .cl-due.late { color: var(--danger); }
+  .cl-min { font-size: 0.72rem; color: var(--ink-faint); }
+  .next-step { display: flex; align-items: center; gap: 6px; margin-top: 3px; font-size: 0.78rem; color: var(--ink-dim); min-width: 0; }
+  .next-step .ic { width: 12px; height: 12px; flex-shrink: 0; }
+  .next-step .ns-label { flex-shrink: 0; font-weight: 600; }
+  .next-step .ns-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .next-step .ns-date { flex-shrink: 0; color: var(--ink-faint); }
+  .next-step.late .ns-date, .next-step.late .ns-label { color: var(--danger); }
   /* v51: 타이머 바 · 체크리스트 · 미루기 · 오늘 요약 */
   .timer-bar { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; padding: 9px 12px; background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 16px; font-size: 0.86rem; }
   .timer-bar[hidden] { display: none; }
@@ -1466,7 +1480,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v51';
+const APP_VERSION = 'v52';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2113,10 +2127,23 @@ function actualOptionsHtml(cur) {
 }
 function setItemActual(it, v) { const n = normActual(v); if (n) it.actualMin = n; else delete it.actualMin; }
 
-// 체크리스트: [{t: 글, d: 완료 여부}] 최대 30개
+// 체크리스트: [{t: 글, d: 완료 여부, due?: 목표 날짜, m?: 예상 분}] 최대 30개
 function normChecklist(arr) {
   if (!Array.isArray(arr)) return [];
-  return arr.map(x => ({ t: cleanText(x && x.t, 120), d: !!(x && x.d) })).filter(x => x.t).slice(0, 30);
+  return arr.map(x => {
+    const o = { t: cleanText(x && x.t, 120), d: !!(x && x.d) };
+    if (x && isValidISO(x.due)) o.due = x.due;            // 단계의 목표 날짜(AI 쪼개기가 채움)
+    const m = normDuration(x && x.m); if (m) o.m = m;      // 단계의 예상 소요(분)
+    return o;
+  }).filter(x => x.t).slice(0, 30);
+}
+// 날짜가 있는 체크리스트 단계 중 아직 안 끝난 가장 이른 단계를 카드에 보여 준다(AI 쪼개기로 만든 단계가 각자 날짜를 잃지 않게)
+function nextStepHtml(it) {
+  if (it.done) return '';
+  const next = normChecklist(it.checklist).filter(x => !x.d && x.due).sort((a, b) => a.due.localeCompare(b.due))[0];
+  if (!next) return '';
+  const late = next.due < todayISO();
+  return `<div class="next-step${late ? ' late' : ''}">${ic('arrow-right', 'ic sm')}<span class="ns-label">다음 단계</span><span class="ns-text">${escapeHtml(next.t)}</span><span class="ns-date">${formatShortDate(next.due)}</span></div>`;
 }
 function checkChipHtml(it) {
   const cl = normChecklist(it.checklist);
@@ -2444,6 +2471,7 @@ function renderItemRow(it, opts) {
     <div class="body">
       <div class="title ${it.done ? 'done' : ''}">${escapeHtml(it.title)}${it.recurringId ? `<span class="recurring-tag">${ic('repeat')}반복</span>` : ''}</div>
       <div class="meta">${dateLabel ? `<span>${dateLabel}</span>` : ''}${ddayHtml(it)}${timeChipHtml(it)}${checkChipHtml(it)}${aiBusyHtml(it)}<span class="type-tag t-${escapeHtml(it.type || '기타')}">${escapeHtml(it.type || '기타')}</span><span>우선순위 ${priorityLabel(it.priority)}</span></div>
+      ${nextStepHtml(it)}
       ${it.notes ? `<div class="notes">${escapeHtml(it.notes)}</div>` : ''}
       ${it.aiComment ? `<div class="ai-comment"><span class="icon">${ic('bulb')}</span><span>${escapeHtml(it.aiComment)}</span></div>` : ''}
       ${it.topicSuggestion ? `
@@ -4518,7 +4546,7 @@ function buildChecklistBox(it) {
   box.className = 'peek-checklist';
   const cl = normChecklist(it.checklist), n = cl.filter(x => x.d).length;
   box.innerHTML = `<div class="cl-head">${ic('checklist', 'ic sm')}체크리스트${cl.length ? `<span class="cl-count">${n}/${cl.length}</span>` : ''}</div>` +
-    cl.map((x, i) => `<div class="cl-row${x.d ? ' is-done' : ''}"><input type="checkbox" class="cl-check" data-i="${i}" ${x.d ? 'checked' : ''} aria-label="완료"><input type="text" class="cl-text" data-i="${i}" maxlength="120" value="${escapeHtml(x.t)}" aria-label="항목"><button type="button" class="cl-del" data-i="${i}" aria-label="항목 삭제">×</button></div>`).join('') +
+    cl.map((x, i) => `<div class="cl-row${x.d ? ' is-done' : ''}"><input type="checkbox" class="cl-check" data-i="${i}" ${x.d ? 'checked' : ''} aria-label="완료"><div class="cl-main"><input type="text" class="cl-text" data-i="${i}" maxlength="120" value="${escapeHtml(x.t)}" aria-label="항목">${x.due || x.m ? `<div class="cl-sub">${x.due ? `<input type="date" class="cl-due${!x.d && x.due < todayISO() ? ' late' : ''}" data-i="${i}" value="${x.due}" aria-label="단계 날짜">` : ''}${x.m ? `<span class="cl-min">${fmtDuration(x.m)}</span>` : ''}</div>` : ''}</div><button type="button" class="cl-del" data-i="${i}" aria-label="항목 삭제">×</button></div>`).join('') +
     (cl.length < 30 ? '<input type="text" class="cl-add" maxlength="120" placeholder="항목 추가 후 Enter" aria-label="체크리스트 항목 추가">' : '');
   const save = async (list, rerender) => {
     if (list.length) it.checklist = list; else delete it.checklist;
@@ -4537,6 +4565,11 @@ function buildChecklistBox(it) {
     const list = normChecklist(it.checklist), i = +inp.dataset.i, v = cleanText(inp.value, 120);
     if (v) list[i].t = v; else list.splice(i, 1);
     await save(list, !v);
+  }));
+  box.querySelectorAll('.cl-due').forEach(inp => inp.addEventListener('change', async () => {
+    const list = normChecklist(it.checklist), i = +inp.dataset.i;
+    if (isValidISO(inp.value)) list[i].due = inp.value; else delete list[i].due;
+    await save(list, true);
   }));
   box.querySelectorAll('.cl-del').forEach(b => b.addEventListener('click', async () => {
     const list = normChecklist(it.checklist); list.splice(+b.dataset.i, 1);
@@ -5419,7 +5452,7 @@ function showPlanError(msg, retry) {
   addPlanButton('닫기', 'btn-ghost', closePlanModal);
 }
 
-// (1) 큰 마감 쪼개기: 오늘~마감일 사이의 중간 단계를 제안 → 확인 창에서 고르고 고쳐서 별도 일정으로 추가(원래 일정은 그대로)
+// (1) 큰 마감 쪼개기: 오늘~마감일 사이의 중간 단계를 제안 → 확인 창에서 고르고 고쳐서 이 일정의 체크리스트에 넣는다(기본). 원하면 각 단계를 별도 일정으로 추가할 수도 있다.
 async function splitItemWithAI(it) {
   if (it.done) return;
   const left = daysUntil(it.dueDate);
@@ -5489,7 +5522,7 @@ ${topicBlock ? '\n' + topicBlock + '\n' : ''}
 function renderSplitReview(it, steps, tok) {
   const today = todayISO(), body = planEl('planBody');
   planEl('planActions').innerHTML = '';          // 로딩 중에 있던 취소 버튼을 비우고 다시 만든다(안 비우면 취소가 두 개 됨)
-  body.innerHTML = '<div class="plan-sub">추가할 단계를 고르고 제목·날짜를 고칠 수 있습니다. 원래 일정은 그대로 남습니다.</div>';
+  body.innerHTML = '<div class="plan-sub">넣을 단계를 고르고 제목·날짜를 고칠 수 있습니다. 체크리스트는 이 일정 안에 담기고, 별도 일정은 각 날짜에 따로 보입니다.</div>';
   const rows = steps.map((s) => {
     const row = document.createElement('div'); row.className = 'plan-step';
     row.dataset.min = s.min || 0;
@@ -5498,16 +5531,36 @@ function renderSplitReview(it, steps, tok) {
   });
   const others = {}; items.forEach(x => { if (x.id !== it.id && !x.done) others[x.dueDate] = (others[x.dueDate] || 0) + 1; });
   const addBtn = addPlanButton('추가', 'btn-main', () => {});
+  const sepBtn = addPlanButton('별도 일정으로 추가', 'btn-ghost', () => {});
   const read = () => rows.filter(r => r.querySelector('.ps-chk').checked).map(r => ({ title: cleanText(r.querySelector('.ps-title').value, 60), date: r.querySelector('.ps-date').value, min: normDuration(r.dataset.min), note: r.querySelector('.ps-note').textContent })).filter(x => x.title && isValidISO(x.date) && x.date >= today && x.date <= it.dueDate);
   const refresh = () => {
     const chosen = rows.filter(r => r.querySelector('.ps-chk').checked);
     const perDay = {}; chosen.forEach(r => { const d = r.querySelector('.ps-date').value; perDay[d] = (perDay[d] || 0) + 1; });
     rows.forEach(r => { const d = r.querySelector('.ps-date').value, n = (others[d] || 0) + (perDay[d] || 0) - (r.querySelector('.ps-chk').checked ? 1 : 0); r.querySelector('.plan-warn').textContent = n >= 3 ? `이 날 이미 ${n}건 있습니다` : ''; r.style.opacity = r.querySelector('.ps-chk').checked ? '' : '0.5'; });
-    const n = read().length; addBtn.textContent = n ? `선택한 ${n}건 추가` : '추가할 단계를 골라야 합니다'; addBtn.disabled = n === 0;
+    const n = read().length; addBtn.textContent = n ? `선택한 ${n}건 체크리스트에 추가` : '추가할 단계를 골라야 합니다'; addBtn.disabled = n === 0; sepBtn.disabled = n === 0;
   };
   rows.forEach(r => r.addEventListener('input', refresh)); rows.forEach(r => r.addEventListener('change', refresh));
   refresh();
   addBtn.onclick = async () => {
+    if (tok !== planToken) return;
+    const chosen = read(); if (!chosen.length) return;
+    const cur = normChecklist(it.checklist), norm = (x) => String(x || '').replace(/\s+/g, '').toLowerCase();
+    const have = new Set(cur.map(x => norm(x.t)));
+    const fresh = chosen.filter(x => !have.has(norm(x.title)));
+    const add = fresh.slice(0, Math.max(0, 30 - cur.length));
+    if (!add.length) { planEl('planStatus').className = 'status err'; planEl('planStatus').textContent = fresh.length ? '체크리스트는 30개까지 담을 수 있습니다' : '선택한 단계가 이미 체크리스트에 들어 있습니다'; return; }
+    const prev = it.checklist ? JSON.parse(JSON.stringify(it.checklist)) : null;
+    it.checklist = cur.concat(add.map(x => { const o = { t: x.title, d: false, due: x.date }; if (x.min) o.m = x.min; return normChecklist([o])[0]; }).filter(Boolean));
+    await saveItems(); refreshAll(); closePlanModal();
+    if (peekId === it.id) renderPeek();
+    const skipped = chosen.length - add.length;
+    showToast(`체크리스트에 ${add.length}개를 추가했습니다${skipped ? ` (${skipped}개는 중복이거나 한도라 제외)` : ''}`, '되돌리기', async () => {
+      if (!items.includes(it)) return;
+      if (prev) it.checklist = prev; else delete it.checklist;
+      await saveItems(); refreshAll(); if (peekId === it.id) renderPeek();
+    }, 7000);
+  };
+  sepBtn.onclick = async () => {
     if (tok !== planToken) return;
     const chosen = read(); if (!chosen.length) return;
     const created = chosen.map(s => ({ id: uid(), title: s.title, shortLabel: '', type: it.type || '기타', dueDate: s.date, priority: it.priority || 'medium', notes: `「${it.title}」의 단계` + (s.note ? ' · ' + s.note : ''), aiComment: '', topicSuggestion: '', topicKeyword: '', done: false, ...(s.min ? { durationMin: s.min, durationAi: s.min } : {}) }));
