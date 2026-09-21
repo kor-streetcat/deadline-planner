@@ -438,11 +438,11 @@
   .quick-opts-inner { margin-top: 10px; padding: 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--sidebar); opacity: 0; transform: translateY(-6px); transition: opacity 0.3s var(--ease-out), transform 0.42s var(--ease-out); }
   .quick-opts.open .quick-opts-inner { opacity: 1; transform: none; transition-delay: 0.05s; }
   /* 정리 중 칸: 먼저 접수된 글이 AI 정리를 기다리는 곳, 날짜를 못 찾은 항목이 날짜를 받는 곳 */
-  .pending-lane { margin-top: 10px; display: grid; gap: 6px; }
+  .pending-lane { margin-top: 10px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }   /* minmax(0,1fr): 긴 글이 칸을 화면 밖으로 밀어 페이지가 가로로 넓어지는 것을 막음 */
   .pending-lane[hidden] { display: none; }
   .pending-head { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 600; color: var(--ink-dim); padding: 0 4px; }
   .pending-head .pending-note { font-weight: 400; margin-left: auto; font-size: 0.72rem; }
-  .pending-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--sidebar); font-size: 0.86rem; animation: riseIn 0.4s var(--ease-out); }
+  .pending-row { min-width: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--sidebar); font-size: 0.86rem; animation: riseIn 0.4s var(--ease-out); }
   .pending-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; animation: planPulse 1.2s ease-in-out infinite; }
   .pending-row.failed .pending-dot { background: var(--danger); animation: none; }
   .pending-text { flex: 1 1 140px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -796,6 +796,9 @@
   .peek-title { width: 100%; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.01em; border: 1px solid transparent; background: transparent; border-radius: var(--radius); padding: 4px 6px; margin: 0 0 10px -6px; }
   .peek-title:hover { background: var(--hover); }
   .peek-title:focus { background: var(--bg); }
+  .peek-ai-busy { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 12px; padding: 9px 12px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); font-size: 0.8rem; line-height: 1.45; }
+  .peek-ai-busy .pending-dot { margin-top: 5px; }
+  .peek-ai-busy span:last-child { word-break: keep-all; overflow-wrap: anywhere; }
   .peek-row { display: grid; grid-template-columns: 84px 1fr; align-items: center; gap: 8px; padding: 4px 0; }
   .peek-key { font-size: 0.8rem; color: var(--ink-dim); }
   .peek-row input[type="date"] { border: 1px solid transparent; background: transparent; border-radius: var(--radius); font-size: 0.86rem; padding: 4px 6px; justify-self: start; }
@@ -919,6 +922,9 @@
 
   /* ===== 되돌리기 알림 ===== */
   .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translate(-50%, 16px); opacity: 0; visibility: hidden; background: var(--ink); color: var(--bg); padding: 10px 14px; border-radius: 14px; box-shadow: 0 8px 28px rgba(0,0,0,0.25); display: flex; align-items: center; gap: 14px; font-size: 0.86rem; z-index: 90; max-width: calc(100vw - 32px); transition: opacity 0.35s var(--ease-out), transform 0.4s var(--ease-out), visibility 0.35s var(--ease-out); }
+  /* 폭: left:50%에 걸린 상자는 기본으로 화면 절반까지만 넓어져서 글자가 반쪽 폭에서 줄바꿈됐다 → 내용 폭(max-content)으로 잡고 화면 폭에서 여백만 뺀다 */
+  .toast { width: max-content; max-width: min(440px, calc(100vw - 32px)); line-height: 1.45; }
+  .toast > span { flex: 1; min-width: 0; word-break: keep-all; overflow-wrap: anywhere; text-wrap: pretty; }
   .toast.show { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
   .toast button { background: transparent; color: var(--toast-action); font-weight: 700; padding: 2px 4px; white-space: nowrap; }
   @media (max-width: 480px) {
@@ -928,6 +934,9 @@
   /* ===== 앱처럼 느껴지게: 더블탭 확대와, 길게 눌러 글자 선택·복사 메뉴가 뜨는 것을 끔 ===== */
   /* manipulation: 이동·핀치 확대는 그대로 두고 "두 번 눌러 확대"만 막음. 빠르게 두 번 누르는 클릭은 그대로 두 번 인식됨. */
   * { touch-action: manipulation; }
+  /* 폰 레이아웃(≤900px)에서 페이지 자체는 세로로만 스크롤하게 해서, 가로로 미는 손짓(탭 넘기기)을 브라우저가 스크롤로 가로채 touchcancel로 끊지 않게 한다.
+     가로로 스크롤되는 상자(탭 줄 등)는 자기 touch-action(manipulation)으로 계속 가로 스크롤된다. 두 번 눌러 확대는 여기서도 꺼져 있다. */
+  @media (max-width: 900px) { html, body { touch-action: pan-y pinch-zoom; } }
   /* 터치 기기에서만: 마우스를 쓰는 컴퓨터에서는 글자 선택이 그대로 됨. 입력칸은 글자를 쓰고 붙여넣어야 하므로 예외. */
   @media (hover: none) and (pointer: coarse) {
     html, body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
@@ -1388,7 +1397,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v43';
+const APP_VERSION = 'v44';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -3277,6 +3286,14 @@ function readLocalPlan(text) {
 function aiBusyHtml(it) { return enrichingIds.has(it.id) ? '<span class="ai-busy">AI 정리 중…</span>' : ''; }
 
 // 등록이 끝났을 때 화면 아래에 뜨는 "등록 완료" 알림(6초, 되돌리기 포함). 입력창 밑의 작은 상태 글만으로는 눈에 안 띄어서 넣었다.
+// 상세 패널이 열려 있는 일정을 AI가 다 채웠을 때 패널을 다시 그린다. 그 패널에서 글을 쓰는 중이면 손을 뗄 때까지 미룬다(쓰던 글이 사라지지 않게).
+function refreshPeekAfterAI(ids) {
+  if (!peekId || !ids.includes(peekId)) return;
+  const id = peekId, body = document.getElementById('peekBody'), a = document.activeElement;
+  if (a && body.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) {
+    body.addEventListener('focusout', () => setTimeout(() => { if (peekId === id) renderPeek(); }, 50), { once: true });
+  } else renderPeek();
+}
 function announceRegistered(ids, extra) {
   const list = ids.map(id => items.find(x => x.id === id)).filter(Boolean);
   if (!list.length) return;
@@ -3319,7 +3336,7 @@ function enqueueEnrich(ctx) {
 }
 async function runEnrich(ctx) {
   const statusEl = document.getElementById('status');
-  const finish = () => { ctx.ids.forEach(id => enrichingIds.delete(id)); };
+  const finish = () => { ctx.ids.forEach(id => enrichingIds.delete(id)); refreshPeekAfterAI(ctx.ids); };
   if (ctx.cancelled) { finish(); return { ok: false, cancelled: true }; }
   try {
     const lines = ctx.plan.map((p, i) => `${i + 1}. 원문: ${p.raw} | 읽은 날짜: ${p.date}${p.time ? ' ' + p.time : ''}`).join('\n');
@@ -3816,7 +3833,7 @@ function closeSidebar() {
   document.getElementById('sbOverlay').classList.remove('open');
 }
 // 모바일 스와이프(v42, 사용자 요청): 메뉴는 ☰ 버튼으로만 열고, 화면을 좌우로 밀면 탭(오늘·달력·이번 주·전체 표·보드)을 넘긴다.
-// (1) 탭 넘기기: 왼쪽으로 밀면 다음 탭, 오른쪽으로 밀면 이전 탭(양 끝에서는 그대로). 손을 뗄 때 판정한다: 60px 이상, 가로가 세로의 1.8배 이상, 0.9초 안.
+// (1) 탭 넘기기: 왼쪽으로 밀면 다음 탭, 오른쪽으로 밀면 이전 탭(양 끝에서는 그대로). 손을 뗄 때 판정한다: 가로가 세로의 1.3배 이상이고 1.2초 안에 40px 이상(또는 22px 이상을 0.35px/ms 넘는 속도로 튕기기). 처음(v42)에는 60px·1.8배·0.9초라 신경 써서 밀어야 해서 완화했다.
 //     입력칸·채팅 패널·가로로 스크롤되는 영역(탭 줄·보드 등)·다른 창이 열려 있을 때·화면 맨 끝 16px(iOS 뒤로 가기 제스처)에서 시작한 것과 프로필 탭에서는 무시한다.
 // (2) 열려 있는 메뉴를 왼쪽으로 밀어 닫는 것은 그대로다(손가락을 따라 메뉴가 같이 움직임).
 (function setupSwipes() {
@@ -3833,7 +3850,7 @@ function closeSidebar() {
     }
     return false;
   };
-  const EDGE = 16, MIN_DX = 60, RATIO = 1.8, MAX_MS = 900;
+  const EDGE = 12, MIN_DX = 40, RATIO = 1.3, MAX_MS = 1200, FLICK_DX = 22, FLICK_V = 0.35;   // 편하게: 40px 이상이거나 짧아도 빠르게 튕기면(22px·0.35px/ms) 넘김
   let g = null;                                // 메뉴 닫기 드래그
   let tab = null;                              // 탭 넘기기 후보
 
@@ -3887,7 +3904,8 @@ function closeSidebar() {
       const t = e.changedTouches && e.changedTouches[0];
       if (e.type === 'touchend' && t) {
         const dx = t.clientX - c.x0, dy = t.clientY - c.y0;
-        if (Date.now() - c.t0 <= MAX_MS && Math.abs(dx) >= MIN_DX && Math.abs(dx) >= Math.abs(dy) * RATIO) {
+        const dt = Math.max(1, Date.now() - c.t0), horizontal = Math.abs(dx) >= Math.abs(dy) * RATIO;
+        if (horizontal && dt <= MAX_MS && (Math.abs(dx) >= MIN_DX || (Math.abs(dx) >= FLICK_DX && Math.abs(dx) / dt >= FLICK_V))) {
           const i = VIEW_ORDER.indexOf(viewMode), ni = i + (dx < 0 ? 1 : -1);
           if (i >= 0 && ni >= 0 && ni < VIEW_ORDER.length) setViewMode(VIEW_ORDER[ni], true);
         }
@@ -4109,6 +4127,7 @@ function renderPeek() {
   if (!it) { closePeek(); return; }
   const type = it.type || '기타';
   body.innerHTML = `
+    ${enrichingIds.has(it.id) ? '<div class="peek-ai-busy" role="status"><span class="pending-dot"></span><span>AI가 이어서 정리하는 중이야. 끝나면 유형·우선순위·메모·예상시간이 채워져.</span></div>' : ''}
     <input type="text" class="peek-title" value="${escapeHtml(it.title)}" aria-label="제목">
     <div class="peek-row"><span class="peek-key">마감일</span><input type="date" class="peek-date" value="${it.dueDate}"></div>
     <div class="peek-row"><span class="peek-key">마감 시각</span><span class="peek-time-wrap"><input type="time" class="peek-time" value="${normTime(it.dueTime)}" aria-label="마감 시각(선택)">${it.dueTime ? '<button type="button" class="peek-time-clear" aria-label="시각 지우기">지우기</button>' : ''}</span></div>
