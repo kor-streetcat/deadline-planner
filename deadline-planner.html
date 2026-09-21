@@ -711,7 +711,6 @@
   .reference-card .ref-del:hover { color: var(--danger); }
   .reference-card .ref-del.restore-btn { color: var(--accent); font-weight: 500; }
   .reference-card .ref-del.perm-btn { margin-left: 2px; }
-  .reference-card .ref-del.armed, .trash-empty-btn.armed { color: var(--danger); font-weight: 600; }
   .trash-head { display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem; color: var(--ink-dim); margin-bottom: 6px; }
   .trash-empty-btn { border: none; background: none; color: var(--ink-faint); font: inherit; font-size: 0.78rem; padding: 3px 6px; border-radius: var(--radius); cursor: pointer; }
   .trash-empty-btn:hover { color: var(--danger); background: var(--hover); }
@@ -719,6 +718,19 @@
   .reference-card .ref-summary { font-size: 0.74rem; color: var(--ink-dim); margin-top: 4px; white-space: pre-wrap; }
   
   /* ===== AI 복사·붙여넣기 모달 ===== */
+  /* 확인 창(애플 스타일): 가운데 둥근 카드에 안내 문구, 그 아래 큰 알약 버튼이 세로로 쌓인다. 위험한 동작은 빨간 글자, 취소는 맨 아래 */
+  .dlg-overlay { position: fixed; inset: 0; z-index: 95; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(15,15,15,0.32); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .dlg-overlay.open { display: flex; animation: fadeIn 0.25s var(--ease-out); }
+  .dlg { width: min(340px, 100%); background: var(--sidebar); border: 1px solid var(--border); border-radius: 28px; box-shadow: 0 18px 60px rgba(0,0,0,0.28); padding: 24px 16px 16px; }
+  .dlg-overlay.open .dlg { animation: dlgIn 0.38s var(--ease-out); }
+  @keyframes dlgIn { from { opacity: 0; transform: scale(0.92) translateY(10px); } to { opacity: 1; transform: none; } }
+  .dlg-msg { margin: 0 8px 20px; font-size: 1.02rem; line-height: 1.55; color: var(--ink); white-space: pre-line; word-break: keep-all; overflow-wrap: anywhere; }
+  .dlg-actions { display: flex; flex-direction: column; gap: 8px; }
+  .dlg-btn { width: 100%; min-height: 50px; padding: 0 16px; border: none; border-radius: 999px; background: var(--hover); color: var(--ink); font: inherit; font-size: 1rem; font-weight: 500; cursor: pointer; transition: background 0.2s var(--ease-out), transform 0.2s var(--ease-out); }
+  .dlg-btn:hover { background: var(--border); }
+  .dlg-btn:active { transform: scale(0.98); }
+  .dlg-btn.destructive { color: var(--danger); }
+  .dlg-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .ai-modal-overlay { position: fixed; inset: 0; background: rgba(15,15,15,0.4); z-index: 70; display: none; align-items: center; justify-content: center; padding: 16px; }
   .ai-modal-overlay.open { display: flex; }
   .ai-modal { background: var(--bg); border-radius: 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.2); width: min(520px, 100%); max-height: 92vh; overflow-y: auto; padding: 18px; }
@@ -1283,6 +1295,13 @@
   </div>
 </div>
 
+<div id="dlgOverlay" class="dlg-overlay" aria-hidden="true">
+  <div class="dlg" role="alertdialog" aria-modal="true" aria-describedby="dlgMsg">
+    <p class="dlg-msg" id="dlgMsg"></p>
+    <div class="dlg-actions" id="dlgActions"></div>
+  </div>
+</div>
+
 <div id="planOverlay" class="ai-modal-overlay">
   <div class="ai-modal plan-modal" role="dialog" aria-modal="true" aria-labelledby="planTitle">
     <h3 id="planTitle"></h3>
@@ -1369,7 +1388,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v40';
+const APP_VERSION = 'v41';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -1578,15 +1597,55 @@ function renderReferenceList() {
   });
 }
 
-// 되돌릴 수 없는 버튼은 두 번 눌러야 실행된다(첫 번째는 문구가 바뀌고, 3.5초 안에 다시 누르면 실행, 아니면 원래대로). confirm 창은 iOS 홈 화면 앱에서 거슬려서 쓰지 않는다.
-function armButton(btn, armedLabel, run) {
-  const label = btn.textContent;
-  let timer = null;
-  btn.addEventListener('click', async () => {
-    if (btn.dataset.armed === '1') { clearTimeout(timer); btn.disabled = true; await run(); return; }
-    btn.dataset.armed = '1'; btn.textContent = armedLabel; btn.classList.add('armed');
-    timer = setTimeout(() => { btn.dataset.armed = ''; btn.textContent = label; btn.classList.remove('armed'); }, 3500);
+// 확인 창(애플 스타일): 브라우저 기본 confirm() 대신 앱 안의 창을 쓴다(iOS 홈 화면 앱·Mac 앱에서도 똑같이 보임).
+// actions: [{label, value, kind: 'destructive'|'default'|'cancel'}]. 값(value)을 돌려주고, Esc·바깥 누르기는 cancel 항목의 값(없으면 null)이다.
+// 처음 포커스는 취소 버튼(실수로 Enter를 눌러도 지워지지 않게).
+let dlgFinish = null;
+function askDialog({ message, actions }) {
+  return new Promise((resolve) => {
+    if (dlgFinish) dlgFinish(null);
+    const ov = document.getElementById('dlgOverlay'), msg = document.getElementById('dlgMsg'), acts = document.getElementById('dlgActions');
+    const prevFocus = document.activeElement;
+    const cancelAct = actions.find(a => a.kind === 'cancel');
+    const cancelValue = cancelAct ? cancelAct.value : null;
+    let done = false;
+    const onKey = (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); finish(cancelValue); }
+      else if (e.key === 'Tab') {
+        e.preventDefault();
+        const bs = [...acts.children], i = bs.indexOf(document.activeElement);
+        bs[(i + (e.shiftKey ? -1 : 1) + bs.length) % bs.length].focus();
+      }
+    };
+    function finish(v) {
+      if (done) return;
+      done = true; dlgFinish = null;
+      ov.classList.remove('open'); ov.setAttribute('aria-hidden', 'true'); ov.onclick = null;
+      document.removeEventListener('keydown', onKey, true);
+      try { if (prevFocus && prevFocus.focus) prevFocus.focus({ preventScroll: true }); } catch (e) {}
+      resolve(v);
+    }
+    msg.textContent = message;
+    acts.textContent = '';
+    actions.forEach(a => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'dlg-btn ' + (a.kind || 'default'); b.dataset.kind = a.kind || 'default'; b.textContent = a.label;
+      b.addEventListener('click', () => finish(a.value));
+      acts.appendChild(b);
+    });
+    ov.onclick = (e) => { if (e.target === ov) finish(cancelValue); };
+    document.addEventListener('keydown', onKey, true);
+    dlgFinish = finish;
+    ov.classList.add('open'); ov.setAttribute('aria-hidden', 'false');
+    (acts.querySelector('.cancel') || acts.firstElementChild).focus({ preventScroll: true });
   });
+}
+function confirmDialog(message, opts) {
+  opts = opts || {};
+  return askDialog({ message, actions: [
+    { label: opts.confirmLabel || '확인', value: true, kind: opts.destructive === false ? 'default' : 'destructive' },
+    { label: opts.cancelLabel || '취소', value: false, kind: 'cancel' }
+  ] });
 }
 function renderTrashList() {
   const container = document.getElementById('trashList');
@@ -1602,7 +1661,9 @@ function renderTrashList() {
   const head = document.createElement('div');
   head.className = 'trash-head';
   head.innerHTML = `<span>${trashedItems.length}건</span><button class="trash-empty-btn" type="button">휴지통 비우기</button>`;
-  armButton(head.querySelector('.trash-empty-btn'), `${trashedItems.length}건 모두 삭제할까?`, async () => {
+  head.querySelector('.trash-empty-btn').addEventListener('click', async () => {
+    const synced = lastCloud.state !== 'off', count = trashedItems.length;
+    if (!(await confirmDialog(`휴지통의 ${count}건이 ${synced ? '모든 기기에서 ' : ''}완전히 삭제돼. 되돌릴 수 없어.`, { confirmLabel: synced ? '모든 기기에서 삭제' : '모두 삭제' }))) return;
     const n = await deleteFromTrash(trashedItems.map(x => x.id));
     renderTrashList();
     showToast(`${n}건을 완전히 삭제했어`);
@@ -1628,7 +1689,9 @@ function renderTrashList() {
         renderTrashList();
         refreshAll();
       });
-      armButton(card.querySelector('.perm-btn'), '정말 삭제?', async () => {
+      card.querySelector('.perm-btn').addEventListener('click', async () => {
+        const synced = lastCloud.state !== 'off', t = cleanText(it.title, 40);
+        if (!(await confirmDialog(`"${t}" 일정이 ${synced ? '모든 기기에서 ' : ''}완전히 삭제돼. 되돌릴 수 없어.`, { confirmLabel: synced ? '모든 기기에서 삭제' : '삭제' }))) return;
         await deleteFromTrash([it.id]);
         renderTrashList();
         showToast('완전히 삭제했어');
@@ -2275,8 +2338,13 @@ ${referenceContext}
 async function deleteItemWithGroupCheck(it) {
   let moved;
   if (it.recurringId) {
-    const wholeSeries = confirm('이 일정은 반복 시리즈의 일부야. 전체 시리즈를 삭제할까? (취소하면 이 항목만 삭제됨)');
-    if (wholeSeries) {
+    const choice = await askDialog({ message: '이 일정은 반복 시리즈의 일부야. 어떻게 삭제할까?\n(휴지통으로 이동돼서 나중에 복구할 수 있어)', actions: [
+      { label: '시리즈 전체 삭제', value: 'all', kind: 'destructive' },
+      { label: '이 항목만 삭제', value: 'one', kind: 'default' },
+      { label: '취소', value: null, kind: 'cancel' }
+    ] });
+    if (!choice) return [];                                   // 취소: 아무것도 지우지 않음
+    if (choice === 'all') {
       moved = items.filter(x => x.recurringId === it.recurringId);
       items = items.filter(x => x.recurringId !== it.recurringId);
     } else {
@@ -2680,7 +2748,7 @@ document.getElementById('bulkCompleteBtn').addEventListener('click', async () =>
 
 document.getElementById('bulkDeleteBtn').addEventListener('click', async () => {
   if (!selectedIds.size) return;
-  const ok = confirm(`선택한 ${selectedIds.size}건을 삭제할까? (휴지통으로 이동돼서 나중에 복구 가능)`);
+  const ok = await confirmDialog(`선택한 ${selectedIds.size}건을 삭제할까?\n휴지통으로 이동돼서 나중에 복구할 수 있어.`, { confirmLabel: '삭제' });
   if (!ok) return;
   const toTrash = items.filter(it => selectedIds.has(it.id));
   items = items.filter(it => !selectedIds.has(it.id));
@@ -4087,6 +4155,7 @@ function renderPeek() {
   if (splitBtn) splitBtn.addEventListener('click', () => splitItemWithAI(it));
   q('#peekDelBtn').addEventListener('click', async () => {
     const moved = await deleteItemWithGroupCheck(it);
+    if (!moved.length) return;                                // 시리즈 삭제 창에서 취소함
     closePeek();
     renderTrashList();
     refreshAll();
@@ -4564,7 +4633,7 @@ document.getElementById('syncResetBtn').addEventListener('click', () => syncAuth
 document.getElementById('syncPassword').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) syncAuthAction('login'); });
 document.getElementById('syncLogoutBtn').addEventListener('click', async () => {
   if (!requireCloud()) return;
-  const ok = confirm('로그아웃하면 이 기기에 저장된 일정과 API 키를 지워. (내 계정에는 그대로 남아 있고, 다시 로그인하면 돌아와)\n\n계속할까?');
+  const ok = await confirmDialog('로그아웃하면 이 기기에 저장된 일정과 API 키를 지워.\n내 계정에는 그대로 남아 있고, 다시 로그인하면 돌아와.', { confirmLabel: '로그아웃' });
   if (!ok) return;
   syncSetStatus('로그아웃 중…');
   try {
