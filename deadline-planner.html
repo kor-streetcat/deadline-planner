@@ -233,6 +233,12 @@
   .sb-brand .ic { width: 1.35rem; height: 1.35rem; color: var(--accent); }
   .sb-label { font-size: 0.7rem; font-weight: 600; color: var(--ink-faint); padding: 14px 8px 4px; letter-spacing: 0.02em; }
   .sb-item .ic { width: 18px; height: 18px; }
+  .sb-profile { display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px 8px; margin-bottom: 6px; border: none; background: transparent; border-radius: var(--radius); text-align: left; cursor: pointer; font-family: inherit; color: var(--ink); transition: background 0.2s var(--ease-out); }
+  .sb-profile:hover { background: var(--hover); }
+  .sb-profile.active { background: var(--hover); }
+  .sb-profile .sbp-text { display: flex; flex-direction: column; min-width: 0; }
+  .sb-profile .sbp-name { font-size: 0.86rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sb-profile .sbp-sub { font-size: 0.7rem; color: var(--ink-dim); }
   .sb-item {
     display: flex;
     align-items: center;
@@ -307,6 +313,10 @@
     /* 노션식: 왼쪽 동그란 프로필 버튼 + 화면 선택 알약들(지금 화면만 이름이 펼쳐지고 나머지는 아이콘만) */
     .tb-avatar { flex-shrink: 0; width: 40px; height: 40px; padding: 0; border-radius: 50%; border: 1px solid var(--border); background: var(--hover); color: var(--ink-dim); font-size: 1rem; font-weight: 600; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
     .tb-avatar:active { transform: scale(0.94); }
+    .tb-menu { flex-shrink: 0; width: 40px; height: 40px; padding: 0; border-radius: 14px; border: none; background: var(--sidebar); color: var(--ink-dim); display: flex; align-items: center; justify-content: center; }
+    .tb-menu .ic { width: 22px; height: 22px; }
+    .tb-menu:active { transform: scale(0.94); background: var(--hover); }
+    .tb-avatar .ic { width: 20px; height: 20px; }
     .tb-nav { flex: 1; min-width: 0; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
     .tb-nav::-webkit-scrollbar { display: none; }
     .tb-pill { flex-shrink: 0; height: 40px; min-width: 40px; padding: 0 9px; border-radius: 14px; border: none; background: var(--sidebar); color: var(--ink-dim); display: flex; align-items: center; justify-content: center; font-size: 0.92rem; font-weight: 600; transition: background-color 0.3s var(--ease-out), color 0.3s var(--ease-out), padding 0.32s var(--ease-out), transform 0.25s var(--ease-out); }
@@ -318,6 +328,16 @@
     .tb-pill.active .tb-label { grid-template-columns: 1fr; opacity: 1; margin-left: 7px; transition: grid-template-columns 0.46s var(--ease-out), opacity 0.32s ease 0.06s, margin 0.46s var(--ease-out); }
     @media (hover: hover) { .tb-pill:not(.active):hover { background: var(--hover); } }
     .tb-pill:not(.active):active { background: var(--hover); transform: scale(0.94); }
+    /* 좁은 폰(≤420px): ☰ 버튼 + 화면 알약 5개 + 프로필 버튼이 한 줄에 들어오도록 조금 줄임 */
+    @media (max-width: 420px) {
+      .topbar { gap: 6px; }
+      .tb-menu, .tb-avatar { width: 36px; height: 36px; }
+      .tb-menu { border-radius: 12px; }
+      .tb-pill { height: 36px; min-width: 36px; padding: 0 6px; border-radius: 12px; }
+      .tb-pill.active { padding: 0 11px 0 9px; }
+      .tb-pill svg { width: 20px; height: 20px; }
+      .tb-nav { gap: 4px; }
+    }
     /* 화면이 바뀔 때 새 내용이 눌린 알약 쪽 방향에서 옆으로 밀려 들어옴 */
     @keyframes viewInR { 0% { opacity: 0; transform: translateX(28px); } 55% { opacity: 1; } 100% { opacity: 1; transform: none; } }
     @keyframes viewInL { 0% { opacity: 0; transform: translateX(-28px); } 55% { opacity: 1; } 100% { opacity: 1; transform: none; } }
@@ -364,6 +384,32 @@
     resize: vertical;
   }
   textarea:focus, input:focus, select:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+
+  /* 프로필 탭: 계정·동기화·AI 설정·문제 기록을 모은 화면 (프로필 버튼이 연다) */
+  .pf-head { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .pf-title { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; margin: 0; }
+  .pf-back { width: 36px; height: 36px; padding: 0; border: none; background: transparent; border-radius: var(--radius); color: var(--ink-dim); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s var(--ease-out); }
+  .pf-back:hover { background: var(--hover); }
+  .pf-back .ic { width: 20px; height: 20px; }
+  .pf-card { display: flex; align-items: center; gap: 14px; padding: 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--sidebar); margin-bottom: 8px; }
+  .pf-avatar { flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem; font-weight: 700; }
+  .pf-avatar .ic { width: 18px; height: 18px; }
+  .pf-avatar.lg { width: 56px; height: 56px; font-size: 1.4rem; }
+  .pf-avatar.lg .ic { width: 28px; height: 28px; }
+  .pf-info { flex: 1; min-width: 0; }
+  .pf-name { font-size: 1rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pf-sub { font-size: 0.78rem; color: var(--ink-dim); margin-top: 2px; }
+  .pf-action { flex-shrink: 0; }
+  .pf-rows { display: grid; gap: 2px; margin-bottom: 26px; }
+  .pf-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: none; background: transparent; border-radius: var(--radius); font-size: 0.9rem; color: var(--ink); text-align: left; cursor: pointer; font-family: inherit; transition: background 0.2s var(--ease-out); }
+  .pf-row:hover { background: var(--hover); }
+  .pf-row.static { cursor: default; color: var(--ink-dim); }
+  .pf-row.static:hover { background: transparent; }
+  .pf-row .ic { width: 18px; height: 18px; color: var(--ink-dim); flex-shrink: 0; }
+  #profileView .drawer-section { margin-bottom: 14px; }
+  #profileView .drawer-group-label { border-top: none; padding-top: 6px; margin: 14px 0 6px; }
+  /* 프로필 화면에서는 일정 입력·요약이 필요 없으니 숨김 */
+  body.view-profile .page-title, body.view-profile .page-sub, body.view-profile #summaryBanner, body.view-profile .quick-wrap, body.view-profile #status, body.view-profile #pendingLane { display: none; }
 
   /* ===== 빠른 입력 + 새 일정 카드 ===== */
   .quick-bar {
@@ -898,6 +944,9 @@
 <symbol id="i-library" viewBox="0 0 24 24"><path d="M12 6.5C10.3 5.2 8 4.7 4.5 4.7v12.6c3.5 0 5.8.5 7.5 1.8 1.7-1.3 4-1.8 7.5-1.8V4.7c-3.5 0-5.8.5-7.5 1.8z"/><path d="M12 6.5v12.6"/></symbol>
 <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l.8 12a1.5 1.5 0 0 0 1.5 1.5h6.4a1.5 1.5 0 0 0 1.5-1.5l.8-12M10 11v6M14 11v6"/></symbol>
 <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18.5a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 17.9 9.6 4.5 4.5 0 0 1 17 18.5z"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.8 19.5c1-3.6 3.9-5.4 7.2-5.4s6.2 1.8 7.2 5.4"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4.5 7h15M4.5 12h15M4.5 17h15"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 6 8.5 12l6 6"/></symbol>
 <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M11 4l1.9 5.1L18 11l-5.1 1.9L11 18l-1.9-5.1L4 11l5.1-1.9z"/><path d="M19 16v4M17 18h4"/></symbol>
 <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></symbol>
 <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
@@ -918,6 +967,7 @@
 
 <aside id="sidebar" class="sidebar">
   <div class="sb-brand"><svg class="ic" aria-hidden="true"><use href="#i-notebook"/></svg><span>Δuenoτe</span><button class="sb-collapse" id="sbCollapseBtn" aria-label="사이드바 접기" title="사이드바 접기 (⌘\)"><svg class="ic" aria-hidden="true"><use href="#i-panel-left-close"/></svg></button></div>
+  <button class="sb-profile" id="sbProfileBtn" aria-label="프로필"><span class="pf-avatar" id="sbProfileAvatar"></span><span class="sbp-text"><span class="sbp-name" id="sbProfileName">로그인 안 됨</span><span class="sbp-sub" id="sbProfileSub">이 기기에만 저장돼</span></span></button>
   <button class="sb-new" id="sbNewBtn">＋ 새 일정</button>
 
   <nav class="sb-pills" aria-label="화면 선택">
@@ -940,7 +990,7 @@
 
 <div class="main">
   <div class="topbar" id="topbar">
-    <button class="tb-avatar" id="sbToggleBtn" aria-label="메뉴 열기"><span id="tbAvatarText">☰</span></button>
+    <button class="tb-menu" id="sbToggleBtn" aria-label="메뉴 열기"><svg class="ic" aria-hidden="true"><use href="#i-menu"/></svg></button>
     <nav class="tb-nav" aria-label="화면 선택">
       <button class="tb-pill" data-view="today" aria-label="오늘" title="오늘"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 11.2 12 4l8.5 7.2"/><path d="M5.5 9.8V19.5h13V9.8"/><path d="M10 19.5v-5h4v5"/></svg><span class="tb-label"><span>오늘</span></span></button>
       <button class="tb-pill" data-view="month" aria-label="달력" title="달력"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span class="tb-label"><span>달력</span></span></button>
@@ -948,6 +998,7 @@
       <button class="tb-pill" data-view="list" aria-label="전체 표" title="전체 표"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M3.5 10h17M3.5 15h17M10 4.5v15"/></svg><span class="tb-label"><span>전체 표</span></span></button>
       <button class="tb-pill" data-view="board" aria-label="보드" title="보드"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="4.5" height="15" rx="1.5"/><rect x="9.75" y="4.5" width="4.5" height="10" rx="1.5"/><rect x="16" y="4.5" width="4.5" height="6.5" rx="1.5"/></svg><span class="tb-label"><span>보드</span></span></button>
     </nav>
+    <button class="tb-avatar" id="tbProfileBtn" aria-label="프로필"><span id="tbAvatarText"></span></button>
   </div>
 
   <div class="page">
@@ -1065,6 +1116,74 @@
       <div class="board" id="boardCols"></div>
     </div>
 
+    <div id="profileView" style="display:none;">
+      <div class="pf-head"><button class="pf-back" id="pfBackBtn" aria-label="돌아가기"><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg></button><h2 class="pf-title">프로필</h2></div>
+      <div class="pf-card">
+        <span class="pf-avatar lg" id="pfAvatar"></span>
+        <div class="pf-info"><div class="pf-name" id="pfName">로그인 안 됨</div><div class="pf-sub" id="pfSub">이 기기에만 저장돼</div></div>
+        <button class="btn-ghost pf-action" id="pfActionBtn">로그인</button>
+      </div>
+      <div class="drawer-group-label">계정 · 동기화</div>
+    <details class="drawer-section fold" id="syncSection">
+      <summary class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-cloud"/></svg>동기화 · 로그인 <span class="fold-state" id="syncSummaryState">로그인 안 됨</span></summary>
+      <p class="drawer-desc" id="syncDesc">로그인하면 폰과 컴퓨터가 같은 일정을 실시간으로 봐. AI 키는 보호 암호를 정하면 암호화해서 함께 나눠. 로그인 전에는 이 기기에만 저장돼.</p>
+      <div id="syncLoggedOut">
+        <input type="email" id="syncEmail" class="settings-input" placeholder="이메일" autocomplete="email" autocapitalize="off">
+        <input type="password" id="syncPassword" class="settings-input" placeholder="비밀번호 (6자 이상)" autocomplete="current-password">
+        <div class="settings-actions">
+          <button class="btn-ghost" id="syncLoginBtn">로그인</button>
+          <button class="btn-ghost" id="syncSignupBtn">새로 가입</button>
+        </div>
+        <button class="btn-ghost" id="syncResetBtn" style="width:100%; margin-top:8px;">비밀번호 재설정 메일 받기</button>
+      </div>
+      <div id="syncLoggedIn" style="display:none;">
+        <div class="sync-account"><span class="sync-dot" id="syncDot"></span><span id="syncAccount"></span></div>
+        <div class="settings-actions"><button class="btn-ghost" id="syncLogoutBtn">로그아웃</button></div>
+      </div>
+      <div class="status" id="syncStatus"></div>
+    </details>
+
+      <div class="drawer-group-label">AI</div>
+    <details class="drawer-section fold" id="aiSection">
+      <summary class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-sparkle"/></svg>AI 설정 · API 키 <span class="fold-state" id="aiSummaryState">키 없음</span></summary>
+      <p class="drawer-desc">키를 넣으면 앱이 AI를 바로 호출해. 비워두면 프롬프트를 복사해서 Claude 등에 붙여넣고, 답을 다시 붙여넣는 방식으로 동작해. 다른 기기와 키를 나누려면 보호 암호를 정해줘. 키는 그 암호로 암호화돼서 서버에는 암호화된 값만 저장되고, 새 기기에서 로그인하면 보호 암호를 한 번 입력해서 풀어. 암호를 잊으면 키를 다시 넣으면 돼. 보호 암호를 정하지 않으면 키는 이 기기에만 저장돼.</p>
+      <div id="aiLockBox" class="ai-lock" style="display:none;">
+        <div class="ai-lock-title"><svg class="ic sm" aria-hidden="true"><use href="#i-lock"/></svg> 암호화된 키가 있어</div>
+        <div class="drawer-desc" style="margin:0 0 8px;">다른 기기에서 저장한 키야. 그 기기에서 정한 보호 암호를 입력하면 이 기기에서도 쓸 수 있어.</div>
+        <input type="password" id="aiUnlockInput" class="settings-input" placeholder="보호 암호" autocomplete="current-password" style="margin-top:0;">
+        <button class="btn-main" id="aiUnlockBtn" style="margin-top:8px;">키 풀기</button>
+        <div class="status" id="aiUnlockStatus"></div>
+      </div>
+      <label class="settings-label" for="geminiKeyInput">AI API 키 (선택)</label>
+      <input type="password" id="geminiKeyInput" class="settings-input" placeholder="비워두면 복사·붙여넣기 방식" autocomplete="off">
+      <label class="settings-label" for="geminiModelInput">모델</label>
+      <input type="text" id="geminiModelInput" class="settings-input" placeholder="비워두면 기본 모델 사용">
+      <label class="settings-label" for="aiPassInput">보호 암호 (다른 기기와 키를 나눌 때)</label>
+      <input type="password" id="aiPassInput" class="settings-input" placeholder="6자 이상 · 정하면 키가 암호화돼서 내 계정에 저장" autocomplete="new-password">
+      <div class="settings-actions">
+        <button class="btn-ghost" id="saveAiSettingsBtn">저장</button>
+        <button class="btn-ghost" id="testAiBtn">연결 테스트</button>
+      </div>
+      <div class="status" id="aiSettingsStatus"></div>
+    </details>
+
+      <div class="drawer-group-label">화면 · 정보</div>
+      <div class="pf-rows">
+        <button class="pf-row" id="pfThemeBtn"><svg class="ic" aria-hidden="true"><use href="#i-theme"/></svg><span id="pfThemeLabel">테마: 자동</span></button>
+        <div class="pf-row static"><svg class="ic" aria-hidden="true"><use href="#i-notebook"/></svg><span id="pfVersion"></span></div>
+      </div>
+    <details class="drawer-section fold" id="diagSection">
+      <summary class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg>문제 기록 <span class="fold-state" id="diagState">오류 0건</span></summary>
+      <p class="drawer-desc">앱이 이상하게 동작하면 여기서 "복사"를 누르고 그대로 붙여넣어 보내줘. 최근 오류, 앱 버전, 기기 정보가 복사돼. 일정 제목·AI 키·이메일·비밀번호는 들어가지 않아.</p>
+      <div class="settings-actions">
+        <button class="btn-ghost" id="diagCopyBtn">문제 기록 복사</button>
+        <button class="btn-ghost" id="diagClearBtn">기록 지우기</button>
+      </div>
+      <textarea id="diagText" class="settings-input diag-text" readonly style="display:none;"></textarea>
+      <div class="status" id="diagStatus"></div>
+    </details>
+    </div>
+
     <div id="todayView" style="display:none;">
       <div class="today-head">
         <div>
@@ -1138,48 +1257,7 @@
       <div id="trashList" class="reference-list"></div>
     </div>
 
-    <div class="drawer-group-label">연결 설정</div>
-    <details class="drawer-section fold" id="syncSection">
-      <summary class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-cloud"/></svg>동기화 · 로그인 <span class="fold-state" id="syncSummaryState">로그인 안 됨</span></summary>
-      <p class="drawer-desc" id="syncDesc">로그인하면 폰과 컴퓨터가 같은 일정을 실시간으로 봐. AI 키는 보호 암호를 정하면 암호화해서 함께 나눠. 로그인 전에는 이 기기에만 저장돼.</p>
-      <div id="syncLoggedOut">
-        <input type="email" id="syncEmail" class="settings-input" placeholder="이메일" autocomplete="email" autocapitalize="off">
-        <input type="password" id="syncPassword" class="settings-input" placeholder="비밀번호 (6자 이상)" autocomplete="current-password">
-        <div class="settings-actions">
-          <button class="btn-ghost" id="syncLoginBtn">로그인</button>
-          <button class="btn-ghost" id="syncSignupBtn">새로 가입</button>
-        </div>
-        <button class="btn-ghost" id="syncResetBtn" style="width:100%; margin-top:8px;">비밀번호 재설정 메일 받기</button>
-      </div>
-      <div id="syncLoggedIn" style="display:none;">
-        <div class="sync-account"><span class="sync-dot" id="syncDot"></span><span id="syncAccount"></span></div>
-        <div class="settings-actions"><button class="btn-ghost" id="syncLogoutBtn">로그아웃</button></div>
-      </div>
-      <div class="status" id="syncStatus"></div>
-    </details>
 
-    <details class="drawer-section fold" id="aiSection">
-      <summary class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-sparkle"/></svg>AI 설정 · API 키 <span class="fold-state" id="aiSummaryState">키 없음</span></summary>
-      <p class="drawer-desc">키를 넣으면 앱이 AI를 바로 호출해. 비워두면 프롬프트를 복사해서 Claude 등에 붙여넣고, 답을 다시 붙여넣는 방식으로 동작해. 다른 기기와 키를 나누려면 보호 암호를 정해줘. 키는 그 암호로 암호화돼서 서버에는 암호화된 값만 저장되고, 새 기기에서 로그인하면 보호 암호를 한 번 입력해서 풀어. 암호를 잊으면 키를 다시 넣으면 돼. 보호 암호를 정하지 않으면 키는 이 기기에만 저장돼.</p>
-      <div id="aiLockBox" class="ai-lock" style="display:none;">
-        <div class="ai-lock-title"><svg class="ic sm" aria-hidden="true"><use href="#i-lock"/></svg> 암호화된 키가 있어</div>
-        <div class="drawer-desc" style="margin:0 0 8px;">다른 기기에서 저장한 키야. 그 기기에서 정한 보호 암호를 입력하면 이 기기에서도 쓸 수 있어.</div>
-        <input type="password" id="aiUnlockInput" class="settings-input" placeholder="보호 암호" autocomplete="current-password" style="margin-top:0;">
-        <button class="btn-main" id="aiUnlockBtn" style="margin-top:8px;">키 풀기</button>
-        <div class="status" id="aiUnlockStatus"></div>
-      </div>
-      <label class="settings-label" for="geminiKeyInput">AI API 키 (선택)</label>
-      <input type="password" id="geminiKeyInput" class="settings-input" placeholder="비워두면 복사·붙여넣기 방식" autocomplete="off">
-      <label class="settings-label" for="geminiModelInput">모델</label>
-      <input type="text" id="geminiModelInput" class="settings-input" placeholder="비워두면 기본 모델 사용">
-      <label class="settings-label" for="aiPassInput">보호 암호 (다른 기기와 키를 나눌 때)</label>
-      <input type="password" id="aiPassInput" class="settings-input" placeholder="6자 이상 · 정하면 키가 암호화돼서 내 계정에 저장" autocomplete="new-password">
-      <div class="settings-actions">
-        <button class="btn-ghost" id="saveAiSettingsBtn">저장</button>
-        <button class="btn-ghost" id="testAiBtn">연결 테스트</button>
-      </div>
-      <div class="status" id="aiSettingsStatus"></div>
-    </details>
 
     <div class="drawer-group-label">도움</div>
     <details class="drawer-section fold" id="quickUrlSection">
@@ -1193,16 +1271,6 @@
       <div class="status" id="quickUrlStatus"></div>
     </details>
 
-    <details class="drawer-section fold" id="diagSection">
-      <summary class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg>문제 기록 <span class="fold-state" id="diagState">오류 0건</span></summary>
-      <p class="drawer-desc">앱이 이상하게 동작하면 여기서 "복사"를 누르고 그대로 붙여넣어 보내줘. 최근 오류, 앱 버전, 기기 정보가 복사돼. 일정 제목·AI 키·이메일·비밀번호는 들어가지 않아.</p>
-      <div class="settings-actions">
-        <button class="btn-ghost" id="diagCopyBtn">문제 기록 복사</button>
-        <button class="btn-ghost" id="diagClearBtn">기록 지우기</button>
-      </div>
-      <textarea id="diagText" class="settings-input diag-text" readonly style="display:none;"></textarea>
-      <div class="status" id="diagStatus"></div>
-    </details>
   </div>
 </div>
 
@@ -1292,7 +1360,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v37';
+const APP_VERSION = 'v38';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -1603,7 +1671,7 @@ async function callGemini({ system, text, media, maxTokens, history }) {
   if (!response.ok) {
     let detail = '';
     try { detail = (await response.json()).error?.message || ''; } catch (e) {}
-    const hint = response.status === 404 ? ' (모델 이름 문제일 수 있어. 메뉴 → AI 설정의 모델 칸을 비우거나 오류 메시지에 나온 새 모델명을 넣어줘)' : '';
+    const hint = response.status === 404 ? ' (모델 이름 문제일 수 있어. 프로필 탭 → AI 설정의 모델 칸을 비우거나 오류 메시지에 나온 새 모델명을 넣어줘)' : '';
     throw new Error(`AI 응답 오류 ${response.status}${detail ? ': ' + detail : ''}${hint}`);
   }
   const data = await response.json();
@@ -2393,7 +2461,7 @@ function refreshAll() {
   else if (viewMode === 'week') renderWeekView();
   else if (viewMode === 'list') renderListView();
   else if (viewMode === 'board') renderBoard();
-  else renderDetail();
+  else if (viewMode !== 'profile') renderDetail();
 }
 
 function renderDetail() {
@@ -2458,6 +2526,8 @@ function renderWeekView() {
 }
 
 const VIEW_ORDER = ['today', 'month', 'week', 'list', 'board'];
+let profilePrevView = 'today';           // 프로필 탭에서 돌아갈 화면
+let lastCloud = { state: 'off', email: '' };
 function setViewMode(mode, animate) {
   const prevMode = viewMode;
   viewMode = mode;
@@ -2474,12 +2544,17 @@ function setViewMode(mode, animate) {
     if (b.classList.contains('tb-pill') || b.classList.contains('sb-pill')) b.setAttribute('aria-current', on ? 'page' : 'false');
   });
   closeSidebar();
+  const isProfile = mode === 'profile';
+  document.body.classList.toggle('view-profile', isProfile);
+  document.getElementById('profileView').style.display = isProfile ? 'block' : 'none';
+  ['sbProfileBtn', 'tbProfileBtn'].forEach(id => document.getElementById(id).classList.toggle('active', isProfile));
+  if (!isProfile) profilePrevView = mode;
   document.getElementById('monthView').style.display = mode === 'month' ? 'block' : 'none';
   document.getElementById('weekView').style.display = mode === 'week' ? 'flex' : 'none';
   document.getElementById('listView').style.display = mode === 'list' ? 'block' : 'none';
   document.getElementById('boardView').style.display = mode === 'board' ? 'block' : 'none';
   document.getElementById('todayView').style.display = mode === 'today' ? 'block' : 'none';
-  document.getElementById('calHead').style.display = mode === 'today' ? 'none' : '';
+  document.getElementById('calHead').style.display = mode === 'today' || isProfile ? 'none' : '';
   document.getElementById('detailPanel').style.display = mode === 'month' ? 'block' : 'none';
   document.getElementById('prevBtn').style.display = mode === 'month' ? '' : 'none';
   document.getElementById('nextBtn').style.display = mode === 'month' ? '' : 'none';
@@ -2489,6 +2564,8 @@ function setViewMode(mode, animate) {
   } else if (mode === 'week') {
     document.getElementById('monthLabel').textContent = '이번 주';
     renderWeekView();
+  } else if (isProfile) {
+    renderProfileUi();
   } else if (mode === 'board') {
     document.getElementById('monthLabel').textContent = '보드';
     renderBoard();
@@ -2501,8 +2578,9 @@ function setViewMode(mode, animate) {
     renderCalendar();
   }
   // 앱을 다시 열어도 마지막에 보던 화면으로 돌아오게 기억
-  store.set('view', mode).catch(() => {});
-  if (animate && prevMode !== mode && window.matchMedia('(max-width: 900px)').matches) slideInView(mode, VIEW_ORDER.indexOf(mode) > VIEW_ORDER.indexOf(prevMode));
+  if (!isProfile) store.set('view', mode).catch(() => {});
+  if (isProfile) window.scrollTo({ top: 0 });
+  if (animate && !isProfile && prevMode !== mode && window.matchMedia('(max-width: 900px)').matches) slideInView(mode, VIEW_ORDER.indexOf(mode) > VIEW_ORDER.indexOf(prevMode));
 }
 
 // 화면 전환 모션: 알약 순서상 오른쪽 화면이면 오른쪽에서, 왼쪽이면 왼쪽에서 밀려 들어옴
@@ -3499,7 +3577,7 @@ async function sendChatMessage() {
   const text = input.value.trim();
   if (!text) return;
   if (!geminiKey) {
-    chatHistory.push({ role: 'assistant', text: 'AI 비서는 AI 키가 있어야 써. 메뉴(☰) → 설정 → AI 설정에서 키를 넣어줘.' });
+    chatHistory.push({ role: 'assistant', text: 'AI 비서는 AI 키가 있어야 써. 프로필 탭 → AI 설정에서 키를 넣어줘.' });
     renderChatLog();
     return;
   }
@@ -3551,6 +3629,36 @@ document.getElementById('chatInput').addEventListener('keydown', (e) => {
 });
 
 // ---- 사이드바 / 빠른 입력 / 떠 있는 AI 비서 ----
+// ---- 프로필 탭: 프로필 버튼(상단 바 오른쪽·사이드바 맨 위)이 연다. 계정·동기화·AI 설정·문제 기록이 여기 모여 있다 ----
+function renderProfileUi() {
+  const loggedIn = lastCloud.state !== 'off', email = lastCloud.email || '';
+  const initial = loggedIn && email ? Array.from(email)[0].toUpperCase() : '';
+  ['tbAvatarText', 'pfAvatar', 'sbProfileAvatar'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (initial) el.textContent = initial; else el.innerHTML = ic('user');
+  });
+  const sub = !loggedIn ? '로그인 전이라 이 기기에만 저장돼' : lastCloud.state === 'synced' ? '동기화됨' : lastCloud.state === 'error' ? '동기화 오류' : '연결 중…';
+  const name = !loggedIn ? '로그인 안 됨' : (email || '로그인됨');
+  document.getElementById('pfName').textContent = name;
+  document.getElementById('pfSub').textContent = sub;
+  document.getElementById('sbProfileName').textContent = name;
+  document.getElementById('sbProfileSub').textContent = !loggedIn ? '이 기기에만 저장돼' : sub;
+  document.getElementById('pfActionBtn').textContent = loggedIn ? '로그아웃' : '로그인';
+  document.getElementById('pfVersion').textContent = 'Δuenoτe ' + APP_VERSION;
+}
+function toggleProfile() { setViewMode(viewMode === 'profile' ? (profilePrevView || 'today') : 'profile', true); }
+document.getElementById('tbProfileBtn').addEventListener('click', toggleProfile);
+document.getElementById('sbProfileBtn').addEventListener('click', toggleProfile);
+document.getElementById('pfBackBtn').addEventListener('click', () => setViewMode(profilePrevView || 'today', true));
+document.getElementById('pfThemeBtn').addEventListener('click', () => cycleTheme());
+document.getElementById('pfActionBtn').addEventListener('click', () => {
+  if (lastCloud.state !== 'off') { document.getElementById('syncLogoutBtn').click(); return; }
+  const sec = document.getElementById('syncSection'); sec.open = true;
+  const em = document.getElementById('syncEmail');
+  em.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  em.focus({ preventScroll: true });
+});
 function openSidebar() {
   document.getElementById('sidebar').classList.add('open');
   document.getElementById('sbOverlay').classList.add('open');
@@ -3943,6 +4051,7 @@ function applyTheme() {
   if (theme) document.documentElement.setAttribute('data-theme', theme);
   else document.documentElement.removeAttribute('data-theme');
   document.getElementById('sbThemeLabel').textContent = '테마: ' + THEME_LABEL[theme];
+  document.getElementById('pfThemeLabel').textContent = '테마: ' + THEME_LABEL[theme];
 }
 async function cycleTheme() {
   theme = THEME_ORDER[(THEME_ORDER.indexOf(theme) + 1) % THEME_ORDER.length];
@@ -3966,6 +4075,7 @@ function paletteEntries(query) {
     { icon: 'board', label: '보드 보기', run: () => setViewMode('board', true) },
     { icon: 'plus', label: '새 일정 입력', run: () => { window.scrollTo({ top: 0, behavior: 'smooth' }); document.getElementById('quickInput').focus(); } },
     { icon: 'chat', label: 'AI 비서 열기', run: () => toggleChat(true) },
+    { icon: 'user', label: '프로필 열기 (계정 · 동기화 · AI 설정)', run: () => setViewMode('profile', true) },
     { icon: 'settings', label: '설정 · 자료 열기', run: openDrawer },
     { icon: 'theme', label: '테마 바꾸기 (자동 → 라이트 → 다크)', run: cycleTheme }
   ].filter(c => !q || c.label.toLowerCase().includes(q)).map(c => ({ ...c, group: '명령' }));
@@ -4204,7 +4314,7 @@ window.plannerApp = {
   async addQuickImage(text, mime, data) {
     await window.plannerReadyPromise;
     if (aiLockedDoc) return { ok: false, error: 'AI 키가 잠겨 있어. 앱에서 보호 암호를 먼저 입력해줘' };
-    if (!geminiKey) return { ok: false, error: '이미지는 AI 키가 있어야 읽을 수 있어. 앱 설정에서 키를 넣어줘' };
+    if (!geminiKey) return { ok: false, error: '이미지는 AI 키가 있어야 읽을 수 있어. 앱의 프로필 탭에서 키를 넣어줘' };
     if (!/^image\/(png|jpeg|webp|gif)$/.test(String(mime)) || typeof data !== 'string' || !data) return { ok: false, error: '지원하지 않는 이미지야' };
     const { done } = enqueueParse({ text: String(text || '').slice(0, 2000), media: [{ mime, data }], kw: '' });
     const r = await done;                              // 이 작업의 정리가 끝날 때까지(앞에 다른 작업이 있으면 그 뒤에) 기다린다
@@ -4347,8 +4457,8 @@ function syncSetStatus(text, isErr) {
 
 function renderSyncUi(d) {
   const loggedIn = d.state !== 'off';
-  const av = document.getElementById('tbAvatarText');   // 상단 프로필 버튼: 로그인하면 이메일 첫 글자, 아니면 메뉴 아이콘
-  if (av) av.textContent = loggedIn && d.email ? Array.from(d.email)[0].toUpperCase() : '☰';
+  lastCloud = { state: d.state, email: d.email || '' };
+  renderProfileUi();                                     // 프로필 버튼들: 로그인하면 이메일 첫 글자, 아니면 사람 아이콘
   const sumEl = document.getElementById('syncSummaryState');
   sumEl.textContent = !loggedIn ? '로그인 안 됨' : d.state === 'error' ? '동기화 오류' : d.state === 'synced' ? (d.email || '동기화됨') : '연결 중…';
   sumEl.className = 'fold-state' + (!loggedIn ? '' : d.state === 'error' ? ' warn' : d.state === 'synced' ? ' ok' : '');
@@ -4472,7 +4582,7 @@ document.getElementById('diagClearBtn').addEventListener('click', () => {
 });
 if (window.plannerLog) window.plannerLog.onchange = updateDiagState;
 
-// 빠른 입력 주소: 설정 창의 예시 주소와 복사 버튼
+// 빠른 입력 주소: 설정 창(설정 · 자료)의 예시 주소와 복사 버튼
 (function () {
   const base = location.origin + location.pathname;
   const sample = base + '?add=발표 준비&due=tomorrow&type=과제';
@@ -4549,7 +4659,7 @@ async function handleUrlAdd() {
   showToast(`"${shown}" 추가했어 · ${formatShortDate(date)}${timeOk ? ' ' + fmtTime(timeOk) : ''}${guessed ? ' (날짜를 못 읽어서 오늘로)' : ''}`, '되돌리기', async () => {
     items = items.filter(x => x.id !== item.id); await saveItems(); refreshAll();
   }, 6000);
-  waitCloudSignedIn(6000).then((ok) => { if (!ok) showToast('이 브라우저는 로그인 전이라 이 기기에만 저장돼. 설정에서 로그인하면 다른 기기에도 보여', null, null, 9000); });   // 되돌리기 알림(6초)이 끝난 뒤에 표시
+  waitCloudSignedIn(6000).then((ok) => { if (!ok) showToast('이 브라우저는 로그인 전이라 이 기기에만 저장돼. 프로필 탭에서 로그인하면 다른 기기에도 보여', null, null, 9000); });   // 되돌리기 알림(6초)이 끝난 뒤에 표시
 }
 
 // Mac 앱 메뉴 막대용 요약(앱 본체가 주기적으로 물어봄): 지난 마감·오늘·내일 개수와 급한 순서대로 8건
@@ -4918,6 +5028,7 @@ function renderTopicChoices(it, topics, tok) {
   renderSummaryBanner();
   renderChatLog();
   renderPendingLane();
+  renderProfileUi();
   setupAddRow('detailAddInput', 'detailAddType', () => selectedDate);
   let startView = 'today';
   try { const v = await store.get('view'); if (v && ['today', 'month', 'week', 'list', 'board'].includes(v.value)) startView = v.value; } catch (e) {}
