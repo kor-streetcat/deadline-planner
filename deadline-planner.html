@@ -1388,7 +1388,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v42';
+const APP_VERSION = 'v43';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -3276,6 +3276,18 @@ function readLocalPlan(text) {
 }
 function aiBusyHtml(it) { return enrichingIds.has(it.id) ? '<span class="ai-busy">AI 정리 중…</span>' : ''; }
 
+// 등록이 끝났을 때 화면 아래에 뜨는 "등록 완료" 알림(6초, 되돌리기 포함). 입력창 밑의 작은 상태 글만으로는 눈에 안 띄어서 넣었다.
+function announceRegistered(ids, extra) {
+  const list = ids.map(id => items.find(x => x.id === id)).filter(Boolean);
+  if (!list.length) return;
+  const one = list[0], t = one.title.length > 24 ? one.title.slice(0, 24) + '…' : one.title;
+  const msg = list.length === 1 ? `등록 완료 · "${t}" · ${formatShortDate(one.dueDate)}` : `${list.length}건 등록 완료`;
+  const gone = new Set(list.map(x => x.id));
+  showToast(msg + (extra || ''), '되돌리기', async () => {
+    items = items.filter(x => !gone.has(x.id));
+    await saveItems(); refreshAll();
+  }, 6000);
+}
 async function registerInstantly(plan, kw) {
   const created = plan.map(p => ({ id: uid(), title: p.title, shortLabel: '', type: '기타', dueDate: p.date, priority: 'medium', notes: '', aiComment: '', topicSuggestion: '', topicKeyword: '', done: false, ...(p.time ? { dueTime: p.time } : {}) }));
   items = items.concat(created);
@@ -3347,6 +3359,7 @@ async function runEnrich(ctx) {
     statusEl.className = 'status';
     statusEl.textContent = `${ctx.ids.length}건 등록 완료`;
     refreshAll();
+    announceRegistered(ctx.ids);
     return { ok: true, count: ctx.ids.length, filled };
   } catch (err) {
     finish();
@@ -3477,6 +3490,8 @@ async function runParseJob(job) {
       ? `${newItems.length}건 등록 완료` + (drafts.length ? ` · 날짜를 못 찾은 ${drafts.length}건은 "정리 중" 칸에 뒀어` : '')
       : `날짜를 못 찾은 ${drafts.length}건을 "정리 중" 칸에 뒀어. 날짜를 정해줘`;
     refreshAll(); renderPendingLane();
+    if (newItems.length) announceRegistered(newItems.map(x => x.id), drafts.length ? ` · 날짜를 못 찾은 ${drafts.length}건은 "정리 중" 칸에 뒀어` : '');
+    else showToast(`날짜를 못 찾은 ${drafts.length}건을 "정리 중" 칸에 뒀어. 날짜를 정해줘`, null, null, 6000);
     return { ok: true, count: newItems.length, undated: drafts.length };
   } catch (err) {
     if (job.cancelled) return { ok: false, cancelled: true };
