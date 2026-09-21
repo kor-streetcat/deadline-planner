@@ -486,7 +486,7 @@
   .recurring-form { display: flex; flex-direction: column; gap: 4px; max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.45s var(--ease-out), opacity 0.3s var(--ease-out), margin-top 0.45s var(--ease-out); }
   .recurring-form.open { max-height: 700px; opacity: 1; margin-top: 10px; }
   .recurring-form label { font-size: 0.74rem; color: var(--ink-dim); margin-top: 6px; }
-  .recurring-form input[type="text"], .recurring-form select, .recurring-form input[type="date"] {
+  .recurring-form input[type="text"], .recurring-form select, .recurring-form input[type="date"], .recurring-form input[type="time"] {
     background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.84rem; padding: 7px 9px; width: 100%;
   }
   .recurring-form select { -webkit-appearance: none; appearance: none; }
@@ -792,6 +792,8 @@
   .time-chip { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; font-size: 0.68rem; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--hover); color: var(--ink-dim); font-variant-numeric: tabular-nums; line-height: 1.5; white-space: nowrap; }
   .time-chip .ic { width: 11px; height: 11px; }
   .ai-busy { display: inline-flex; align-items: center; flex-shrink: 0; font-size: 0.68rem; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); line-height: 1.5; white-space: nowrap; animation: planPulse 1.2s ease-in-out infinite; }
+  .pill-time { display: none; font-variant-numeric: tabular-nums; opacity: 0.75; margin-right: 4px; font-size: 0.92em; }
+  @media (min-width: 901px) { .pill-time { display: inline; } }
   .time-chip.late { background: var(--danger-soft); color: var(--danger); }
   .cell-title-wrap .time-chip { margin-left: 4px; }
   .peek-row label { font-size: 0.86rem; display: flex; align-items: center; gap: 6px; cursor: pointer; }
@@ -1057,6 +1059,8 @@
             <span>~</span>
             <input type="date" id="rEnd">
           </div>
+          <label>시각 (선택)</label>
+          <input type="time" id="rTime" aria-label="반복 일정의 시각(선택)">
           <label>우선순위</label>
           <select id="rPriority">
             <option value="high">높음</option>
@@ -1360,7 +1364,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v38';
+const APP_VERSION = 'v39';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -1881,10 +1885,12 @@ function toastUndoDelete(moved) {
 }
 
 // AI 없이 바로 추가 (제목·날짜·유형만)
-async function addItemDirect(title, dueDate, type) {
+async function addItemDirect(title, dueDate, type, dueTime) {
   const t = (title || '').trim();
   if (!t) return false;
-  items.push({ id: uid(), title: t, shortLabel: '', type: type || '기타', dueDate, priority: 'medium', notes: '', aiComment: '', topicSuggestion: '', topicKeyword: '', done: false });
+  const it = { id: uid(), title: t, shortLabel: '', type: type || '기타', dueDate, priority: 'medium', notes: '', aiComment: '', topicSuggestion: '', topicKeyword: '', done: false };
+  if (normTime(dueTime)) it.dueTime = normTime(dueTime);
+  items.push(it);
   await saveItems();
   refreshAll();
   showToast('추가했어');
@@ -2340,7 +2346,11 @@ function renderCalendar() {
         const label = document.createElement('div');
         const overdue = it.dueDate < today && !it.done;
         label.className = 'item-label pill t-' + (it.type || '기타') + (it.priority === 'high' ? ' high' : '') + (overdue ? ' overdue' : '') + (it.done ? ' done' : '');
-        label.textContent = getShortLabel(it);   // 지난 마감은 이모지 대신 빨간 테두리로 표시(좁은 칸에서 글자 자리를 뺏지 않게)
+        label.textContent = getShortLabel(it);
+        const tm = normTime(it.dueTime);
+        if (tm) { const sp = document.createElement('span'); sp.className = 'pill-time'; sp.textContent = tm; label.prepend(sp); }   // 시각은 넓은 화면에서만 글자로, 좁은 칸에서는 마우스를 올리면(title) 보임
+        label.title = getShortLabel(it) + (tm ? ' · ' + fmtTime(tm) : '');
+        // 지난 마감은 이모지 대신 빨간 테두리로 표시(좁은 칸에서 글자 자리를 뺏지 않게)
         cell.appendChild(label);
       });
       if (dayItems.length > shown.length) {
@@ -2978,6 +2988,7 @@ document.getElementById('rSubmitBtn').addEventListener('click', async () => {
   const priority = document.getElementById('rPriority').value;
   const start = document.getElementById('rStart').value;
   const end = document.getElementById('rEnd').value;
+  const rTime = normTime(document.getElementById('rTime').value);
   const rStatus = document.getElementById('rStatus');
 
   if (!title) { rStatus.className = 'status err'; rStatus.textContent = '제목을 입력해줘'; return; }
@@ -3006,7 +3017,8 @@ document.getElementById('rSubmitBtn').addEventListener('click', async () => {
         topicSuggestion: '',
         topicKeyword: '',
         recurringId,
-        done: false
+        done: false,
+        ...(rTime ? { dueTime: rTime } : {})
       });
     }
     cursor.setDate(cursor.getDate() + 1);
@@ -4304,10 +4316,10 @@ async function unlockAi(pass) {
 
 window.plannerApp = {
   // Mac 앱의 빠른 추가 창이 부르는 입구. 앱이 다 불러오기 전에 추가하면 불러오기가 덮어쓸 수 있어서 준비될 때까지 기다린다.
-  async addQuick(title, dueDate, type) {
+  async addQuick(title, dueDate, type, dueTime) {
     await window.plannerReadyPromise;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dueDate || ''))) return false;
-    return addItemDirect(title, dueDate, TYPE_OPTIONS.includes(type) ? type : '기타');
+    return addItemDirect(title, dueDate, TYPE_OPTIONS.includes(type) ? type : '기타', dueTime);
   },
   // Mac 앱 빠른 추가 창에서 이미지를 붙였을 때: "정리 중" 접수 흐름(enqueueParse)에 이미지와 글을 태운다.
   // 키가 없으면 복사·붙여넣기 창이 뜨는데 그 창은 이 창에서 처리할 수 없으니, 창을 띄우지 않고 이유만 돌려준다.
@@ -4671,7 +4683,7 @@ function traySummary() {
   const today = active.filter(x => daysUntil(x.dueDate) === 0).sort(byDate);
   const tomorrow = active.filter(x => daysUntil(x.dueDate) === 1).sort(byDate);
   const soon = active.filter(x => { const n = daysUntil(x.dueDate); return n >= 2 && n <= 7; }).sort(byDate);
-  const list = [...overdue, ...today, ...tomorrow, ...soon].slice(0, 8).map(x => ({ id: x.id, title: String(x.title || '').slice(0, 40), dueDate: x.dueDate, dday: daysUntil(x.dueDate), high: x.priority === 'high' }));
+  const list = [...overdue, ...today, ...tomorrow, ...soon].slice(0, 8).map(x => ({ id: x.id, title: String(x.title || '').slice(0, 40), dueDate: x.dueDate, dday: daysUntil(x.dueDate), high: x.priority === 'high', time: normTime(x.dueTime) }));
   return { overdue: overdue.length, today: today.length, tomorrow: tomorrow.length, urgent: overdue.length + today.length, list };
 }
 
