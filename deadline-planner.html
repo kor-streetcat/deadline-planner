@@ -995,7 +995,7 @@
 
 <aside id="sidebar" class="sidebar">
   <div class="sb-brand"><svg class="ic" aria-hidden="true"><use href="#i-notebook"/></svg><span>Δuenoτe</span><button class="sb-collapse" id="sbCollapseBtn" aria-label="사이드바 접기" title="사이드바 접기 (⌘\)"><svg class="ic" aria-hidden="true"><use href="#i-panel-left-close"/></svg></button></div>
-  <button class="sb-profile" id="sbProfileBtn" aria-label="프로필"><span class="pf-avatar" id="sbProfileAvatar"></span><span class="sbp-text"><span class="sbp-name" id="sbProfileName">로그인 안 됨</span><span class="sbp-sub" id="sbProfileSub">이 기기에만 저장돼</span></span></button>
+  <button class="sb-profile" id="sbProfileBtn" aria-label="프로필"><span class="pf-avatar" id="sbProfileAvatar"></span><span class="sbp-text"><span class="sbp-name" id="sbProfileName">로그인 안 됨</span><span class="sbp-sub" id="sbProfileSub">이 기기에만 저장돼요</span></span></button>
   <button class="sb-new" id="sbNewBtn">＋ 새 일정</button>
 
   <nav class="sb-pills" aria-label="화면 선택">
@@ -1031,7 +1031,7 @@
 
   <div class="page">
     <h1 class="page-title"><span class="page-emoji"><svg class="ic" aria-hidden="true"><use href="#i-notebook"/></svg></span>Δuenoτe</h1>
-    <p class="page-sub">마감일과 일정을 한곳에서 정리해.</p>
+    <p class="page-sub">마감일과 일정을 한곳에서 정리하세요.</p>
 
     <div id="summaryBanner" class="summary-banner" style="display:none;">
       <div class="summary-banner-row">
@@ -1049,7 +1049,7 @@
       <button class="qbtn" id="parseBtn">AI 정리</button>
     </div>
     <div class="quick-opts" id="newCard"><div class="quick-opts-clip"><div class="quick-opts-inner">
-      <p class="panel-role">여러 건은 쉼표로 이어 적거나(컴퓨터는 Shift+Enter로 줄바꿈) 한꺼번에 적을 수 있어. 아래 스크린샷과 주제 방향은 위 입력과 함께 AI 정리에 쓰여.</p>
+      <p class="panel-role">여러 건은 쉼표나 줄바꿈으로 구분해 한 번에 적을 수 있어요.</p>
       <div class="filebox">
         일정 스크린샷 (선택)
         <input type="file" id="fileInput" accept="image/*">
@@ -1150,13 +1150,13 @@
       <div class="pf-head"><button class="pf-back" id="pfBackBtn" aria-label="돌아가기"><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg></button><h2 class="pf-title">프로필</h2></div>
       <div class="pf-card">
         <span class="pf-avatar lg" id="pfAvatar"></span>
-        <div class="pf-info"><div class="pf-name" id="pfName">로그인 안 됨</div><div class="pf-sub" id="pfSub">이 기기에만 저장돼</div></div>
+        <div class="pf-info"><div class="pf-name" id="pfName">로그인 안 됨</div><div class="pf-sub" id="pfSub">이 기기에만 저장돼요</div></div>
         <button class="btn-ghost pf-action" id="pfActionBtn">로그인</button>
       </div>
       <div class="drawer-group-label">계정 · 동기화</div>
     <details class="drawer-section fold" id="syncSection">
       <summary class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-cloud"/></svg>동기화 · 로그인 <span class="fold-state" id="syncSummaryState">로그인 안 됨</span></summary>
-      <p class="drawer-desc" id="syncDesc">로그인하면 폰과 컴퓨터가 같은 일정을 실시간으로 봐. AI 키는 보호 암호를 정하면 암호화해서 함께 나눠. 로그인 전에는 이 기기에만 저장돼.</p>
+      <p class="drawer-desc" id="syncDesc">로그인하면 모든 기기에서 같은 일정을 볼 수 있어요. 로그인 전에는 이 기기에만 저장돼요.</p>
       <div id="syncLoggedOut">
         <input type="email" id="syncEmail" class="settings-input" placeholder="이메일" autocomplete="email" autocapitalize="off">
         <input type="password" id="syncPassword" class="settings-input" placeholder="비밀번호 (6자 이상)" autocomplete="current-password">
@@ -1176,20 +1176,20 @@
       <div class="drawer-group-label">AI</div>
     <details class="drawer-section fold" id="aiSection">
       <summary class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-sparkle"/></svg>AI 설정 · API 키 <span class="fold-state" id="aiSummaryState">키 없음</span></summary>
-      <p class="drawer-desc">키를 넣으면 앱이 AI를 바로 호출해. 비워두면 프롬프트를 복사해서 Claude 등에 붙여넣고, 답을 다시 붙여넣는 방식으로 동작해. 다른 기기와 키를 나누려면 보호 암호를 정해줘. 키는 그 암호로 암호화돼서 서버에는 암호화된 값만 저장되고, 새 기기에서 로그인하면 보호 암호를 한 번 입력해서 풀어. 암호를 잊으면 키를 다시 넣으면 돼. 보호 암호를 정하지 않으면 키는 이 기기에만 저장돼.</p>
+      <p class="drawer-desc">키를 넣으면 AI를 바로 호출해요. 비워 두면 복사·붙여넣기 방식으로 쓰고, 보호 암호를 정하면 키를 암호화해 다른 기기와 나눌 수 있어요.</p>
       <div id="aiLockBox" class="ai-lock" style="display:none;">
-        <div class="ai-lock-title"><svg class="ic sm" aria-hidden="true"><use href="#i-lock"/></svg> 암호화된 키가 있어</div>
-        <div class="drawer-desc" style="margin:0 0 8px;">다른 기기에서 저장한 키야. 그 기기에서 정한 보호 암호를 입력하면 이 기기에서도 쓸 수 있어.</div>
+        <div class="ai-lock-title"><svg class="ic sm" aria-hidden="true"><use href="#i-lock"/></svg> 암호화된 키가 있어요</div>
+        <div class="drawer-desc" style="margin:0 0 8px;">다른 기기에서 저장한 키예요. 보호 암호를 입력하면 이 기기에서도 쓸 수 있어요.</div>
         <input type="password" id="aiUnlockInput" class="settings-input" placeholder="보호 암호" autocomplete="current-password" style="margin-top:0;">
         <button class="btn-main" id="aiUnlockBtn" style="margin-top:8px;">키 풀기</button>
         <div class="status" id="aiUnlockStatus"></div>
       </div>
       <label class="settings-label" for="geminiKeyInput">AI API 키 (선택)</label>
-      <input type="password" id="geminiKeyInput" class="settings-input" placeholder="비워두면 복사·붙여넣기 방식" autocomplete="off">
+      <input type="password" id="geminiKeyInput" class="settings-input" placeholder="비워 두면 복사·붙여넣기 방식" autocomplete="off">
       <label class="settings-label" for="geminiModelInput">모델</label>
-      <input type="text" id="geminiModelInput" class="settings-input" placeholder="비워두면 기본 모델 사용">
+      <input type="text" id="geminiModelInput" class="settings-input" placeholder="비워 두면 기본 모델 사용">
       <label class="settings-label" for="aiPassInput">보호 암호 (다른 기기와 키를 나눌 때)</label>
-      <input type="password" id="aiPassInput" class="settings-input" placeholder="6자 이상 · 정하면 키가 암호화돼서 내 계정에 저장" autocomplete="new-password">
+      <input type="password" id="aiPassInput" class="settings-input" placeholder="6자 이상 · 정하면 키를 암호화해 계정에 저장해요" autocomplete="new-password">
       <div class="settings-actions">
         <button class="btn-ghost" id="saveAiSettingsBtn">저장</button>
         <button class="btn-ghost" id="testAiBtn">연결 테스트</button>
@@ -1204,7 +1204,7 @@
       </div>
     <details class="drawer-section fold" id="diagSection">
       <summary class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg>문제 기록 <span class="fold-state" id="diagState">오류 0건</span></summary>
-      <p class="drawer-desc">앱이 이상하게 동작하면 여기서 "복사"를 누르고 그대로 붙여넣어 보내줘. 최근 오류, 앱 버전, 기기 정보가 복사돼. 일정 제목·AI 키·이메일·비밀번호는 들어가지 않아.</p>
+      <p class="drawer-desc">이상하게 동작하면 "복사"를 눌러 붙여넣어 보내 주세요. 일정 제목·키·이메일은 포함되지 않아요.</p>
       <div class="settings-actions">
         <button class="btn-ghost" id="diagCopyBtn">문제 기록 복사</button>
         <button class="btn-ghost" id="diagClearBtn">기록 지우기</button>
@@ -1220,14 +1220,14 @@
           <div class="today-date" id="todayDate"></div>
           <div class="today-progress-text" id="todayProgressText"></div>
         </div>
-        <button class="briefing-btn" id="weekPlanBtn" title="오늘부터 7일 동안 무엇을 언제 할지 AI가 짜줘"><svg class="ic sm" aria-hidden="true"><use href="#i-sparkle"/></svg><span>이번 주 계획</span></button>
+        <button class="briefing-btn" id="weekPlanBtn" title="AI가 오늘부터 7일 계획을 짜 드려요"><svg class="ic sm" aria-hidden="true"><use href="#i-sparkle"/></svg><span>이번 주 계획</span></button>
       </div>
       <div class="today-progress"><div class="today-progress-bar" id="todayProgressBar"></div></div>
       <div id="todaySections"></div>
     </div>
 
     <div class="detail" id="detailPanel">
-      <h3 id="detailTitle">날짜를 선택해줘</h3>
+      <h3 id="detailTitle">날짜를 선택해 주세요</h3>
       <div id="detailList"></div>
       <div class="add-row" id="detailAddRow" style="display:none;">
         <input type="text" id="detailAddInput" class="add-input" placeholder="＋ 이 날짜에 일정 추가 (Enter)" autocomplete="off">
@@ -1247,7 +1247,7 @@
   <p class="panel-role">완료·삭제·변경·질문 전용 (AI 키 필요)</p>
   <div id="chatLog" class="chat-log"></div>
   <div class="chat-input-row">
-    <input type="text" id="chatInput" placeholder="예: 완료 처리해줘 / 뭐가 급해?">
+    <input type="text" id="chatInput" placeholder="예: 완료 처리해 주세요 / 뭐가 급한가요?">
     <button class="btn-main" id="chatSendBtn">보내기</button>
   </div>
 </div>
@@ -1260,7 +1260,7 @@
 
 <div id="cmdOverlay" class="cmd-overlay">
   <div class="cmd-box">
-    <input type="text" id="cmdInput" placeholder="검색하거나 명령을 입력해…" autocomplete="off">
+    <input type="text" id="cmdInput" placeholder="검색하거나 명령을 입력하세요…" autocomplete="off">
     <div class="cmd-list" id="cmdList"></div>
   </div>
 </div>
@@ -1274,7 +1274,7 @@
   <div class="drawer-body">
     <div class="drawer-section">
       <div class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg>주제 추천 참고 자료</div>
-      <p class="drawer-desc">주제 추천 시 참고돼</p>
+      <p class="drawer-desc">주제 추천에 참고돼요</p>
       <input type="file" id="referenceFileInput" accept="image/*,.pdf,.txt,.md,text/plain,text/markdown,application/pdf">
       <button class="btn-ghost" id="addReferenceBtn" style="margin-top:8px; width:100%;">자료 등록</button>
       <div class="status" id="referenceStatus"></div>
@@ -1283,7 +1283,7 @@
 
     <div class="drawer-section">
       <div class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>휴지통</div>
-      <p class="drawer-desc">마감일+2일 후 자동삭제 · 바로 지우려면 "영구 삭제"(되돌릴 수 없어)</p>
+      <p class="drawer-desc">마감일 2일 뒤 자동 삭제돼요. 바로 지우려면 "영구 삭제"를 누르세요.</p>
       <div id="trashList" class="reference-list"></div>
     </div>
 
@@ -1292,12 +1292,12 @@
     <div class="drawer-group-label">도움</div>
     <details class="drawer-section fold" id="quickUrlSection">
       <summary class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>빠른 입력 주소 (단축어 · Siri)</summary>
-      <p class="drawer-desc">주소 뒤에 <b>?add=제목</b>을 붙여서 열면 바로 일정이 추가돼. 날짜는 <b>&amp;due=2026-10-01</b> (또는 today · tomorrow · 내일 · 모레 · +3), 유형은 <b>&amp;type=과제</b>, 우선순위는 <b>&amp;priority=high</b>, 메모는 <b>&amp;notes=…</b>, 마감 시각은 <b>&amp;time=15:30</b>(또는 오후 3시), 예상 소요시간은 <b>&amp;min=90</b>(분)으로 정해. 추가하면 "되돌리기" 알림이 떠.</p>
+      <p class="drawer-desc">주소 뒤에 <b>?add=제목</b>을 붙여 열면 일정이 바로 추가돼요. 옵션: <b>&amp;due=</b> 날짜(2026-10-01·내일·+3), <b>&amp;type=</b> 유형, <b>&amp;priority=</b> high, <b>&amp;notes=</b> 메모, <b>&amp;time=</b> 15:30, <b>&amp;min=</b> 분.</p>
       <input type="text" id="quickUrlSample" class="settings-input" readonly>
       <div class="settings-actions">
         <button class="btn-ghost" id="quickUrlCopyBtn">주소 형식 복사</button>
       </div>
-      <p class="drawer-desc" style="margin-top:10px;"><b>아이폰 단축어로 쓰는 법</b><br>1. 단축어 앱 → ＋ → "입력 요청"(질문: 무슨 일정이야?)<br>2. "URL" 동작에 위 주소를 넣고 끝에 입력값을 이어 붙여<br>3. "URL 열기"<br>4. 이름을 "마감 추가"로 하면 "시리야, 마감 추가"로 실행돼<br><br>단축어가 여는 주소는 홈 화면 앱이 아니라 사파리에서 열려. 그 사파리에서 한 번 로그인해 두면 같은 일정에 들어가고, 로그인이 안 돼 있으면 그 기기에만 저장된다고 알려줘.</p>
+      <p class="drawer-desc" style="margin-top:10px;"><b>아이폰 단축어로 쓰기</b><br>1. 단축어 앱 → ＋ → "입력 요청"<br>2. "URL"에 위 주소를 넣고 끝에 입력값을 이어 붙이기<br>3. "URL 열기"<br>4. 이름을 "마감 추가"로 하면 "시리야, 마감 추가"로 실행돼요<br><br>사파리에서 열리므로 사파리에서 한 번 로그인해 두세요.</p>
       <div class="status" id="quickUrlStatus"></div>
     </details>
 
@@ -1318,7 +1318,7 @@
     <div id="planBody"></div>
     <div class="status" id="planStatus"></div>
     <div class="ai-modal-actions" id="planActions"></div>
-    <div class="plan-caption" id="planCaption">일정의 제목·유형·마감일이 AI에 전달돼. 메모와 키는 보내지 않아.</div>
+    <div class="plan-caption" id="planCaption">제목·유형·마감일을 AI에 보내요. 메모와 키는 보내지 않아요.</div>
   </div>
 </div>
 
@@ -1326,9 +1326,9 @@
   <div class="ai-modal">
     <h3 id="aiModalTitle">AI에게 물어보기</h3>
     <ol>
-      <li>아래 "프롬프트 복사"를 눌러.</li>
-      <li>Claude 같은 AI 앱에 붙여넣고 답을 받아.</li>
-      <li>받은 답 전체를 아래 칸에 붙여넣고 "적용"을 눌러.</li>
+      <li>아래 "프롬프트 복사"를 누르세요.</li>
+      <li>AI 앱에 붙여넣고 답을 받아 오세요.</li>
+      <li>받은 답 전체를 아래 칸에 붙여넣고 "적용"을 누르세요.</li>
     </ol>
     <div class="ai-modal-note" id="aiModalNote" style="display:none;"></div>
     <button class="btn-ghost" id="aiModalCopyBtn" style="width:100%;">프롬프트 복사</button>
@@ -1397,7 +1397,7 @@ const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v44';
+const APP_VERSION = 'v45';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -1672,10 +1672,10 @@ function renderTrashList() {
   head.innerHTML = `<span>${trashedItems.length}건</span><button class="trash-empty-btn" type="button">휴지통 비우기</button>`;
   head.querySelector('.trash-empty-btn').addEventListener('click', async () => {
     const synced = lastCloud.state !== 'off', count = trashedItems.length;
-    if (!(await confirmDialog(`휴지통의 ${count}건이 ${synced ? '모든 기기에서 ' : ''}완전히 삭제돼. 되돌릴 수 없어.`, { confirmLabel: synced ? '모든 기기에서 삭제' : '모두 삭제' }))) return;
+    if (!(await confirmDialog(`휴지통의 ${count}건이 ${synced ? '모든 기기에서 ' : ''}완전히 삭제돼요. 되돌릴 수 없어요.`, { confirmLabel: synced ? '모든 기기에서 삭제' : '모두 삭제' }))) return;
     const n = await deleteFromTrash(trashedItems.map(x => x.id));
     renderTrashList();
-    showToast(`${n}건을 완전히 삭제했어`);
+    showToast(`${n}건을 완전히 삭제했어요`);
   });
   container.appendChild(head);
 
@@ -1700,10 +1700,10 @@ function renderTrashList() {
       });
       card.querySelector('.perm-btn').addEventListener('click', async () => {
         const synced = lastCloud.state !== 'off', t = cleanText(it.title, 40);
-        if (!(await confirmDialog(`"${t}" 일정이 ${synced ? '모든 기기에서 ' : ''}완전히 삭제돼. 되돌릴 수 없어.`, { confirmLabel: synced ? '모든 기기에서 삭제' : '삭제' }))) return;
+        if (!(await confirmDialog(`"${t}" 일정이 ${synced ? '모든 기기에서 ' : ''}완전히 삭제돼요. 되돌릴 수 없어요.`, { confirmLabel: synced ? '모든 기기에서 삭제' : '삭제' }))) return;
         await deleteFromTrash([it.id]);
         renderTrashList();
-        showToast('완전히 삭제했어');
+        showToast('완전히 삭제했어요');
       });
       container.appendChild(card);
     });
@@ -1787,7 +1787,7 @@ async function callGemini({ system, text, media, maxTokens, history }) {
   if (!response.ok) {
     let detail = '';
     try { detail = (await response.json()).error?.message || ''; } catch (e) {}
-    const hint = response.status === 404 ? ' (모델 이름 문제일 수 있어. 프로필 탭 → AI 설정의 모델 칸을 비우거나 오류 메시지에 나온 새 모델명을 넣어줘)' : '';
+    const hint = response.status === 404 ? ' (모델 이름이 잘못됐을 수 있어요. 프로필 탭 → AI 설정에서 모델 칸을 비워 보세요)' : '';
     throw new Error(`AI 응답 오류 ${response.status}${detail ? ': ' + detail : ''}${hint}`);
   }
   const data = await response.json();
@@ -1827,10 +1827,10 @@ function askViaClipboard({ title, prompt, note }) {
       try {
         await navigator.clipboard.writeText(prompt);
         statusEl.className = 'status';
-        statusEl.textContent = '프롬프트가 복사됐어. AI 앱에 붙여넣어줘.';
+        statusEl.textContent = '프롬프트를 복사했어요. AI 앱에 붙여넣어 주세요.';
       } catch (e) {
         statusEl.className = 'status err';
-        statusEl.textContent = '자동 복사가 안 됐어. "프롬프트 복사"를 다시 눌러줘.';
+        statusEl.textContent = '자동 복사에 실패했어요. "프롬프트 복사"를 다시 눌러 주세요.';
       }
     };
     copy();
@@ -1857,13 +1857,13 @@ async function runAI({ system, text, media, maxTokens, title, history }) {
   const hasMedia = media && media.length;
   const nonImage = hasMedia && media.some(m => !m.mime.startsWith('image/'));
   if (nonImage) {
-    throw new AiUnavailableError('PDF는 AI 키가 있어야 처리할 수 있어. 텍스트(txt/md)나 이미지로 등록해줘.');
+    throw new AiUnavailableError('PDF는 AI 키가 있어야 처리할 수 있어요. 텍스트나 이미지로 등록해 주세요.');
   }
   const prompt = `${system}\n\n---\n\n${text}`;
   return askViaClipboard({
     title,
     prompt,
-    note: hasMedia ? '이미지는 복사되지 않아. AI 앱에 같은 이미지를 직접 첨부해서 함께 보내줘.' : ''
+    note: hasMedia ? '이미지는 복사되지 않아요. AI 앱에 같은 이미지를 직접 첨부해 주세요.' : ''
   });
 }
 
@@ -1922,7 +1922,7 @@ async function estimateDurationWithAI(it) {
 JSON 객체만 반환해. 다른 설명, 마크다운, 코드 블록 없이. 형식: {"minutes":90,"why":"한 문장 이유"}`;
   const raw = await runAI({ system, text: '예상 소요시간을 추정해줘.', maxTokens: 300, title: '예상 소요시간' });
   const o = extractJsonObject(raw), n = normDuration(o && o.minutes);
-  if (!n) throw new Error('AI 답을 읽지 못했어');
+  if (!n) throw new Error('AI 답을 읽지 못했어요');
   if (!items.includes(it)) return;
   setAiDuration(it, n);
   await saveItems();
@@ -1988,11 +1988,11 @@ function showToast(msg, actionLabel, onAction, ms) {
 function toastUndoDelete(moved) {
   if (!moved || !moved.length) return;
   const ids = moved.map(x => x.id);
-  showToast(`${ids.length}건 삭제했어`, '되돌리기', async () => {
+  showToast(`${ids.length}건 삭제했어요`, '되돌리기', async () => {
     for (const id of ids) await restoreFromTrash(id);
     renderTrashList();
     refreshAll();
-    showToast('되돌렸어');
+    showToast('되돌렸어요');
   });
 }
 
@@ -2005,7 +2005,7 @@ async function addItemDirect(title, dueDate, type, dueTime) {
   items.push(it);
   await saveItems();
   refreshAll();
-  showToast('추가했어');
+  showToast('추가했어요');
   return true;
 }
 function setupAddRow(inputId, typeId, getDate) {
@@ -2050,7 +2050,7 @@ function renderTodayView() {
   const todayDone = todayAll.filter(it => it.done);
   const overdueN = groups[0].list.length;
   document.getElementById('todayProgressText').textContent =
-    (todayAll.length ? `오늘 마감 ${todayAll.length}건 중 ${todayDone.length}건 완료` : '오늘 마감인 일정은 없어') + (overdueN ? ` · 밀린 일정 ${overdueN}건` : '');
+    (todayAll.length ? `오늘 마감 ${todayAll.length}건 중 ${todayDone.length}건 완료` : '오늘 마감인 일정이 없어요') + (overdueN ? ` · 밀린 일정 ${overdueN}건` : '');
   document.getElementById('todayProgressBar').style.width = todayAll.length ? Math.round(todayDone.length / todayAll.length * 100) + '%' : '0%';
 
   const box = document.getElementById('todaySections');
@@ -2069,8 +2069,8 @@ function renderTodayView() {
     const empty = document.createElement('div');
     empty.className = 'today-empty';
     empty.innerHTML = active.length
-      ? `<span class="big">${ic('check')}</span>앞으로 7일 안에 급한 일정이 없어.<br>다음 일정: <span class="next">${escapeHtml(next.title)}</span> ${ddayHtml(next)}`
-      : `<span class="big">${ic('pencil')}</span>등록된 일정이 없어.<br>위 입력칸에 바로 적거나 ＋ 새 일정으로 추가해봐.`;
+      ? `<span class="big">${ic('check')}</span>앞으로 7일 안에 급한 일정이 없어요.<br>다음 일정: <span class="next">${escapeHtml(next.title)}</span> ${ddayHtml(next)}`
+      : `<span class="big">${ic('pencil')}</span>등록된 일정이 없어요.<br>위 입력칸에 적거나 ＋ 새 일정으로 추가하세요.`;
     box.appendChild(empty);
   }
 
@@ -2194,9 +2194,9 @@ function buildItemExtras(it) {
   box.className = 'tbl-extras';
   box.innerHTML = `
     <label class="extras-label">메모</label>
-    <textarea class="extras-notes" placeholder="메모를 입력해…">${escapeHtml(it.notes)}</textarea>
+    <textarea class="extras-notes" placeholder="메모를 입력하세요…">${escapeHtml(it.notes)}</textarea>
     ${topicFieldApplies(it) ? `
-      <label class="extras-label">분야<span class="extras-hint">세부 분야를 적을수록 주제 추천이 구체적이 돼</span></label>
+      <label class="extras-label">분야<span class="extras-hint">분야를 구체적으로 적을수록 주제 추천이 정확해져요</span></label>
       <input type="text" class="settings-input extras-field" maxlength="80" placeholder="예: ALD 공정의 박막 균일도, 조선시대 상업사" value="${escapeHtml(it.topicKeyword || '')}" aria-label="분야">
       ${keywordPresets.length ? `<div class="field-chips">${keywordPresets.map(k => `<button type="button" class="field-chip" data-k="${escapeHtml(k)}">${escapeHtml(k)}</button>`).join('')}</div>` : ''}
       <button type="button" class="elaborate-btn topic-recommend-btn">${ic('sparkle', 'ic sm')} ${it.topicSuggestion ? '이 분야로 주제 다시 추천' : '이 분야로 주제 추천 받기'}</button>
@@ -2347,7 +2347,7 @@ ${referenceContext}
 async function deleteItemWithGroupCheck(it) {
   let moved;
   if (it.recurringId) {
-    const choice = await askDialog({ message: '이 일정은 반복 시리즈의 일부야. 어떻게 삭제할까?\n(휴지통으로 이동돼서 나중에 복구할 수 있어)', actions: [
+    const choice = await askDialog({ message: '반복 일정의 일부예요. 어떻게 삭제할까요?\n삭제해도 휴지통에서 복구할 수 있어요.', actions: [
       { label: '시리즈 전체 삭제', value: 'all', kind: 'destructive' },
       { label: '이 항목만 삭제', value: 'one', kind: 'default' },
       { label: '취소', value: null, kind: 'cancel' }
@@ -2547,7 +2547,7 @@ async function generateBriefing() {
     ...tomorrowItems.map(it => `- 내일: ${it.title} (${it.type}, 우선순위 ${it.priority})`)
   ].join('\n');
 
-  const system = `너는 이 사람의 개인 비서야. 아래 지난 마감/오늘/내일 마감 일정 목록을 보고, 아침에 건네는 브리핑처럼 짧고 자연스러운 문장 1~2개로 요약해줘. 반말로, 친근하지만 담백하게. 지난 마감이 있으면 가장 먼저, 살짝 다급하게 짚어줘. 겹치는 일정이 있으면 언급하고, 없으면 굳이 말하지 마. 목록:\n${listText}\n\n다른 설명 없이 브리핑 문장만 출력해.`;
+  const system = `너는 이 사람의 개인 비서야. 아래 지난 마감/오늘/내일 마감 일정 목록을 보고, 아침에 건네는 브리핑처럼 짧고 자연스러운 문장 1~2개로 요약해줘. 존댓말로, 친근하지만 담백하게. 지난 마감이 있으면 가장 먼저, 살짝 다급하게 짚어줘. 겹치는 일정이 있으면 언급하고, 없으면 굳이 말하지 마. 목록:\n${listText}\n\n다른 설명 없이 브리핑 문장만 출력해.`;
 
   return runAI({ system, text: '브리핑 만들어줘.', maxTokens: 300, title: '브리핑' });
 }
@@ -2597,7 +2597,7 @@ function renderDetail() {
   document.getElementById('detailAddRow').style.display = selectedDate ? 'flex' : 'none';
 
   if (!selectedDate) {
-    titleEl.textContent = '날짜를 선택해줘';
+    titleEl.textContent = '날짜를 선택해 주세요';
     listEl.innerHTML = '';
     return;
   }
@@ -2757,7 +2757,7 @@ document.getElementById('bulkCompleteBtn').addEventListener('click', async () =>
 
 document.getElementById('bulkDeleteBtn').addEventListener('click', async () => {
   if (!selectedIds.size) return;
-  const ok = await confirmDialog(`선택한 ${selectedIds.size}건을 삭제할까?\n휴지통으로 이동돼서 나중에 복구할 수 있어.`, { confirmLabel: '삭제' });
+  const ok = await confirmDialog(`선택한 ${selectedIds.size}건을 삭제할까요?\n휴지통에서 복구할 수 있어요.`, { confirmLabel: '삭제' });
   if (!ok) return;
   const toTrash = items.filter(it => selectedIds.has(it.id));
   items = items.filter(it => !selectedIds.has(it.id));
@@ -2918,9 +2918,9 @@ document.getElementById('saveAiSettingsBtn').addEventListener('click', async () 
   try {
     const r = await saveAiConfig(keyVal, typedModel, passVal);
     const signedIn = !!(window.cloud && window.cloud.isSignedIn && window.cloud.isSignedIn());
-    let msg = keyVal ? '저장함 — 앱이 AI를 직접 호출해' : '키를 비워서 저장함 — 복사·붙여넣기 방식으로 동작해';
-    if (signedIn && keyVal) msg += r.shared ? ' (암호화해서 내 계정에 저장했어. 다른 기기에서는 보호 암호를 한 번 입력하면 돼)' : ' (이 기기에만 저장했어. 다른 기기와 나누려면 보호 암호를 정해줘)';
-    else if (signedIn) msg += ' (다른 기기에도 적용돼)';
+    let msg = keyVal ? '저장했어요. AI를 직접 호출해요' : '키를 비워 저장했어요. 복사·붙여넣기 방식으로 동작해요';
+    if (signedIn && keyVal) msg += r.shared ? ' (암호화해 내 계정에 저장했어요. 다른 기기에서는 보호 암호를 한 번 입력하면 돼요)' : ' (이 기기에만 저장했어요. 다른 기기와 나누려면 보호 암호를 정해 주세요)';
+    else if (signedIn) msg += ' (다른 기기에도 적용돼요)';
     statusEl.className = 'status';
     statusEl.textContent = msg;
     document.getElementById('aiPassInput').value = '';
@@ -2935,13 +2935,13 @@ document.getElementById('saveAiSettingsBtn').addEventListener('click', async () 
 document.getElementById('aiUnlockBtn').addEventListener('click', async () => {
   const st = document.getElementById('aiUnlockStatus');
   const pass = document.getElementById('aiUnlockInput').value;
-  if (!pass) { st.className = 'status err'; st.textContent = '보호 암호를 입력해줘'; return; }
+  if (!pass) { st.className = 'status err'; st.textContent = '보호 암호를 입력해 주세요'; return; }
   st.className = 'status'; st.textContent = '푸는 중…';
   try {
     await unlockAi(pass);
     document.getElementById('aiUnlockInput').value = '';
     document.getElementById('aiSettingsStatus').className = 'status';
-    document.getElementById('aiSettingsStatus').textContent = '키를 풀었어. 이 기기에서 바로 쓸 수 있어.';
+    document.getElementById('aiSettingsStatus').textContent = '키를 풀었어요. 이 기기에서 바로 쓸 수 있어요.';
   } catch (e) {
     st.className = 'status err'; st.textContent = e.message;
   }
@@ -2954,7 +2954,7 @@ document.getElementById('testAiBtn').addEventListener('click', async () => {
   const model = document.getElementById('geminiModelInput').value.trim() || DEFAULT_GEMINI_MODEL;
   if (!key) {
     statusEl.className = 'status err';
-    statusEl.textContent = '테스트하려면 키를 먼저 입력해줘';
+    statusEl.textContent = '테스트하려면 키를 먼저 입력해 주세요';
     return;
   }
   statusEl.className = 'status';
@@ -2964,7 +2964,7 @@ document.getElementById('testAiBtn').addEventListener('click', async () => {
   try {
     const out = await callGemini({ system: '한 단어로만 답해.', text: '"ok"라고 답해.', maxTokens: 20 });
     statusEl.className = 'status';
-    statusEl.textContent = '연결 성공: ' + out.slice(0, 30) + ' (저장 버튼을 눌러야 적용돼)';
+    statusEl.textContent = '연결 성공: ' + out.slice(0, 30) + ' (저장 버튼을 눌러야 적용돼요)';
   } catch (e) {
     statusEl.className = 'status err';
     statusEl.textContent = '연결 실패: ' + e.message;
@@ -2985,7 +2985,7 @@ document.getElementById('addReferenceBtn').addEventListener('click', async () =>
 
   if (!file) {
     statusEl.className = 'status err';
-    statusEl.textContent = '먼저 파일을 선택해줘';
+    statusEl.textContent = '먼저 파일을 선택해 주세요';
     return;
   }
 
@@ -3013,7 +3013,7 @@ document.getElementById('addReferenceBtn').addEventListener('click', async () =>
       text = `[파일명: ${file.name}] 위 자료를 요약해줘.`;
     } else {
       statusEl.className = 'status err';
-      statusEl.textContent = '지원하지 않는 파일 형식이야 (이미지, PDF, txt, md만 가능)';
+      statusEl.textContent = '지원하지 않는 파일 형식이에요 (이미지, PDF, txt, md만 가능)';
       return;
     }
 
@@ -3021,7 +3021,7 @@ document.getElementById('addReferenceBtn').addEventListener('click', async () =>
 
     if (!summary) {
       statusEl.className = 'status err';
-      statusEl.textContent = '요약을 만들지 못했음. 다른 파일로 시도해줘.';
+      statusEl.textContent = '요약을 만들지 못했어요. 다른 파일로 시도해 주세요.';
       return;
     }
 
@@ -3031,7 +3031,7 @@ document.getElementById('addReferenceBtn').addEventListener('click', async () =>
 
     fileInput.value = '';
     statusEl.className = 'status';
-    statusEl.textContent = '등록 완료 — 앞으로 주제 추천할 때 참고할게';
+    statusEl.textContent = '등록했어요. 주제 추천에 참고할게요';
   } catch (err) {
     console.error(err);
     statusEl.className = 'status err';
@@ -3044,7 +3044,7 @@ document.getElementById('addKeywordBtn').addEventListener('click', async () => {
   const input = document.getElementById('itemKeywordInput');
   const parts = input.value.split(',').map(s => s.trim()).filter(Boolean);
   if (!parts.length) {
-    input.placeholder = '먼저 키워드를 입력한 다음 눌러줘 (쉼표로 여러 개 가능)';
+    input.placeholder = '키워드를 먼저 입력한 뒤 눌러 주세요 (쉼표로 여러 개 가능)';
     return;
   }
   let changed = false;
@@ -3108,10 +3108,10 @@ document.getElementById('rSubmitBtn').addEventListener('click', async () => {
   const rTime = normTime(document.getElementById('rTime').value);
   const rStatus = document.getElementById('rStatus');
 
-  if (!title) { rStatus.className = 'status err'; rStatus.textContent = '제목을 입력해줘'; return; }
-  if (!selectedWeekdays.size) { rStatus.className = 'status err'; rStatus.textContent = '반복 요일을 하나 이상 골라줘'; return; }
-  if (!start || !end) { rStatus.className = 'status err'; rStatus.textContent = '시작일과 종료일을 입력해줘'; return; }
-  if (end < start) { rStatus.className = 'status err'; rStatus.textContent = '종료일이 시작일보다 빠름'; return; }
+  if (!title) { rStatus.className = 'status err'; rStatus.textContent = '제목을 입력해 주세요'; return; }
+  if (!selectedWeekdays.size) { rStatus.className = 'status err'; rStatus.textContent = '반복 요일을 하나 이상 골라 주세요'; return; }
+  if (!start || !end) { rStatus.className = 'status err'; rStatus.textContent = '시작일과 종료일을 입력해 주세요'; return; }
+  if (end < start) { rStatus.className = 'status err'; rStatus.textContent = '종료일이 시작일보다 빨라요'; return; }
 
   const MAX_OCCURRENCES = 104; // 대략 2년치 주간 반복 상한선, 무한 생성 방지
   const recurringId = uid();
@@ -3143,7 +3143,7 @@ document.getElementById('rSubmitBtn').addEventListener('click', async () => {
 
   if (!generated.length) {
     rStatus.className = 'status err';
-    rStatus.textContent = '선택한 기간/요일에 해당하는 날짜가 없음';
+    rStatus.textContent = '선택한 기간에 해당하는 날짜가 없어요';
     return;
   }
 
@@ -3213,7 +3213,7 @@ function extractJsonArray(rawText) {
   const start = cleaned.indexOf('[');
   const end = cleaned.lastIndexOf(']');
   if (start >= 0 && end > start) return JSON.parse(cleaned.slice(start, end + 1));
-  throw new Error('응답에서 JSON 배열을 찾지 못했음');
+  throw new Error('응답에서 JSON 배열을 찾지 못했어요');
 }
 
 // ---- 일정 정리(AI)는 "먼저 접수 → 이어서 정리" ----
@@ -3223,7 +3223,7 @@ function extractJsonArray(rawText) {
 let pendingJobs = [];                // {id, text, hasImage, kw, status: 'working'|'failed'|'undated', error, drafts[]}
 const jobMedia = new Map();          // 이미지는 메모리에만 둔다(용량). 앱이 닫히면 이미지 작업은 다시 시도할 수 없다.
 let jobChain = Promise.resolve();    // AI 작업은 한 번에 하나씩(키가 없으면 복사·붙여넣기 창이 하나뿐이라 겹치면 안 됨)
-const PARSE_EMPTY_MSG = '마감일 정보를 찾지 못했음. 조금 더 구체적으로 입력해줘.';
+const PARSE_EMPTY_MSG = '마감일 정보를 찾지 못했어요. 조금 더 구체적으로 입력해 주세요.';
 
 // ---- 먼저 등록: 글에 날짜가 다 들어 있으면 AI 없이 날짜·시각만 바로 읽어서 등록하고, AI는 이어서 나머지를 채운다 ----
 // 줄(또는 쉼표)마다 날짜가 읽혀야만 이 경로를 쓴다. 하나라도 못 읽으면 통째로 AI에 맡기는 기존 경로(정리 중 칸)로 간다.
@@ -3314,12 +3314,12 @@ async function registerInstantly(plan, kw) {
   viewYear = parseInt(y); viewMonth = parseInt(mo) - 1;
   const statusEl = document.getElementById('status');
   statusEl.className = 'status';
-  statusEl.textContent = `${created.length}건 등록했어 · AI가 이어서 정리하는 중…`;
+  statusEl.textContent = `${created.length}건 등록했어요 · AI가 이어서 정리하는 중…`;
   const ctx = { ids: created.map(c => c.id), plan, kw, cancelled: false };
   const p = enqueueEnrich(ctx);
   refreshAll();
   const first = created[0].title.length > 24 ? created[0].title.slice(0, 24) + '…' : created[0].title;
-  showToast(created.length === 1 ? `"${first}" 등록했어 · ${formatShortDate(created[0].dueDate)}` : `${created.length}건 등록했어`, '되돌리기', async () => {
+  showToast(created.length === 1 ? `"${first}" 등록했어요 · ${formatShortDate(created[0].dueDate)}` : `${created.length}건 등록했어요`, '되돌리기', async () => {
     ctx.cancelled = true;
     ctx.ids.forEach(id => enrichingIds.delete(id));
     const gone = new Set(ctx.ids);
@@ -3349,7 +3349,7 @@ async function runEnrich(ctx) {
     const raw = await runAI({ system, text: lines, maxTokens: 2000, title: '일정 정리' });
     if (ctx.cancelled) { finish(); return { ok: false, cancelled: true }; }
     const rows = extractJsonArray(raw);
-    if (!Array.isArray(rows)) throw new Error('AI 답을 읽지 못했어');
+    if (!Array.isArray(rows)) throw new Error('AI 답을 읽지 못했어요');
     let filled = 0;
     rows.forEach(r => {
       if (!r || typeof r !== 'object') return;
@@ -3382,12 +3382,12 @@ async function runEnrich(ctx) {
     finish();
     refreshAll();
     if (err && err.message === '취소함') {
-      statusEl.className = 'status'; statusEl.textContent = 'AI 정리는 건너뛰었어 · 일정은 등록돼 있어';
+      statusEl.className = 'status'; statusEl.textContent = 'AI 정리를 건너뛰었어요 · 일정은 등록돼 있어요';
       return { ok: true, count: ctx.ids.length, filled: 0, skipped: true };
     }
     console.error(err);
-    statusEl.className = 'status err'; statusEl.textContent = '등록은 됐지만 AI 정리에 실패했어: ' + ((err && err.message) || err);
-    showToast('AI 정리에 실패했어 · 일정은 등록돼 있어', '다시 시도', async () => { ctx.cancelled = false; enqueueEnrich(ctx); refreshAll(); }, 8000);
+    statusEl.className = 'status err'; statusEl.textContent = '등록은 됐지만 AI 정리에 실패했어요: ' + ((err && err.message) || err);
+    showToast('AI 정리에 실패했어요 · 일정은 등록돼 있어요', '다시 시도', async () => { ctx.cancelled = false; enqueueEnrich(ctx); refreshAll(); }, 8000);
     return { ok: true, count: ctx.ids.length, filled: 0, error: String((err && err.message) || err) };
   }
 }
@@ -3409,7 +3409,7 @@ async function loadPending() {
       const drafts = (Array.isArray(j.drafts) ? j.drafts : []).map(sanitizeDraft).filter(Boolean).slice(0, 10);
       let status = ['failed', 'undated'].includes(j.status) ? j.status : 'failed';
       let error = cleanText(j.error, 200);
-      if (j.status === 'working') error = '정리를 마치기 전에 앱이 닫혔어';      // 이전 실행에서 끝나지 못한 작업
+      if (j.status === 'working') error = '정리를 마치기 전에 앱이 닫혔어요';      // 이전 실행에서 끝나지 못한 작업
       if (status === 'undated' && !drafts.length) return;
       pendingJobs.push({ id: j.id, text: cleanText(j.text, 2000), hasImage: !!j.hasImage, kw: cleanText(j.kw, 200), status, error, drafts });
     });
@@ -3470,7 +3470,7 @@ async function runParseJob(job) {
   if (job.cancelled) return { ok: false, cancelled: true };
   const fail = (msg) => {
     job.status = 'failed'; job.error = msg;
-    statusEl.textContent = msg === PARSE_EMPTY_MSG ? msg : '처리 중 오류가 발생했음: ' + msg;
+    statusEl.textContent = msg === PARSE_EMPTY_MSG ? msg : '처리 중 오류가 발생했어요: ' + msg;
     statusEl.className = 'status err';
     savePending(); renderPendingLane();
     return { ok: false, error: msg };
@@ -3504,11 +3504,11 @@ async function runParseJob(job) {
     if (drafts.length) { job.status = 'undated'; savePending(); } else removeJob(job);
     statusEl.className = 'status';
     statusEl.textContent = newItems.length
-      ? `${newItems.length}건 등록 완료` + (drafts.length ? ` · 날짜를 못 찾은 ${drafts.length}건은 "정리 중" 칸에 뒀어` : '')
-      : `날짜를 못 찾은 ${drafts.length}건을 "정리 중" 칸에 뒀어. 날짜를 정해줘`;
+      ? `${newItems.length}건 등록 완료` + (drafts.length ? ` · 날짜를 못 찾은 ${drafts.length}건은 "정리 중" 칸에 뒀어요` : '')
+      : `날짜를 못 찾은 ${drafts.length}건을 "정리 중" 칸에 뒀어요. 날짜를 정해 주세요`;
     refreshAll(); renderPendingLane();
-    if (newItems.length) announceRegistered(newItems.map(x => x.id), drafts.length ? ` · 날짜를 못 찾은 ${drafts.length}건은 "정리 중" 칸에 뒀어` : '');
-    else showToast(`날짜를 못 찾은 ${drafts.length}건을 "정리 중" 칸에 뒀어. 날짜를 정해줘`, null, null, 6000);
+    if (newItems.length) announceRegistered(newItems.map(x => x.id), drafts.length ? ` · 날짜를 못 찾은 ${drafts.length}건은 "정리 중" 칸에 뒀어요` : '');
+    else showToast(`날짜를 못 찾은 ${drafts.length}건을 "정리 중" 칸에 뒀어요. 날짜를 정해 주세요`, null, null, 6000);
     return { ok: true, count: newItems.length, undated: drafts.length };
   } catch (err) {
     if (job.cancelled) return { ok: false, cancelled: true };
@@ -3530,7 +3530,7 @@ function renderPendingLane() {
   if (!pendingJobs.length) { box.hidden = true; box.textContent = ''; return; }
   box.hidden = false; box.textContent = '';
   const head = document.createElement('div'); head.className = 'pending-head';
-  head.innerHTML = ic('clock', 'ic sm') + '<span>정리 중</span><span class="pending-note">이 기기에만 잠시 보관돼</span>';
+  head.innerHTML = ic('clock', 'ic sm') + '<span>정리 중</span><span class="pending-note">이 기기에만 잠시 보관돼요요</span>';
   box.appendChild(head);
   const mkBtn = (label, cls, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'pending-btn ' + cls; b.textContent = label; b.addEventListener('click', fn); return b; };
   pendingJobs.forEach(job => {
@@ -3538,19 +3538,19 @@ function renderPendingLane() {
       job.drafts.forEach(d => {
         const row = document.createElement('div'); row.className = 'pending-row undated';
         const t = document.createElement('span'); t.className = 'pending-text'; t.textContent = d.title;
-        const sub = document.createElement('span'); sub.className = 'pending-sub'; sub.textContent = '날짜를 못 찾았어';
+        const sub = document.createElement('span'); sub.className = 'pending-sub'; sub.textContent = '날짜를 못 찾았어요';
         const date = document.createElement('input'); date.type = 'date'; date.className = 'pending-date'; date.value = d.pickedDate || ''; date.setAttribute('aria-label', '날짜');
         date.addEventListener('change', () => { d.pickedDate = date.value; });
         const hint = document.createElement('span'); hint.className = 'pending-hint';
         const add = mkBtn('일정으로 추가', 'primary', async () => {
-          if (!isValidISO(date.value)) { hint.textContent = '날짜를 골라줘'; return; }
+          if (!isValidISO(date.value)) { hint.textContent = '날짜를 골라 주세요'; return; }
           const it = makeParsedItem({ ...d, dueDate: date.value }, d.kw);
           items.push(it);
           job.drafts = job.drafts.filter(x => x !== d);
           if (!job.drafts.length) removeJob(job); else { savePending(); renderPendingLane(); }
           await saveItems();
           refreshAll();
-          showToast(`"${it.title.length > 24 ? it.title.slice(0, 24) + '…' : it.title}" 추가했어 · ${formatShortDate(it.dueDate)}`);
+          showToast(`"${it.title.length > 24 ? it.title.slice(0, 24) + '…' : it.title}" 추가했어요 · ${formatShortDate(it.dueDate)}`);
         });
         const del = mkBtn('지우기', '', () => { job.drafts = job.drafts.filter(x => x !== d); if (!job.drafts.length) removeJob(job); else { savePending(); renderPendingLane(); } });
         row.append(t, sub, date, add, del, hint);
@@ -3567,10 +3567,10 @@ function renderPendingLane() {
       sub.textContent = 'AI가 정리하는 중…';
       row.appendChild(mkBtn('취소', '', () => removeJob(job)));
     } else {
-      sub.textContent = job.error || '정리하지 못했어';
+      sub.textContent = job.error || '정리하지 못했어요';
       const canRetry = !!job.text || jobMedia.has(job.id);
       if (canRetry) row.appendChild(mkBtn('다시 시도', 'primary', () => startJob(job)));
-      else sub.textContent += ' · 이미지는 다시 첨부해야 해';
+      else sub.textContent += ' · 이미지를 다시 첨부해 주세요';
       row.appendChild(mkBtn('지우기', '', () => removeJob(job)));
     }
     box.appendChild(row);
@@ -3588,7 +3588,7 @@ document.getElementById('parseBtn').addEventListener('click', async () => {
   const statusEl = document.getElementById('status');
 
   if (!text && !pendingImageBase64) {
-    statusEl.textContent = '텍스트를 입력하거나 이미지를 첨부해줘';
+    statusEl.textContent = '텍스트를 입력하거나 이미지를 첨부해 주세요';
     statusEl.className = 'status err';
     return;
   }
@@ -3624,7 +3624,7 @@ function buildChatContext() {
     ? referenceMaterials.slice(-5).map(r => `- [${r.name}] ${r.summary}`).join('\n')
     : '(등록된 참고 자료 없음)';
 
-  return `너는 이 사람의 개인 비서야. 질문/조언에는 아래 정보를 참고해서 자연스럽게 반말로 답해. 목록에 없는 내용을 지어내지 말고, 모르면 모른다고 솔직히 말해. 조언은 추상적으로 말고 실행 가능한 내용으로 구체적으로 답해. 불필요하게 길게 늘어놓지 마.
+  return `너는 이 사람의 개인 비서야. 질문/조언에는 아래 정보를 참고해서 자연스럽게 존댓말로 짧게 답해. 목록에 없는 내용을 지어내지 말고, 모르면 모른다고 솔직히 말해. 조언은 추상적으로 말고 실행 가능한 내용으로 구체적으로 답해. 불필요하게 길게 늘어놓지 마.
 
 오늘 날짜: ${todayISO()}
 
@@ -3653,7 +3653,7 @@ ${refs}
 id는 반드시 위 목록에 있는 실제 id만 사용하고 절대 지어내지 마. 해당 id를 못 찾겠으면 액션을 만들지 말고 대화로 "그런 항목을 못 찾겠다"고 답해. 단순 질문/조언에는 ###ACTIONS### 블록을 절대 붙이지 마.
 
 --- 중요: 새 일정 등록 요청이 오면 ---
-사용자가 새로운 일정을 추가/등록해달라고 하면(예: "OO까지 XX 등록해줘", "이거 일정에 넣어줘"), 너는 여기서 직접 등록하지 마. 액션도 만들지 말고, 대화로 "새 일정 등록은 맨 위 입력창에 적고 Enter를 눌러줘(또는 AI 정리 버튼). 거기서 하면 자동으로 인식해서 등록돼"라고 짧게 안내만 해줘.`;
+사용자가 새로운 일정을 추가/등록해달라고 하면(예: "OO까지 XX 등록해줘", "이거 일정에 넣어줘"), 너는 여기서 직접 등록하지 마. 액션도 만들지 말고, 대화로 "새 일정 등록은 맨 위 입력창에 적고 Enter를 눌러 주세요(또는 AI 정리 버튼). 자동으로 인식해 등록돼요"라고 짧게 안내만 해줘.`;
 }
 
 function parseActionsFromReply(replyText) {
@@ -3676,25 +3676,25 @@ async function applyChatActions(actions) {
   for (const act of actions) {
     if (act.action === 'complete' && act.id) {
       const found = items.find(it => it.id === act.id);
-      if (found) { found.done = true; results.push(`✅ "${found.title}" 완료 처리함`); changed = true; }
-      else results.push(`⚠️ 해당 항목을 못 찾았음`);
+      if (found) { found.done = true; results.push(`✅ "${found.title}" 완료 처리했어요`); changed = true; }
+      else results.push(`⚠️ 해당 항목을 찾지 못했어요`);
     } else if (act.action === 'uncomplete' && act.id) {
       const found = items.find(it => it.id === act.id);
-      if (found) { found.done = false; results.push(`↩️ "${found.title}" 완료 취소함`); changed = true; }
-      else results.push(`⚠️ 해당 항목을 못 찾았음`);
+      if (found) { found.done = false; results.push(`↩️ "${found.title}" 완료를 취소했어요`); changed = true; }
+      else results.push(`⚠️ 해당 항목을 찾지 못했어요`);
     } else if (act.action === 'delete' && act.id) {
       const idx = items.findIndex(it => it.id === act.id);
       if (idx >= 0) {
         const removed = items.splice(idx, 1)[0];
         await moveToTrash([removed]);
-        results.push(`🗑️ "${removed.title}" 삭제함 (휴지통에서 복구 가능)`);
+        results.push(`🗑️ "${removed.title}" 삭제했어요 (휴지통에서 복구할 수 있어요)`);
         changed = true;
       }
-      else results.push(`⚠️ 해당 항목을 못 찾았음`);
+      else results.push(`⚠️ 해당 항목을 찾지 못했어요`);
     } else if (act.action === 'reschedule' && act.id && act.newDueDate) {
       const found = items.find(it => it.id === act.id);
-      if (found) { found.dueDate = act.newDueDate; results.push(`📅 "${found.title}" 날짜를 ${formatShortDate(act.newDueDate)}로 변경함`); changed = true; }
-      else results.push(`⚠️ 해당 항목을 못 찾았음`);
+      if (found) { found.dueDate = act.newDueDate; results.push(`📅 "${found.title}" 날짜를 ${formatShortDate(act.newDueDate)}로 바꿨어요`); changed = true; }
+      else results.push(`⚠️ 해당 항목을 찾지 못했어요`);
     }
   }
 
@@ -3711,7 +3711,7 @@ function renderChatLog() {
   log.innerHTML = '';
   if (!chatHistory.length) {
     const empty = document.createElement('div');
-    empty.innerHTML = emptyStateHtml('chat', geminiKey ? '완료·삭제·변경 지시나 질문을 해줘' : '메뉴(☰)에서 AI 키를 넣으면 쓸 수 있어');
+    empty.innerHTML = emptyStateHtml('chat', geminiKey ? '완료·삭제·변경 지시나 질문을 입력하세요' : '프로필 탭에서 AI 키를 넣으면 쓸 수 있어요');
     log.appendChild(empty);
     return;
   }
@@ -3729,7 +3729,7 @@ async function sendChatMessage() {
   const text = input.value.trim();
   if (!text) return;
   if (!geminiKey) {
-    chatHistory.push({ role: 'assistant', text: 'AI 비서는 AI 키가 있어야 써. 프로필 탭 → AI 설정에서 키를 넣어줘.' });
+    chatHistory.push({ role: 'assistant', text: 'AI 비서는 AI 키가 있어야 쓸 수 있어요. 프로필 탭 → AI 설정에서 키를 넣어 주세요.' });
     renderChatLog();
     return;
   }
@@ -3768,7 +3768,7 @@ async function sendChatMessage() {
     }
   } catch (err) {
     console.error(err);
-    loadingMsg.text = '오류가 발생했음: ' + err.message;
+    loadingMsg.text = '오류가 발생했어요: ' + err.message;
   } finally {
     sendBtn.disabled = false;
     renderChatLog();
@@ -3790,12 +3790,12 @@ function renderProfileUi() {
     if (!el) return;
     if (initial) el.textContent = initial; else el.innerHTML = ic('user');
   });
-  const sub = !loggedIn ? '로그인 전이라 이 기기에만 저장돼' : lastCloud.state === 'synced' ? '동기화됨' : lastCloud.state === 'error' ? '동기화 오류' : '연결 중…';
+  const sub = !loggedIn ? '로그인 전이라 이 기기에만 저장돼요' : lastCloud.state === 'synced' ? '동기화됨' : lastCloud.state === 'error' ? '동기화 오류' : '연결 중…';
   const name = !loggedIn ? '로그인 안 됨' : (email || '로그인됨');
   document.getElementById('pfName').textContent = name;
   document.getElementById('pfSub').textContent = sub;
   document.getElementById('sbProfileName').textContent = name;
-  document.getElementById('sbProfileSub').textContent = !loggedIn ? '이 기기에만 저장돼' : sub;
+  document.getElementById('sbProfileSub').textContent = !loggedIn ? '이 기기에만 저장돼요' : sub;
   document.getElementById('pfActionBtn').textContent = loggedIn ? '로그아웃' : '로그인';
   document.getElementById('pfVersion').textContent = 'Δuenoτe ' + APP_VERSION;
 }
@@ -3833,7 +3833,7 @@ function closeSidebar() {
   document.getElementById('sbOverlay').classList.remove('open');
 }
 // 모바일 스와이프(v42, 사용자 요청): 메뉴는 ☰ 버튼으로만 열고, 화면을 좌우로 밀면 탭(오늘·달력·이번 주·전체 표·보드)을 넘긴다.
-// (1) 탭 넘기기: 왼쪽으로 밀면 다음 탭, 오른쪽으로 밀면 이전 탭(양 끝에서는 그대로). 손을 뗄 때 판정한다: 가로가 세로의 1.3배 이상이고 1.2초 안에 40px 이상(또는 22px 이상을 0.35px/ms 넘는 속도로 튕기기). 처음(v42)에는 60px·1.8배·0.9초라 신경 써서 밀어야 해서 완화했다.
+// (1) 탭 넘기기: 왼쪽으로 밀면 다음 탭, 오른쪽으로 밀면 이전 탭(양 끝에서는 그대로). 손을 뗄 때 판정한다: 가로가 세로의 1.1배 이상이고 1.5초 안에 28px 이상(또는 14px 이상을 0.22px/ms 넘는 속도로 튕기기). 또 손을 떼기 전이라도 56px 넘게(세로의 1.2배 이상) 밀면 바로 넘긴다. 처음(v42)은 60px·1.8배·0.9초, v44는 40px·1.3배였다.
 //     입력칸·채팅 패널·가로로 스크롤되는 영역(탭 줄·보드 등)·다른 창이 열려 있을 때·화면 맨 끝 16px(iOS 뒤로 가기 제스처)에서 시작한 것과 프로필 탭에서는 무시한다.
 // (2) 열려 있는 메뉴를 왼쪽으로 밀어 닫는 것은 그대로다(손가락을 따라 메뉴가 같이 움직임).
 (function setupSwipes() {
@@ -3850,7 +3850,12 @@ function closeSidebar() {
     }
     return false;
   };
-  const EDGE = 12, MIN_DX = 40, RATIO = 1.3, MAX_MS = 1200, FLICK_DX = 22, FLICK_V = 0.35;   // 편하게: 40px 이상이거나 짧아도 빠르게 튕기면(22px·0.35px/ms) 넘김
+  const EDGE = 8, MIN_DX = 28, RATIO = 1.1, MAX_MS = 1500, FLICK_DX = 14, FLICK_V = 0.22;   // 편하게: 28px 이상이거나 짧아도 빠르게 튕기면(14px·0.22px/ms) 넘김
+  const LIVE_DX = 56, LIVE_RATIO = 1.2;       // 손을 떼기 전이라도 56px 넘게 가로로 밀면 바로 넘김(느긋하게 끌어도, 손가락을 못 떼는 상황에도 반응)
+  const switchTab = (step) => {               // step: +1 다음 탭, -1 이전 탭(양 끝에서는 그대로)
+    const i = VIEW_ORDER.indexOf(viewMode), ni = i + step;
+    if (i >= 0 && ni >= 0 && ni < VIEW_ORDER.length) setViewMode(VIEW_ORDER[ni], true);
+  };
   let g = null;                                // 메뉴 닫기 드래그
   let tab = null;                              // 탭 넘기기 후보
 
@@ -3884,6 +3889,10 @@ function closeSidebar() {
 
   document.addEventListener('touchmove', (e) => {
     if (tab && e.touches.length !== 1) tab = null;
+    if (tab && !tab.done) {                    // 크게 가로로 밀면 손을 떼기 전에 바로 넘김
+      const t0 = e.touches[0], dx0 = t0.clientX - tab.x0, dy0 = t0.clientY - tab.y0;
+      if (Math.abs(dx0) >= LIVE_DX && Math.abs(dx0) >= Math.abs(dy0) * LIVE_RATIO) { tab.done = true; switchTab(dx0 < 0 ? 1 : -1); }
+    }
     if (!g) return;
     const t = e.touches[0];
     const dx = t.clientX - g.x0, dy = t.clientY - g.y0;
@@ -3902,12 +3911,11 @@ function closeSidebar() {
     if (tab) {
       const c = tab; tab = null;
       const t = e.changedTouches && e.changedTouches[0];
-      if (e.type === 'touchend' && t) {
+      if (e.type === 'touchend' && t && !c.done) {
         const dx = t.clientX - c.x0, dy = t.clientY - c.y0;
         const dt = Math.max(1, Date.now() - c.t0), horizontal = Math.abs(dx) >= Math.abs(dy) * RATIO;
         if (horizontal && dt <= MAX_MS && (Math.abs(dx) >= MIN_DX || (Math.abs(dx) >= FLICK_DX && Math.abs(dx) / dt >= FLICK_V))) {
-          const i = VIEW_ORDER.indexOf(viewMode), ni = i + (dx < 0 ? 1 : -1);
-          if (i >= 0 && ni >= 0 && ni < VIEW_ORDER.length) setViewMode(VIEW_ORDER[ni], true);
+          switchTab(dx < 0 ? 1 : -1);
         }
       }
     }
@@ -4039,8 +4047,8 @@ function renderBoard() {
     chips.appendChild(c);
   });
   document.getElementById('boardHint').textContent = boardGroup === 'status'
-    ? "카드를 끌어 '오늘'이나 '완료'로 옮길 수 있어. 카드를 누르면 상세가 열려."
-    : '카드를 끌어 다른 유형으로 옮길 수 있어. 카드를 누르면 상세가 열려.';
+    ? "카드를 끌어 '오늘'이나 '완료'로 옮길 수 있어요. 누르면 상세가 열려요."
+    : '카드를 끌어 다른 유형으로 옮길 수 있어요. 누르면 상세가 열려요.';
 
   const wrap = document.getElementById('boardCols');
   wrap.innerHTML = '';
@@ -4127,7 +4135,7 @@ function renderPeek() {
   if (!it) { closePeek(); return; }
   const type = it.type || '기타';
   body.innerHTML = `
-    ${enrichingIds.has(it.id) ? '<div class="peek-ai-busy" role="status"><span class="pending-dot"></span><span>AI가 이어서 정리하는 중이야. 끝나면 유형·우선순위·메모·예상시간이 채워져.</span></div>' : ''}
+    ${enrichingIds.has(it.id) ? '<div class="peek-ai-busy" role="status"><span class="pending-dot"></span><span>AI가 정리하는 중이에요. 끝나면 유형·우선순위·메모·예상시간이 채워져요.</span></div>' : ''}
     <input type="text" class="peek-title" value="${escapeHtml(it.title)}" aria-label="제목">
     <div class="peek-row"><span class="peek-key">마감일</span><input type="date" class="peek-date" value="${it.dueDate}"></div>
     <div class="peek-row"><span class="peek-key">마감 시각</span><span class="peek-time-wrap"><input type="time" class="peek-time" value="${normTime(it.dueTime)}" aria-label="마감 시각(선택)">${it.dueTime ? '<button type="button" class="peek-time-clear" aria-label="시각 지우기">지우기</button>' : ''}</span></div>
@@ -4183,7 +4191,7 @@ function renderPeek() {
   q('.peek-dur-ai').addEventListener('click', async (e) => {
     const b = e.currentTarget; b.disabled = true; b.textContent = '추정하는 중…';
     try { await estimateDurationWithAI(it); }
-    catch (err) { if (!(err && err.message === '취소함')) showToast('추정하지 못했어: ' + ((err && err.message) || err)); if (peekId === it.id) renderPeek(); }
+    catch (err) { if (!(err && err.message === '취소함')) showToast('추정하지 못했어요: ' + ((err && err.message) || err)); if (peekId === it.id) renderPeek(); }
   });
   q('.peek-type').addEventListener('change', async (e) => {
     it.type = e.target.value;
@@ -4400,7 +4408,7 @@ const AI_PBKDF2_ITER = 250000;
 const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
 const unb64 = (str) => Uint8Array.from(atob(str), c => c.charCodeAt(0));
 function requireCrypto() {
-  if (!(globalThis.crypto && crypto.subtle)) throw new Error('이 환경에서는 암호화를 쓸 수 없어 (https 주소에서 열어줘)');
+  if (!(globalThis.crypto && crypto.subtle)) throw new Error('이 환경에서는 암호화를 쓸 수 없어요 (https 주소에서 열어 주세요)');
 }
 async function deriveAesKey(passphrase, saltBytes) {
   requireCrypto();
@@ -4440,7 +4448,7 @@ function showAiInputs() {
 
 // 설정 화면의 "저장": 키·모델을 이 기기에 저장하고, 보호 암호가 있으면 암호화해서 내 계정에도 올림
 async function saveAiConfig(keyVal, typedModel, passVal) {
-  if (passVal && passVal.length < 6) throw new Error('보호 암호는 6자 이상이어야 해');
+  if (passVal && passVal.length < 6) throw new Error('보호 암호는 6자 이상이어야 해요요');
   if (passVal) {                                   // 암호를 새로 정하면 새 salt로 다시 만듦 (다른 기기는 새 암호로 한 번 더 풀어야 함)
     const salt = crypto.getRandomValues(new Uint8Array(16));
     const aes = await deriveAesKey(passVal, salt);
@@ -4458,11 +4466,11 @@ async function saveAiConfig(keyVal, typedModel, passVal) {
 
 // 다른 기기가 올린 암호화된 키를 보호 암호로 풂
 async function unlockAi(pass) {
-  if (!aiLockedDoc || !aiLockedDoc.enc) throw new Error('풀 키가 없어');
+  if (!aiLockedDoc || !aiLockedDoc.enc) throw new Error('풀 키가 없어요요');
   const d = aiLockedDoc;
   const aes = await deriveAesKey(pass, unb64(d.enc.salt));
   let plain;
-  try { plain = await decryptWith(d.enc, aes); } catch (e) { throw new Error('보호 암호가 맞지 않아'); }
+  try { plain = await decryptWith(d.enc, aes); } catch (e) { throw new Error('보호 암호가 맞지 않아요'); }
   aiPass = { salt: d.enc.salt, key: await exportRawKey(aes) };
   geminiKey = plain;
   geminiModel = d.model && !RETIRED_GEMINI_MODELS.includes(d.model) ? d.model : DEFAULT_GEMINI_MODEL;
@@ -4486,14 +4494,14 @@ window.plannerApp = {
   // 키가 없으면 복사·붙여넣기 창이 뜨는데 그 창은 이 창에서 처리할 수 없으니, 창을 띄우지 않고 이유만 돌려준다.
   async addQuickImage(text, mime, data) {
     await window.plannerReadyPromise;
-    if (aiLockedDoc) return { ok: false, error: 'AI 키가 잠겨 있어. 앱에서 보호 암호를 먼저 입력해줘' };
-    if (!geminiKey) return { ok: false, error: '이미지는 AI 키가 있어야 읽을 수 있어. 앱의 프로필 탭에서 키를 넣어줘' };
-    if (!/^image\/(png|jpeg|webp|gif)$/.test(String(mime)) || typeof data !== 'string' || !data) return { ok: false, error: '지원하지 않는 이미지야' };
+    if (aiLockedDoc) return { ok: false, error: 'AI 키가 잠겨 있어요. 앱에서 보호 암호를 먼저 입력해 주세요' };
+    if (!geminiKey) return { ok: false, error: '이미지는 AI 키가 있어야 읽을 수 있어요. 앱의 프로필 탭에서 키를 넣어 주세요' };
+    if (!/^image\/(png|jpeg|webp|gif)$/.test(String(mime)) || typeof data !== 'string' || !data) return { ok: false, error: '지원하지 않는 이미지예요' };
     const { done } = enqueueParse({ text: String(text || '').slice(0, 2000), media: [{ mime, data }], kw: '' });
     const r = await done;                              // 이 작업의 정리가 끝날 때까지(앞에 다른 작업이 있으면 그 뒤에) 기다린다
     if (r.ok && r.count > 0) return { ok: true, count: r.count };
-    if (r.ok) return { ok: false, error: '날짜를 못 찾아서 앱의 "정리 중" 칸에 뒀어. 앱에서 날짜를 정해줘' };
-    return { ok: false, error: r.cancelled ? '취소됐어' : String(r.error || '정리하지 못했어').replace(/^처리 중 오류가 발생했음:\s*/, '') };
+    if (r.ok) return { ok: false, error: '날짜를 못 찾아서 앱의 "정리 중" 칸에 뒀어요. 앱에서 날짜를 정해 주세요' };
+    return { ok: false, error: r.cancelled ? '취소됐어요' : String(r.error || '정리하지 못했어요').replace(/^처리 중 오류가 발생했어요:\s*/, '') };
   },
   getTraySummary: () => traySummary(),
   openItem(id) { if (items.some(x => x.id === id)) { openPeek(id); return true; } return false; },
@@ -4582,7 +4590,7 @@ window.plannerApp = {
         aiLockedDoc = null; setAiLockUi(false);
         await persistAiLocal(); showAiInputs(); updateAiSummary(); renderChatLog();
         return true;
-      } catch (e) { console.warn('키를 풀지 못함', e); }
+      } catch (e) { console.warn('키를 풀지 못했어요', e); }
     }
     aiLockedDoc = d;                                       // 보호 암호가 필요함: 이 기기의 키는 건드리지 않고 입력 상자를 보여줌
     setAiLockUi(true);
@@ -4606,16 +4614,16 @@ window.plannerApp = {
 };
 
 const AUTH_ERRORS = {
-  'auth/invalid-credential': '이메일이나 비밀번호가 맞지 않아',
-  'auth/wrong-password': '이메일이나 비밀번호가 맞지 않아',
-  'auth/user-not-found': '이메일이나 비밀번호가 맞지 않아',
-  'auth/invalid-email': '이메일 형식이 올바르지 않아',
-  'auth/email-already-in-use': '이미 가입된 이메일이야. "로그인"을 눌러줘',
-  'auth/weak-password': '비밀번호는 6자 이상이어야 해',
-  'auth/missing-password': '비밀번호를 입력해줘',
-  'auth/too-many-requests': '시도가 너무 많아. 잠시 뒤에 다시 해줘',
-  'auth/network-request-failed': '인터넷 연결을 확인해줘',
-  'auth/operation-not-allowed': 'Firebase에서 이메일/비밀번호 로그인이 아직 꺼져 있어',
+  'auth/invalid-credential': '이메일이나 비밀번호가 맞지 않아요요',
+  'auth/wrong-password': '이메일이나 비밀번호가 맞지 않아요요',
+  'auth/user-not-found': '이메일이나 비밀번호가 맞지 않아요요',
+  'auth/invalid-email': '이메일 형식이 올바르지 않아요요',
+  'auth/email-already-in-use': '이미 가입된 이메일이에요. "로그인"을 눌러 주세요',
+  'auth/weak-password': '비밀번호는 6자 이상이어야 해요요',
+  'auth/missing-password': '비밀번호를 입력해 주세요',
+  'auth/too-many-requests': '시도가 너무 많아요. 잠시 뒤에 다시 시도해 주세요',
+  'auth/network-request-failed': '인터넷 연결을 확인해 주세요',
+  'auth/operation-not-allowed': 'Firebase에서 이메일/비밀번호 로그인이 아직 꺼져 있어요요',
   'auth/configuration-not-found': 'Firebase 콘솔에서 Authentication을 아직 시작하지 않았어 ("시작하기" → 이메일/비밀번호 사용 설정)'
 };
 function authErrorText(e) {
@@ -4660,20 +4668,20 @@ function updateAiSummary() {
 
 function requireCloud() {
   if (window.cloud) return true;
-  syncSetStatus('동기화 기능을 불러오지 못했어. 인터넷 연결을 확인하고 새로고침해줘.', true);
+  syncSetStatus('동기화 기능을 불러오지 못했어요. 인터넷 연결을 확인하고 새로고침해 주세요.', true);
   return false;
 }
 async function syncAuthAction(kind) {
   if (!requireCloud()) return;
   const email = document.getElementById('syncEmail').value.trim();
   const pw = document.getElementById('syncPassword').value;
-  if (!email) { syncSetStatus('이메일을 입력해줘', true); return; }
-  if (kind !== 'reset' && !pw) { syncSetStatus('비밀번호를 입력해줘', true); return; }
+  if (!email) { syncSetStatus('이메일을 입력해 주세요', true); return; }
+  if (kind !== 'reset' && !pw) { syncSetStatus('비밀번호를 입력해 주세요', true); return; }
   syncSetStatus(kind === 'reset' ? '메일 보내는 중…' : '처리 중…');
   try {
     if (kind === 'login') await window.cloud.signIn(email, pw);
     else if (kind === 'signup') await window.cloud.signUp(email, pw);
-    else { await window.cloud.resetPassword(email); syncSetStatus('재설정 메일을 보냈어. 메일함(스팸함도)을 확인해줘.'); return; }
+    else { await window.cloud.resetPassword(email); syncSetStatus('재설정 메일을 보냈어요. 메일함(스팸함 포함)을 확인해 주세요.'); return; }
     document.getElementById('syncPassword').value = '';
   } catch (e) {
     syncSetStatus(authErrorText(e), true);
@@ -4685,7 +4693,7 @@ document.getElementById('syncResetBtn').addEventListener('click', () => syncAuth
 document.getElementById('syncPassword').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) syncAuthAction('login'); });
 document.getElementById('syncLogoutBtn').addEventListener('click', async () => {
   if (!requireCloud()) return;
-  const ok = await confirmDialog('로그아웃하면 이 기기에 저장된 일정과 API 키를 지워.\n내 계정에는 그대로 남아 있고, 다시 로그인하면 돌아와.', { confirmLabel: '로그아웃' });
+  const ok = await confirmDialog('로그아웃하면 이 기기의 일정과 API 키가 지워져요.\n계정에는 그대로 남아 있고, 다시 로그인하면 돌아와요.', { confirmLabel: '로그아웃' });
   if (!ok) return;
   syncSetStatus('로그아웃 중…');
   try {
@@ -4745,12 +4753,12 @@ document.getElementById('diagCopyBtn').addEventListener('click', async () => {
   ta.value = text; ta.style.display = 'block';                // 무엇이 복사되는지 그대로 보여줌(복사가 막힌 환경에서는 직접 복사)
   const ok = await copyToClipboard(text);
   st.className = 'status' + (ok ? '' : ' err');
-  st.textContent = ok ? '복사했어. 붙여넣어서 보내줘.' : '자동 복사가 안 됐어. 아래 글을 길게 눌러 전체 선택 후 복사해줘.';
+  st.textContent = ok ? '복사했어요. 붙여넣어서 보내 주세요.' : '자동 복사에 실패했어요. 아래 글을 길게 눌러 전체 선택 후 복사해 주세요.';
 });
 document.getElementById('diagClearBtn').addEventListener('click', () => {
   if (window.plannerLog) window.plannerLog.clear();
   document.getElementById('diagText').style.display = 'none';
-  const st = document.getElementById('diagStatus'); st.className = 'status'; st.textContent = '기록을 지웠어.';
+  const st = document.getElementById('diagStatus'); st.className = 'status'; st.textContent = '기록을 지웠어요.';
   updateDiagState();
 });
 if (window.plannerLog) window.plannerLog.onchange = updateDiagState;
@@ -4763,7 +4771,7 @@ if (window.plannerLog) window.plannerLog.onchange = updateDiagState;
   document.getElementById('quickUrlCopyBtn').addEventListener('click', async () => {
     const ok = await copyToClipboard(base + '?add=');
     const st = document.getElementById('quickUrlStatus'); st.className = 'status' + (ok ? '' : ' err');
-    st.textContent = ok ? '복사했어: 끝에 제목을 이어 붙이면 돼.' : '자동 복사가 안 됐어. 위 칸의 주소를 직접 복사해줘.';
+    st.textContent = ok ? '복사했어요. 끝에 제목을 이어 붙이세요.' : '자동 복사에 실패했어요. 위 칸의 주소를 직접 복사해 주세요.';
   });
 })();
 
@@ -4818,7 +4826,7 @@ async function handleUrlAdd() {
   const title = (q.get('add') || '').trim().slice(0, 300);
   const dueParam = q.get('due'), typeParam = q.get('type'), priParam = (q.get('priority') || '').trim().toLowerCase(), notes = (q.get('notes') || '').slice(0, 2000);
   try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {}   // 새로고침해도 또 추가되지 않게 주소를 정리
-  if (!title) { showToast('주소에 일정 제목(add)이 비어 있어서 추가하지 못했어'); return; }
+  if (!title) { showToast('주소에 일정 제목(add)이 없어서 추가하지 못했어요'); return; }
   const { date, guessed } = quickDateFromParam(dueParam);
   const pri = { high: 'high', '높음': 'high', medium: 'medium', '보통': 'medium', low: 'low', '낮음': 'low' }[priParam] || 'medium';
   const item = { id: uid(), title, shortLabel: '', type: TYPE_OPTIONS.includes(typeParam) ? typeParam : '기타', dueDate: date, priority: pri, notes, aiComment: '', topicSuggestion: '', topicKeyword: '', done: false };
@@ -4829,10 +4837,10 @@ async function handleUrlAdd() {
   await saveItems();
   refreshAll();
   const shown = title.length > 24 ? title.slice(0, 24) + '…' : title;
-  showToast(`"${shown}" 추가했어 · ${formatShortDate(date)}${timeOk ? ' ' + fmtTime(timeOk) : ''}${guessed ? ' (날짜를 못 읽어서 오늘로)' : ''}`, '되돌리기', async () => {
+  showToast(`"${shown}" 추가했어요 · ${formatShortDate(date)}${timeOk ? ' ' + fmtTime(timeOk) : ''}${guessed ? ' (날짜를 못 읽어 오늘로 넣었어요)' : ''}`, '되돌리기', async () => {
     items = items.filter(x => x.id !== item.id); await saveItems(); refreshAll();
   }, 6000);
-  waitCloudSignedIn(6000).then((ok) => { if (!ok) showToast('이 브라우저는 로그인 전이라 이 기기에만 저장돼. 프로필 탭에서 로그인하면 다른 기기에도 보여', null, null, 9000); });   // 되돌리기 알림(6초)이 끝난 뒤에 표시
+  waitCloudSignedIn(6000).then((ok) => { if (!ok) showToast('로그인 전이라 이 기기에만 저장돼요. 프로필 탭에서 로그인하면 다른 기기에서도 볼 수 있어요', null, null, 9000); });   // 되돌리기 알림(6초)이 끝난 뒤에 표시
 }
 
 // Mac 앱 메뉴 막대용 요약(앱 본체가 주기적으로 물어봄): 지난 마감·오늘·내일 개수와 급한 순서대로 8건
@@ -4869,7 +4877,7 @@ function extractJsonObject(raw) {
 
 let planToken = 0;                       // 창을 닫거나 다시 열면 값이 바뀌어서, 늦게 도착한 AI 답이 엉뚱하게 그려지는 것을 막음
 const planEl = (id) => document.getElementById(id);
-const PLAN_CAPTION_DEFAULT = '일정의 제목·유형·마감일이 AI에 전달돼. 메모와 키는 보내지 않아.';
+const PLAN_CAPTION_DEFAULT = '제목·유형·마감일을 AI에 보내요. 메모와 키는 보내지 않아요.';
 function openPlanModal(title, sub, caption) {
   planToken++;
   planEl('planTitle').textContent = title; planEl('planSub').textContent = sub || ''; planEl('planCaption').textContent = caption || PLAN_CAPTION_DEFAULT;
@@ -4894,16 +4902,16 @@ function showPlanError(msg, retry) {
 async function splitItemWithAI(it) {
   if (it.done) return;
   const left = daysUntil(it.dueDate);
-  if (left < 2) { showToast(left < 0 ? '이미 지난 마감이라 나눌 수 없어. 마감일을 먼저 고쳐줘' : '마감이 하루 이내라서 더 쪼갤 시간이 없어'); return; }
+  if (left < 2) { showToast(left < 0 ? '이미 지난 마감이라 나눌 수 없어요. 마감일을 먼저 고쳐 주세요' : '마감이 하루 이내라 더 쪼갤 수 없어요'); return; }
   const hasTopic = !!(it.topicSuggestion || it.topicKeyword);
-  const tok = openPlanModal('AI로 쪼개기', `"${it.title}" · 마감 ${formatShortDate(it.dueDate)} (D-${left})` + (it.topicSuggestion ? ` · 주제 "${cleanText(it.topicSuggestion, 40)}"를 반영해` : it.topicKeyword ? ` · 분야 "${cleanText(it.topicKeyword, 30)}"를 반영해` : ''), hasTopic ? '일정의 제목·유형·마감일과 주제·분야·구체화 내용이 AI에 전달돼. 메모와 키는 보내지 않아.' : '');
+  const tok = openPlanModal('AI로 쪼개기', `"${it.title}" · 마감 ${formatShortDate(it.dueDate)} (D-${left})` + (it.topicSuggestion ? ` · 주제 "${cleanText(it.topicSuggestion, 40)}"를 반영해요` : it.topicKeyword ? ` · 분야 "${cleanText(it.topicKeyword, 30)}"를 반영해요` : ''), hasTopic ? '제목·유형·마감일과 주제·분야·구체화 내용을 AI에 보내요. 메모와 키는 보내지 않아요.' : '');
   await runSplit(it, tok);
 }
 function sanitizeSplitSteps(raw, parent) {
   let arr = null;
   try { const v = extractJsonArray(raw); if (Array.isArray(v)) arr = v; } catch (e) {}
   if (!arr) { const o = extractJsonObject(raw); if (o && Array.isArray(o.steps)) arr = o.steps; }
-  if (!Array.isArray(arr)) throw new Error('AI 답을 읽지 못했어');
+  if (!Array.isArray(arr)) throw new Error('AI 답을 읽지 못했어요');
   const today = todayISO(), due = parent.dueDate, seen = new Set(), out = [];
   const norm = (x) => String(x || '').replace(/\s+/g, '').toLowerCase();
   for (const s of arr) {
@@ -4948,19 +4956,19 @@ ${topicBlock ? '\n' + topicBlock + '\n' : ''}
     const raw = await runAI({ system, text: '이 마감을 단계로 나눠줘.', maxTokens: 1200, title: '마감 쪼개기' });
     if (tok !== planToken) return;
     const steps = sanitizeSplitSteps(raw, it);
-    if (!steps.length) throw new Error('AI가 쓸 수 있는 단계를 주지 못했어');
+    if (!steps.length) throw new Error('AI가 쓸 수 있는 단계를 주지 못했어요');
     renderSplitReview(it, steps, tok);
   } catch (err) {
     if (tok !== planToken) return;
     if (err.message === '취소함') { closePlanModal(); return; }
     console.error(err);
-    showPlanError('단계를 만들지 못했어: ' + err.message, () => runSplit(it, tok));
+    showPlanError('단계를 만들지 못했어요: ' + err.message, () => runSplit(it, tok));
   }
 }
 function renderSplitReview(it, steps, tok) {
   const today = todayISO(), body = planEl('planBody');
   planEl('planActions').innerHTML = '';          // 로딩 중에 있던 취소 버튼을 비우고 다시 만든다(안 비우면 취소가 두 개 됨)
-  body.innerHTML = '<div class="plan-sub">추가할 단계를 고르고 제목·날짜를 고쳐줘. 원래 일정은 그대로 남아.</div>';
+  body.innerHTML = '<div class="plan-sub">추가할 단계를 고르고 제목·날짜를 고쳐 주세요. 원래 일정은 그대로 남아요.</div>';
   const rows = steps.map((s) => {
     const row = document.createElement('div'); row.className = 'plan-step';
     row.dataset.min = s.min || 0;
@@ -4973,8 +4981,8 @@ function renderSplitReview(it, steps, tok) {
   const refresh = () => {
     const chosen = rows.filter(r => r.querySelector('.ps-chk').checked);
     const perDay = {}; chosen.forEach(r => { const d = r.querySelector('.ps-date').value; perDay[d] = (perDay[d] || 0) + 1; });
-    rows.forEach(r => { const d = r.querySelector('.ps-date').value, n = (others[d] || 0) + (perDay[d] || 0) - (r.querySelector('.ps-chk').checked ? 1 : 0); r.querySelector('.plan-warn').textContent = n >= 3 ? `이 날 이미 ${n}건 있어` : ''; r.style.opacity = r.querySelector('.ps-chk').checked ? '' : '0.5'; });
-    const n = read().length; addBtn.textContent = n ? `선택한 ${n}건 추가` : '추가할 단계를 골라줘'; addBtn.disabled = n === 0;
+    rows.forEach(r => { const d = r.querySelector('.ps-date').value, n = (others[d] || 0) + (perDay[d] || 0) - (r.querySelector('.ps-chk').checked ? 1 : 0); r.querySelector('.plan-warn').textContent = n >= 3 ? `이 날 이미 ${n}건 있어요요` : ''; r.style.opacity = r.querySelector('.ps-chk').checked ? '' : '0.5'; });
+    const n = read().length; addBtn.textContent = n ? `선택한 ${n}건 추가` : '추가할 단계를 골라 주세요'; addBtn.disabled = n === 0;
   };
   rows.forEach(r => r.addEventListener('input', refresh)); rows.forEach(r => r.addEventListener('change', refresh));
   refresh();
@@ -4983,7 +4991,7 @@ function renderSplitReview(it, steps, tok) {
     const chosen = read(); if (!chosen.length) return;
     const created = chosen.map(s => ({ id: uid(), title: s.title, shortLabel: '', type: it.type || '기타', dueDate: s.date, priority: it.priority || 'medium', notes: `「${it.title}」의 단계` + (s.note ? ' · ' + s.note : ''), aiComment: '', topicSuggestion: '', topicKeyword: '', done: false, ...(s.min ? { durationMin: s.min, durationAi: s.min } : {}) }));
     items.push(...created); await saveItems(); refreshAll(); closePlanModal();
-    showToast(`${created.length}건 추가했어`, '되돌리기', async () => { const ids = new Set(created.map(c => c.id)); items = items.filter(x => !ids.has(x.id)); await saveItems(); refreshAll(); }, 7000);
+    showToast(`${created.length}건 추가했어요`, '되돌리기', async () => { const ids = new Set(created.map(c => c.id)); items = items.filter(x => !ids.has(x.id)); await saveItems(); refreshAll(); }, 7000);
   };
   addPlanButton('취소', 'btn-ghost', closePlanModal);
 }
@@ -4994,12 +5002,12 @@ async function planWeekWithAI() {
   const tok = openPlanModal('이번 주 계획', `${formatShortDate(days[0])}(${weekdayKo(days[0])}) ~ ${formatShortDate(days[6])}(${weekdayKo(days[6])}) · 오늘부터 7일`);
   const byDate = cmpDue;
   const pool = items.filter(x => !x.done && x.dueDate <= horizon).sort(byDate).slice(0, 40);
-  if (!pool.length) { planEl('planBody').innerHTML = '<div class="plan-sub">앞으로 2주 안에 마감인 일정이 없어. 여유로운 한 주야.</div>'; addPlanButton('닫기', 'btn-ghost', closePlanModal); return; }
+  if (!pool.length) { planEl('planBody').innerHTML = '<div class="plan-sub">앞으로 2주 안에 마감인 일정이 없어요. 여유로운 한 주예요.</div>'; addPlanButton('닫기', 'btn-ghost', closePlanModal); return; }
   await runWeekPlan(pool, days, tok);
 }
 async function runWeekPlan(pool, days, tok) {
   planLoading('AI가 일주일을 짜는 중…');
-  planEl('planCaption').textContent = pool.some(x => normTime(x.dueTime) || normDuration(x.durationMin)) ? '일정의 제목·유형·마감일·시각·예상 소요시간이 AI에 전달돼. 메모와 키는 보내지 않아.' : PLAN_CAPTION_DEFAULT;
+  planEl('planCaption').textContent = pool.some(x => normTime(x.dueTime) || normDuration(x.durationMin)) ? '제목·유형·마감일·시각·예상 소요시간을 AI에 보내요. 메모와 키는 보내지 않아요.' : PLAN_CAPTION_DEFAULT;
   const today = days[0];
   const dtext = (d) => { const n = daysUntil(d); return n < 0 ? `지난 마감 D+${-n}` : n === 0 ? '오늘 마감' : `D-${n}`; };
   const list = pool.map((x, i) => `${i + 1}. ${x.title} | ${x.type || '기타'} | 마감 ${x.dueDate}(${weekdayKo(x.dueDate)}, ${dtext(x.dueDate)}) | 우선순위 ${priorityLabel(x.priority)}${normTime(x.dueTime) ? ' | 마감 시각 ' + normTime(x.dueTime) : ''}${normDuration(x.durationMin) ? ' | 예상 소요 ' + fmtDuration(normDuration(x.durationMin)) : ''}`).join('\n');
@@ -5027,12 +5035,12 @@ ${list}
     if (tok !== planToken) return;
     if (err.message === '취소함') { closePlanModal(); return; }
     console.error(err);
-    showPlanError('계획을 만들지 못했어: ' + err.message, () => runWeekPlan(pool, days, tok));
+    showPlanError('계획을 만들지 못했어요: ' + err.message, () => runWeekPlan(pool, days, tok));
   }
 }
 function sanitizeWeekPlan(raw, pool, days) {
   const obj = extractJsonObject(raw);
-  if (!obj || !Array.isArray(obj.days)) throw new Error('AI 답을 읽지 못했어');
+  if (!obj || !Array.isArray(obj.days)) throw new Error('AI 답을 읽지 못했어요');
   const daySet = new Set(days), perDay = new Map(), used = new Set();
   for (const d of obj.days) {
     if (!d || !daySet.has(d.date) || !Array.isArray(d.tasks)) continue;
@@ -5046,7 +5054,7 @@ function sanitizeWeekPlan(raw, pool, days) {
       arr.push({ item, why: cleanText(t.why, 100) }); perDay.set(d.date, arr); used.add(item.id);
     }
   }
-  if (!perDay.size) throw new Error('AI가 쓸 수 있는 계획을 주지 못했어');
+  if (!perDay.size) throw new Error('AI가 쓸 수 있는 계획을 주지 못했어요');
   const warnings = (Array.isArray(obj.warnings) ? obj.warnings : []).slice(0, 5).map(w => cleanText(w, 150)).filter(Boolean);
   const unscheduled = pool.filter(x => !used.has(x.id) && x.dueDate <= days[6]);   // 이번 주 안에 마감인데 AI가 배정하지 않은 일정
   return { summary: cleanText(obj.summary, 300), perDay, warnings, unscheduled };
@@ -5078,7 +5086,7 @@ function renderWeekPlan(plan, pool, days, tok) {
   if (plan.warnings.length) { const w = document.createElement('div'); w.className = 'plan-warnings'; w.innerHTML = plan.warnings.map(x => '· ' + escapeHtml(x)).join('<br>'); body.appendChild(w); }
   if (plan.unscheduled.length) { const u = document.createElement('div'); u.className = 'plan-unsched'; u.innerHTML = '<b>AI가 배정하지 않은 이번 주 마감</b><br>' + plan.unscheduled.map(x => `${escapeHtml(x.title)} (${formatShortDate(x.dueDate)})`).join(' · '); body.appendChild(u); }
   planEl('planActions').innerHTML = '';
-  const copyBtn = addPlanButton('계획 복사', 'btn-main', async () => { const ok = await copyToClipboard(weekPlanText(plan, days)); planEl('planStatus').className = 'status' + (ok ? '' : ' err'); planEl('planStatus').textContent = ok ? '복사했어.' : '자동 복사가 안 됐어.'; });
+  const copyBtn = addPlanButton('계획 복사', 'btn-main', async () => { const ok = await copyToClipboard(weekPlanText(plan, days)); planEl('planStatus').className = 'status' + (ok ? '' : ' err'); planEl('planStatus').textContent = ok ? '복사했어요.' : '자동 복사에 실패했어요.'; });
   addPlanButton('다시 짜기', 'btn-ghost', () => runWeekPlan(pool, days, tok));
   addPlanButton('닫기', 'btn-ghost', closePlanModal);
 }
@@ -5093,7 +5101,7 @@ function sanitizeTopics(raw) {
   let arr = null;
   try { const v = extractJsonArray(raw); if (Array.isArray(v)) arr = v; } catch (e) {}
   if (!arr) { const o = extractJsonObject(raw); if (o && Array.isArray(o.topics)) arr = o.topics; }
-  if (!Array.isArray(arr)) throw new Error('AI 답을 읽지 못했어');
+  if (!Array.isArray(arr)) throw new Error('AI 답을 읽지 못했어요');
   const out = [], seen = new Set();
   for (const t of arr) {
     if (!t || typeof t !== 'object') continue;
@@ -5105,7 +5113,7 @@ function sanitizeTopics(raw) {
 }
 function recommendTopicsWithAI(it) {
   const field = cleanText(it.topicKeyword, 80);
-  const tok = openPlanModal('주제 추천', `"${it.title}" · ${it.type || '기타'}` + (field ? ` · 분야: ${field}` : ''), '일정의 제목·유형과 분야·현재 주제, 참고 자료 요약이 AI에 전달돼. 메모와 키는 보내지 않아.');
+  const tok = openPlanModal('주제 추천', `"${it.title}" · ${it.type || '기타'}` + (field ? ` · 분야: ${field}` : ''), '제목·유형·분야·현재 주제·참고 자료 요약을 AI에 보내요. 메모와 키는 보내지 않아요.');
   return runTopicRecommend(it, tok);
 }
 async function runTopicRecommend(it, tok) {
@@ -5133,13 +5141,13 @@ ${refs}
     const raw = await runAI({ system, text: '주제를 추천해줘.', maxTokens: 900, title: '주제 추천' });
     if (tok !== planToken) return;
     const topics = sanitizeTopics(raw);
-    if (!topics.length) throw new Error('AI가 쓸 수 있는 주제를 주지 못했어');
+    if (!topics.length) throw new Error('AI가 쓸 수 있는 주제를 주지 못했어요');
     renderTopicChoices(it, topics, tok);
   } catch (err) {
     if (tok !== planToken) return;
     if (err.message === '취소함') { closePlanModal(); return; }
     console.error(err);
-    showPlanError('주제를 만들지 못했어: ' + err.message, () => runTopicRecommend(it, tok));
+    showPlanError('주제를 만들지 못했어요: ' + err.message, () => runTopicRecommend(it, tok));
   }
 }
 function renderTopicChoices(it, topics, tok) {
@@ -5152,20 +5160,20 @@ function renderTopicChoices(it, topics, tok) {
     body.appendChild(card); return card;
   });
   const edit = document.createElement('input'); edit.type = 'text'; edit.className = 'settings-input topic-edit'; edit.maxLength = 150; edit.value = topics[0].topic; edit.setAttribute('aria-label', '선택한 주제 고치기');
-  const hint = document.createElement('div'); hint.className = 'plan-sub'; hint.style.marginTop = '8px'; hint.textContent = '고르면 아래 칸에 들어가. 정하기 전에 문장을 고쳐도 돼.';
+  const hint = document.createElement('div'); hint.className = 'plan-sub'; hint.style.marginTop = '8px'; hint.textContent = '고르면 아래 칸에 들어가요. 정하기 전에 문장을 고쳐도 돼요.';
   body.appendChild(hint); body.appendChild(edit);
   cards.forEach((card, i) => card.querySelector('input').addEventListener('change', () => { cards.forEach(c => c.classList.remove('on')); card.classList.add('on'); edit.value = topics[i].topic; }));
   const apply = async (elaborate) => {
     if (tok !== planToken) return;
-    const topic = cleanText(edit.value, 150); if (!topic) { planEl('planStatus').className = 'status err'; planEl('planStatus').textContent = '주제를 비워둘 수 없어'; return; }
+    const topic = cleanText(edit.value, 150); if (!topic) { planEl('planStatus').className = 'status err'; planEl('planStatus').textContent = '주제를 비워 둘 수 없어요'; return; }
     const prev = { topicSuggestion: it.topicSuggestion, topicElaboration: it.topicElaboration, topicKeyword: it.topicKeyword };
     it.topicSuggestion = topic; it.topicElaboration = '';                  // 주제가 바뀌었으니 예전 구체화 내용은 비움
     await saveItems(); refreshAll(); if (peekId === it.id) renderPeek(); closePlanModal();
-    showToast('주제를 정했어', '되돌리기', async () => { Object.assign(it, prev); if (!prev.topicElaboration) delete it.topicElaboration; await saveItems(); refreshAll(); if (peekId === it.id) renderPeek(); }, 7000);
+    showToast('주제를 정했어요', '되돌리기', async () => { Object.assign(it, prev); if (!prev.topicElaboration) delete it.topicElaboration; await saveItems(); refreshAll(); if (peekId === it.id) renderPeek(); }, 7000);
     if (elaborate) {
-      showToast('주제를 정했어 · 구체화하는 중…', null, null, 60000);
-      try { it.topicElaboration = await elaborateTopic(it); await saveItems(); refreshAll(); if (peekId === it.id) renderPeek(); showToast('주제를 정하고 구체화까지 끝냈어'); }
-      catch (err) { if (err.message !== '취소함') { console.error(err); showToast('주제는 정했는데 구체화는 실패했어: ' + err.message, null, null, 7000); } else hideToast(); }
+      showToast('주제를 정했어요 · 구체화하는 중…', null, null, 60000);
+      try { it.topicElaboration = await elaborateTopic(it); await saveItems(); refreshAll(); if (peekId === it.id) renderPeek(); showToast('주제를 정하고 구체화까지 끝냈어요'); }
+      catch (err) { if (err.message !== '취소함') { console.error(err); showToast('주제는 정했지만 구체화에 실패했어요: ' + err.message, null, null, 7000); } else hideToast(); }
     }
   };
   addPlanButton('이 주제로 정하기', 'btn-main', () => apply(false));
