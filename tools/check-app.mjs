@@ -105,13 +105,17 @@ const grab = (from, to) => { const a = html.indexOf(from), b = html.indexOf(to, 
   const localVer = (html.match(/APP_VERSION = '([^']+)'/) || [])[1];
   const localCache = (sw.match(/CACHE = '([^']+)'/) || [])[1];
   ok('APP_VERSION과 sw.js 캐시 이름을 읽을 수 있음', !!localVer && !!localCache, `${localVer} / ${localCache}`);
+  // 운영 주소에 못 나가는 환경(클라우드 점검은 github.io가 막혀 있음)에서는 실패가 아니라 건너뛴다.
   try {
     const t = await (await fetch(PROD + '/deadline-planner.html?cb=' + Date.now(), { signal: AbortSignal.timeout(25000) })).text();
     const s2 = await (await fetch(PROD + '/sw.js?cb=' + Date.now(), { signal: AbortSignal.timeout(25000) })).text();
     const pv = (t.match(/APP_VERSION = '([^']+)'/) || [])[1], pc = (s2.match(/CACHE = '([^']+)'/) || [])[1];
-    ok('운영 주소가 열리고 앱 버전을 읽을 수 있음', !!pv, String(pv));
-    if (pv === localVer) ok(`운영 주소가 저장소와 같음 (${pv} / ${pc})`, pc === localCache, `캐시 이름이 다름: 운영 ${pc} / 저장소 ${localCache}`);
-    else console.log(`SKIP 운영(${pv})과 저장소(${localVer}) 버전이 다름 — 아직 배포 전이거나 배포 반영 중`);
+    if (!pv || !pc) console.log('SKIP 운영 주소 확인 건너뜀 — 받은 내용이 이 앱이 아님(네트워크가 막혀 대신 다른 응답이 온 듯)');
+    else {
+      ok('운영 주소가 열리고 앱 버전을 읽을 수 있음', true, pv);
+      if (pv === localVer) ok(`운영 주소가 저장소와 같음 (${pv} / ${pc})`, pc === localCache, `캐시 이름이 다름: 운영 ${pc} / 저장소 ${localCache}`);
+      else console.log(`SKIP 운영(${pv})과 저장소(${localVer}) 버전이 다름 — 아직 배포 전이거나 배포 반영 중`);
+    }
   } catch (e) {
     console.log('SKIP 운영 주소 확인 건너뜀 (네트워크 안 됨): ' + (e && e.message));
   }
