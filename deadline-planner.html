@@ -198,13 +198,13 @@
   .ic.sm { width: 1.05em; height: 1.05em; vertical-align: -0.18em; }
   /* 데스크톱 사이드바 알약 줄 (노션 데스크톱 배열): 지금 화면만 이름이 펼쳐지고, 나머지는 아이콘만 */
   .sb-pills { display: flex; gap: 2px; margin: 4px 0 2px; }
-  .sb-pill { position: relative; flex-shrink: 0; height: 32px; min-width: 32px; padding: 0 7px; border-radius: 11px; border: none; background: transparent; color: var(--ink-dim); display: flex; align-items: center; justify-content: center; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background-color 0.3s var(--ease-out), color 0.3s var(--ease-out), padding 0.32s var(--ease-out), transform 0.25s var(--ease-out); }
+  .sb-pill { position: relative; flex-shrink: 0; height: 32px; min-width: 29px; padding: 0 6px; border-radius: 11px; border: none; background: transparent; color: var(--ink-dim); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background-color 0.3s var(--ease-out), color 0.3s var(--ease-out), padding 0.32s var(--ease-out), transform 0.25s var(--ease-out); }
   .sb-pill .ic { width: 17px; height: 17px; vertical-align: 0; }
   .sb-pill .sp-label { display: grid; grid-template-columns: 0fr; opacity: 0; margin-left: 0; transition: grid-template-columns 0.32s var(--ease-out), opacity 0.18s ease, margin 0.32s var(--ease-out); }
   .sb-pill .sp-label > span { overflow: hidden; white-space: nowrap; min-width: 0; }
   .sb-pill:not(.active):hover { background: var(--hover); color: var(--ink); }
   .sb-pill:active { transform: scale(0.94); }
-  .sb-pill.active { background: var(--hover); color: var(--ink); padding: 0 11px 0 9px; transition: background-color 0.3s var(--ease-out), color 0.3s var(--ease-out), padding 0.46s var(--ease-out), transform 0.25s var(--ease-out); }
+  .sb-pill.active { background: var(--hover); color: var(--ink); padding: 0 9px 0 8px; transition: background-color 0.3s var(--ease-out), color 0.3s var(--ease-out), padding 0.46s var(--ease-out), transform 0.25s var(--ease-out); }
   .sb-pill.active .sp-label { grid-template-columns: 1fr; opacity: 1; margin-left: 6px; transition: grid-template-columns 0.46s var(--ease-out), opacity 0.32s ease 0.06s, margin 0.46s var(--ease-out); }
   .sb-pill .sp-badge { position: absolute; top: -2px; right: -2px; min-width: 15px; height: 15px; padding: 0 4px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 0.62rem; font-weight: 700; line-height: 15px; text-align: center; box-shadow: 0 0 0 2px var(--sidebar); }
   @media (prefers-reduced-motion: reduce) { .sb-pill, .sb-pill .sp-label { transition: none; } }
@@ -338,6 +338,14 @@
       .tb-pill.active { padding: 0 11px 0 9px; }
       .tb-pill svg { width: 20px; height: 20px; }
       .tb-nav { gap: 4px; }
+    }
+    /* 360px 안팎: "체크리스트"(다섯 글자)가 펼쳐져도 한 줄에 들어오도록 간격과 글자를 조금 더 줄임 */
+    @media (max-width: 380px) {
+      .topbar { gap: 4px; }
+      .tb-nav { gap: 2px; }
+      .tb-pill.active { padding: 0 9px 0 8px; }
+      .tb-pill.active .tb-label { margin-left: 5px; }
+      .tb-pill .tb-label { font-size: 0.8rem; }
     }
     /* 화면이 바뀔 때 새 내용이 눌린 알약 쪽 방향에서 옆으로 밀려 들어옴 */
     @keyframes viewInR { 0% { opacity: 0; transform: translateX(28px); } 55% { opacity: 1; } 100% { opacity: 1; transform: none; } }
@@ -770,25 +778,6 @@
   .sb-version { font-size: 0.68rem; color: var(--ink-faint); padding: 6px 8px 0; }
 
   /* ===== 보드 뷰 ===== */
-  .board-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 14px 0 12px; }
-  .board-toolbar .chip-row { margin-top: 0; }
-  .board-hint { font-size: 0.76rem; color: var(--ink-faint); }
-  .board { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; align-items: start; }
-  .board-col { min-width: 0; background: var(--sidebar); border-radius: 18px; padding: 10px; min-height: 120px; }
-  .board-col-head { display: flex; align-items: center; gap: 6px; padding: 4px 6px 8px; font-size: 0.82rem; font-weight: 600; }
-  .board-col-head .count { font-weight: 500; color: var(--ink-faint); font-size: 0.76rem; }
-  .board-col-head .col-tag { padding: 1px 8px; border-radius: 999px; font-size: 0.76rem; background: var(--tbg, var(--tbg-gray)); color: var(--tfg, var(--tfg-gray)); }
-  .board-body { display: flex; flex-direction: column; gap: 8px; min-height: 60px; border-radius: 12px; }
-  .board-body.drop-over { outline: 2px dashed var(--accent); outline-offset: -2px; background: var(--accent-soft); }
-  .board-card { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; box-shadow: 0 1px 2px rgba(15,15,15,0.05); cursor: pointer; }
-  .board-card:hover { background: var(--hover); }
-  .board-card.dragging { opacity: 0.4; }
-  .board-card.is-done .bc-title { text-decoration: line-through; color: var(--ink-faint); }
-  .bc-title { font-size: 0.88rem; font-weight: 500; word-break: break-word; }
-  .bc-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 6px; font-size: 0.72rem; color: var(--ink-dim); }
-  .bc-date.overdue { color: var(--danger); font-weight: 600; }
-  .bc-pri { padding: 0 6px; border-radius: 999px; background: var(--danger-soft); color: var(--danger); font-weight: 500; }
-  .board-empty { font-size: 0.76rem; color: var(--ink-faint); padding: 6px; }
 
   /* ===== 상세 패널 (오른쪽 peek) ===== */
   .peek-overlay { position: fixed; inset: 0; background: rgba(15,15,15,0.25); z-index: 52; opacity: 0; visibility: hidden; transition: opacity 0.35s var(--ease-out), visibility 0.35s var(--ease-out); }
@@ -817,6 +806,33 @@
   .peek-time-clear:hover, .peek-mini:hover { background: var(--hover); color: var(--ink); }
 
 
+
+  /* v53: 체크리스트 탭 */
+  .cv-summary { font-size: 0.82rem; color: var(--ink-dim); margin: 14px 0 10px; }
+  .cv-summary:empty { display: none; }
+  .cv-group { background: var(--sidebar); border-radius: 18px; padding: 12px 14px 10px; margin: 0 0 12px; }
+  .cv-group.is-finished { opacity: 0.75; }
+  .cv-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .cv-title { flex: 1 1 120px; min-width: 0; text-align: left; background: none; border: none; color: var(--ink); font: inherit; font-size: 0.92rem; font-weight: 600; padding: 0; cursor: pointer; overflow-wrap: anywhere; }
+  .cv-title:hover { text-decoration: underline; }
+  .cv-count { font-size: 0.76rem; font-weight: 600; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+  .cv-bar { height: 4px; border-radius: 4px; background: var(--border); margin: 8px 0 6px; overflow: hidden; }
+  .cv-bar > div { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.4s var(--ease-out); }
+  .cv-row { display: grid; grid-template-columns: 18px 1fr; align-items: start; gap: 8px; padding: 4px 0; }
+  .cv-row input[type="checkbox"] { width: 16px; height: 16px; margin-top: 2px; accent-color: var(--accent); }
+  .cv-main { min-width: 0; }
+  .cv-text { display: block; width: 100%; text-align: left; background: none; border: none; color: var(--ink); font: inherit; font-size: 0.88rem; padding: 0; cursor: pointer; overflow-wrap: anywhere; }
+  .cv-row.is-done .cv-text { text-decoration: line-through; color: var(--ink-faint); }
+  .cv-sub { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 1px; font-size: 0.72rem; color: var(--ink-faint); }
+  .cv-date.late { color: var(--danger); font-weight: 600; }
+  .cv-link, .cl-open { display: inline-flex; align-items: center; gap: 3px; }
+  .cv-link .ic, .cl-open .ic { width: 11px; height: 11px; }
+  .cl-open { border: none; background: transparent; color: var(--ink-faint); font: inherit; font-size: 0.72rem; padding: 1px 4px; border-radius: var(--radius); cursor: pointer; }
+  .cl-open:hover { background: var(--hover); color: var(--ink); }
+  .cv-add { width: 100%; margin-top: 4px; border: 1px solid transparent; background: transparent; color: var(--ink); font: inherit; font-size: 0.86rem; padding: 5px 6px; border-radius: var(--radius); }
+  .cv-add:hover { background: var(--hover); }
+  .cv-add:focus { outline: none; border-color: var(--accent); background: var(--bg); }
+  .cv-finished { margin-top: 8px; }
   /* v52: 체크리스트 단계의 날짜·소요, 카드의 다음 단계 */
   .cl-main { min-width: 0; }
   .cl-sub { display: flex; align-items: center; gap: 8px; padding: 0 6px 2px; }
@@ -974,6 +990,9 @@
   .today-empty .big { display: block; margin-bottom: 8px; color: var(--ink-faint); }
   .today-empty .big .ic { width: 2.4rem; height: 2.4rem; stroke-width: 1.4; }
   .today-empty .next { color: var(--ink); font-weight: 500; }
+  .cv-empty { text-align: center; padding: 34px 12px; color: var(--ink-dim); font-size: 0.9rem; line-height: 1.7; }
+  .cv-empty .big { display: block; margin-bottom: 8px; color: var(--ink-faint); }
+  .cv-empty .big .ic { width: 2.4rem; height: 2.4rem; stroke-width: 1.4; }
 
   /* ===== 바로 추가(AI 없이) ===== */
   .add-row { display: flex; gap: 8px; margin: 12px 0 4px; }
@@ -1024,7 +1043,6 @@
 <symbol id="i-month" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
 <symbol id="i-week" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4M7.5 14.5h9"/></symbol>
 <symbol id="i-list" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M3.5 10h17M3.5 15h17M10 4.5v15"/></symbol>
-<symbol id="i-board" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="4.5" height="15" rx="1.5"/><rect x="9.75" y="4.5" width="4.5" height="10" rx="1.5"/><rect x="16" y="4.5" width="4.5" height="6.5" rx="1.5"/></symbol>
 <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></symbol>
 <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 4.5h14a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2h-7l-4.5 3.5V17H5a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2z"/><path d="M8 9.5h8M8 12.8h5" opacity=".6"/></symbol>
 <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
@@ -1039,6 +1057,7 @@
 <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/></symbol>
 <symbol id="i-checklist" viewBox="0 0 24 24"><path d="M11 6.5h9M11 12h9M11 17.5h9"/><path d="m4 6.5 1.2 1.2L7.6 5.3M4 12l1.2 1.2 2.4-2.4M4 17.5l1.2 1.2 2.4-2.4"/></symbol>
 <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3A4 4 0 0 0 11 18.7l1-1"/></symbol>
 <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.8 19.5c1-3.6 3.9-5.4 7.2-5.4s6.2 1.8 7.2 5.4"/></symbol>
 <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4.5 7h15M4.5 12h15M4.5 17h15"/></symbol>
 <symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 6 8.5 12l6 6"/></symbol>
@@ -1070,7 +1089,7 @@
     <button class="sb-pill" data-view="month" aria-label="달력" title="달력"><svg class="ic" aria-hidden="true"><use href="#i-month"/></svg><span class="sp-label"><span>달력</span></span></button>
     <button class="sb-pill" data-view="week" aria-label="이번 주" title="이번 주"><svg class="ic" aria-hidden="true"><use href="#i-week"/></svg><span class="sp-label"><span>이번 주</span></span></button>
     <button class="sb-pill" data-view="list" aria-label="전체 표" title="전체 표"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg><span class="sp-label"><span>전체 표</span></span><span class="sp-badge" id="sbPillListBadge" style="display:none;"></span></button>
-    <button class="sb-pill" data-view="board" aria-label="보드" title="보드"><svg class="ic" aria-hidden="true"><use href="#i-board"/></svg><span class="sp-label"><span>보드</span></span></button>
+    <button class="sb-pill" data-view="checklist" aria-label="체크리스트" title="체크리스트"><svg class="ic" aria-hidden="true"><use href="#i-checklist"/></svg><span class="sp-label"><span>체크리스트</span></span></button>
   </nav>
   <div class="sb-label">도구</div>
   <button class="sb-item" id="sbSearchBtn"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg><span>검색 · 명령</span><span class="sb-kbd">⌘K</span></button>
@@ -1091,7 +1110,7 @@
       <button class="tb-pill" data-view="month" aria-label="달력" title="달력"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span class="tb-label"><span>달력</span></span></button>
       <button class="tb-pill" data-view="week" aria-label="이번 주" title="이번 주"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4M7.5 14.5h9"/></svg><span class="tb-label"><span>이번 주</span></span></button>
       <button class="tb-pill" data-view="list" aria-label="전체 표" title="전체 표"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M3.5 10h17M3.5 15h17M10 4.5v15"/></svg><span class="tb-label"><span>전체 표</span></span></button>
-      <button class="tb-pill" data-view="board" aria-label="보드" title="보드"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="4.5" height="15" rx="1.5"/><rect x="9.75" y="4.5" width="4.5" height="10" rx="1.5"/><rect x="16" y="4.5" width="4.5" height="6.5" rx="1.5"/></svg><span class="tb-label"><span>보드</span></span></button>
+      <button class="tb-pill" data-view="checklist" aria-label="체크리스트" title="체크리스트"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 6.5h9M11 12h9M11 17.5h9"/><path d="m4 6.5 1.2 1.2L7.6 5.3M4 12l1.2 1.2 2.4-2.4M4 17.5l1.2 1.2 2.4-2.4"/></svg><span class="tb-label"><span>체크리스트</span></span></button>
     </nav>
     <button class="tb-avatar" id="tbProfileBtn" aria-label="프로필"><span id="tbAvatarText"></span></button>
   </div>
@@ -1207,12 +1226,9 @@
       <div id="listItems"></div>
     </div>
 
-    <div id="boardView" style="display:none;">
-      <div class="board-toolbar">
-        <div class="chip-row" id="boardGroupChips"></div>
-        <span class="board-hint" id="boardHint"></span>
-      </div>
-      <div class="board" id="boardCols"></div>
+    <div id="checklistView" style="display:none;">
+      <div class="cv-summary" id="cvSummary"></div>
+      <div id="cvGroups"></div>
     </div>
 
     <div id="profileView" style="display:none;">
@@ -1478,9 +1494,8 @@ let listSortKey = 'dueDate';
 let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
-let boardGroup = 'status'; // 'status' 기한별 | 'type' 유형별
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v52';
+const APP_VERSION = 'v53';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2100,6 +2115,7 @@ function markDone(it, done) {
   it.done = !!done;
   if (it.done) it.doneAt = new Date().toISOString(); else delete it.doneAt;
   if (it.done && timer && timer.id === it.id) finishTimerSync(it);
+  items.forEach(p => { if (Array.isArray(p.checklist)) p.checklist.forEach(e => { if (e && e.ref === it.id) e.d = it.done; }); });   // 이 일정이 어떤 체크리스트의 연결 항목이면 그쪽도 맞춘다
 }
 function doneDayOf(it) {
   if (!it.done || !it.doneAt) return '';
@@ -2127,20 +2143,37 @@ function actualOptionsHtml(cur) {
 }
 function setItemActual(it, v) { const n = normActual(v); if (n) it.actualMin = n; else delete it.actualMin; }
 
-// 체크리스트: [{t: 글, d: 완료 여부, due?: 목표 날짜, m?: 예상 분}] 최대 30개
+// 체크리스트: [{t: 글, d: 완료 여부, due?: 목표 날짜, m?: 예상 분, ref?: 연결된 별도 일정 id}] 최대 30개.
+// ref가 가리키는 일정이 있으면 그 일정의 완료 여부가 이 항목의 완료 여부다(stepDone). 어느 쪽에서 체크해도 양쪽이 맞춰진다.
+function stepDone(e) { const c = e.ref && items.find(x => x.id === e.ref); return c ? !!c.done : !!e.d; }
+async function toggleStep(it, i, checked) {
+  const list = normChecklist(it.checklist);
+  if (!list[i]) return;
+  list[i].d = !!checked;
+  it.checklist = list;
+  const child = list[i].ref && items.find(x => x.id === list[i].ref);
+  if (child && child.done !== !!checked) markDone(child, !!checked);      // markDone이 이 항목의 d도 맞춰 준다
+  await saveItems(); refreshAll();
+  if (peekId === it.id) renderPeek();
+  if (checked && it.checklist.length && it.checklist.every(stepDone) && !it.done) showToast('체크리스트를 모두 끝냈습니다', '일정도 완료', async () => {
+    if (!items.includes(it)) return;
+    markDone(it, true); await saveItems(); refreshAll(); if (peekId === it.id) renderPeek();
+  }, 6000);
+}
 function normChecklist(arr) {
   if (!Array.isArray(arr)) return [];
   return arr.map(x => {
     const o = { t: cleanText(x && x.t, 120), d: !!(x && x.d) };
     if (x && isValidISO(x.due)) o.due = x.due;            // 단계의 목표 날짜(AI 쪼개기가 채움)
     const m = normDuration(x && x.m); if (m) o.m = m;      // 단계의 예상 소요(분)
+    if (x && typeof x.ref === 'string' && x.ref) o.ref = x.ref.slice(0, 80);   // 이 단계와 연결된 별도 일정의 id(AI 쪼개기가 만듦)
     return o;
   }).filter(x => x.t).slice(0, 30);
 }
 // 날짜가 있는 체크리스트 단계 중 아직 안 끝난 가장 이른 단계를 카드에 보여 준다(AI 쪼개기로 만든 단계가 각자 날짜를 잃지 않게)
 function nextStepHtml(it) {
   if (it.done) return '';
-  const next = normChecklist(it.checklist).filter(x => !x.d && x.due).sort((a, b) => a.due.localeCompare(b.due))[0];
+  const next = normChecklist(it.checklist).filter(x => !stepDone(x) && x.due && !(x.ref && items.some(i => i.id === x.ref))).sort((a, b) => a.due.localeCompare(b.due))[0];   // 연결된 별도 일정이 있는 단계는 그 일정이 따로 보이므로 뺀다
   if (!next) return '';
   const late = next.due < todayISO();
   return `<div class="next-step${late ? ' late' : ''}">${ic('arrow-right', 'ic sm')}<span class="ns-label">다음 단계</span><span class="ns-text">${escapeHtml(next.t)}</span><span class="ns-date">${formatShortDate(next.due)}</span></div>`;
@@ -2148,7 +2181,7 @@ function nextStepHtml(it) {
 function checkChipHtml(it) {
   const cl = normChecklist(it.checklist);
   if (!cl.length) return '';
-  const n = cl.filter(x => x.d).length;
+  const n = cl.filter(stepDone).length;
   return `<span class="chk-chip${n === cl.length ? ' all' : ''}" title="체크리스트">${ic('checklist', 'ic sm')}${n}/${cl.length}</span>`;
 }
 
@@ -2957,7 +2990,7 @@ function refreshAll() {
   if (viewMode === 'today') renderTodayView();
   else if (viewMode === 'week') renderWeekView();
   else if (viewMode === 'list') renderListView();
-  else if (viewMode === 'board') renderBoard();
+  else if (viewMode === 'checklist') renderChecklistView();
   else if (viewMode !== 'profile') renderDetail();
 }
 
@@ -3024,7 +3057,7 @@ function renderWeekView() {
   });
 }
 
-const VIEW_ORDER = ['today', 'month', 'week', 'list', 'board'];
+const VIEW_ORDER = ['today', 'month', 'week', 'list', 'checklist'];
 let profilePrevView = 'today';           // 프로필 탭에서 돌아갈 화면
 let lastCloud = { state: 'off', email: '' };
 function setViewMode(mode, animate) {
@@ -3051,7 +3084,7 @@ function setViewMode(mode, animate) {
   document.getElementById('monthView').style.display = mode === 'month' ? 'block' : 'none';
   document.getElementById('weekView').style.display = mode === 'week' ? 'flex' : 'none';
   document.getElementById('listView').style.display = mode === 'list' ? 'block' : 'none';
-  document.getElementById('boardView').style.display = mode === 'board' ? 'block' : 'none';
+  document.getElementById('checklistView').style.display = mode === 'checklist' ? 'block' : 'none';
   document.getElementById('todayView').style.display = mode === 'today' ? 'block' : 'none';
   document.getElementById('calHead').style.display = mode === 'today' || isProfile ? 'none' : '';
   document.getElementById('detailPanel').style.display = mode === 'month' ? 'block' : 'none';
@@ -3065,9 +3098,9 @@ function setViewMode(mode, animate) {
     renderWeekView();
   } else if (isProfile) {
     renderProfileUi();
-  } else if (mode === 'board') {
-    document.getElementById('monthLabel').textContent = '보드';
-    renderBoard();
+  } else if (mode === 'checklist') {
+    document.getElementById('monthLabel').textContent = '체크리스트';
+    renderChecklistView();
   } else if (mode === 'list') {
     document.getElementById('monthLabel').textContent = '전체 목록';
     renderListFilters();
@@ -3085,7 +3118,7 @@ function setViewMode(mode, animate) {
 // 화면 전환 모션: 알약 순서상 오른쪽 화면이면 오른쪽에서, 왼쪽이면 왼쪽에서 밀려 들어옴
 let slideTimer = null;
 function slideInView(mode, fromRight) {
-  const id = { today: 'todayView', month: 'monthView', week: 'weekView', list: 'listView', board: 'boardView' }[mode];
+  const id = { today: 'todayView', month: 'monthView', week: 'weekView', list: 'listView', checklist: 'checklistView' }[mode];
   const els = [document.getElementById(id), document.getElementById('calHead'), mode === 'month' ? document.getElementById('detailPanel') : null].filter(el => el && el.style.display !== 'none');
   clearViewSlide();
   els.forEach(el => { void el.offsetWidth; el.classList.add(fromRight ? 'view-in-r' : 'view-in-l'); });
@@ -3246,7 +3279,7 @@ document.getElementById('todayBtn').addEventListener('click', () => {
   viewMonth = d.getMonth();
   if (viewMode === 'week') renderWeekView();
   else if (viewMode === 'list') renderListView();
-  else if (viewMode === 'board') renderBoard();
+  else if (viewMode === 'checklist') renderChecklistView();
   else renderCalendar();
 });
 
@@ -4422,104 +4455,68 @@ document.getElementById('chatFab').addEventListener('click', () => toggleChat())
 document.getElementById('sbChatBtn').addEventListener('click', () => toggleChat());
 document.getElementById('chatCloseBtn').addEventListener('click', () => toggleChat(false));
 
-// ---- 보드 뷰 ----
-function boardColumns() {
-  const today = todayISO();
-  if (boardGroup === 'type') {
-    return TYPE_OPTIONS.map(t => ({
-      key: t, label: t, cls: 't-' + t,
-      match: it => (it.type || '기타') === t,
-      drop: it => { it.type = t; }
-    }));
-  }
-  const weekEnd = getThisWeekDates()[6];
-  return [
-    { key: 'overdue', label: '지난 마감', match: it => !it.done && it.dueDate < today, drop: null },
-    { key: 'today', label: '오늘', match: it => !it.done && it.dueDate === today, drop: it => { markDone(it, false); it.dueDate = today; } },
-    { key: 'week', label: '이번 주', match: it => !it.done && it.dueDate > today && it.dueDate <= weekEnd, drop: null },
-    { key: 'later', label: '이후', match: it => !it.done && it.dueDate > weekEnd, drop: null },
-    { key: 'done', label: '완료', match: it => it.done, drop: it => { markDone(it, true); } }
-  ];
+// ---- 체크리스트 탭(v53): 체크리스트가 있는 일정을 일정별 묶음으로 모아 보여 준다 ----
+function cvStepRow(it, e, i, finished) {
+  const row = document.createElement('div');
+  const done = stepDone(e), child = e.ref && items.find(x => x.id === e.ref);
+  row.className = 'cv-row' + (done ? ' is-done' : '');
+  const late = !done && e.due && e.due < todayISO();
+  row.innerHTML = `<input type="checkbox" class="cv-check" ${done ? 'checked' : ''} aria-label="완료"><div class="cv-main"><button type="button" class="cv-text"></button>` +
+    (e.due || e.m || child ? `<div class="cv-sub">${e.due ? `<span class="cv-date${late ? ' late' : ''}">${formatShortDate(e.due)}</span>` : ''}${e.m ? `<span class="cv-min">${fmtDuration(e.m)}</span>` : ''}${child ? `<span class="cv-link">${ic('link', 'ic sm')}별도 일정</span>` : ''}</div>` : '') + `</div>`;
+  row.querySelector('.cv-text').textContent = e.t;
+  row.querySelector('.cv-text').addEventListener('click', () => openPeek(child ? child.id : it.id));
+  row.querySelector('.cv-check').addEventListener('change', (ev) => toggleStep(it, i, ev.target.checked));
+  return row;
 }
-
-function renderBoard() {
-  const chips = document.getElementById('boardGroupChips');
-  chips.innerHTML = '';
-  [['status', '기한별'], ['type', '유형별']].forEach(([key, label]) => {
-    const c = document.createElement('div');
-    c.className = 'chip chip-plain' + (boardGroup === key ? ' selected' : '');
-    c.innerHTML = `<span>${label}</span>`;
-    c.addEventListener('click', () => { boardGroup = key; renderBoard(); });
-    chips.appendChild(c);
-  });
-  document.getElementById('boardHint').textContent = boardGroup === 'status'
-    ? "카드를 끌어 '오늘'이나 '완료'로 옮길 수 있습니다. 누르면 상세가 열립니다."
-    : '카드를 끌어 다른 유형으로 옮길 수 있습니다. 누르면 상세가 열립니다.';
-
-  const wrap = document.getElementById('boardCols');
-  wrap.innerHTML = '';
-  const today = todayISO();
-
-  boardColumns().forEach(col => {
-    const colItems = items.filter(col.match).sort((a, b) => (a.done - b.done) || cmpDue(a, b));
-    const colEl = document.createElement('div');
-    colEl.className = 'board-col';
-    const head = document.createElement('div');
-    head.className = 'board-col-head';
-    head.innerHTML = col.cls
-      ? `<span class="col-tag ${col.cls}">${escapeHtml(col.label)}</span><span class="count">${colItems.length}</span>`
-      : `<span>${escapeHtml(col.label)}</span><span class="count">${colItems.length}</span>`;
-    colEl.appendChild(head);
-
-    const body = document.createElement('div');
-    body.className = 'board-body';
-    body.dataset.col = col.key;
-    if (!colItems.length) {
-      const empty = document.createElement('div');
-      empty.className = 'board-empty';
-      empty.textContent = '비어 있음';
-      body.appendChild(empty);
-    }
-    colItems.forEach(it => {
-      const overdue = it.dueDate < today && !it.done;
-      const card = document.createElement('div');
-      card.className = 'board-card' + (it.done ? ' is-done' : '');
-      card.draggable = true;
-      card.dataset.id = it.id;
-      card.innerHTML = `
-        <div class="bc-title">${escapeHtml(it.title)}</div>
-        <div class="bc-meta">
-          <span class="bc-date ${overdue ? 'overdue' : ''}">${overdue ? ic('alert', 'ic sm') + ' ' : ''}${formatShortDate(it.dueDate)}</span>${ddayHtml(it)}${timeChipHtml(it)}${checkChipHtml(it)}${aiBusyHtml(it)}
-          ${boardGroup === 'status' ? `<span class="type-tag t-${escapeHtml(it.type || '기타')}">${escapeHtml(it.type || '기타')}</span>` : ''}
-          ${it.priority === 'high' ? '<span class="bc-pri">높음</span>' : ''}
-          ${it.recurringId ? `<span>${ic('repeat', 'ic sm')}</span>` : ''}
-        </div>`;
-      card.addEventListener('click', () => openPeek(it.id));
-      card.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('text/plain', it.id);
-        e.dataTransfer.effectAllowed = 'move';
-        card.classList.add('dragging');
-      });
-      card.addEventListener('dragend', () => card.classList.remove('dragging'));
-      body.appendChild(card);
+function cvGroup(it, finished) {
+  const cl = normChecklist(it.checklist), n = cl.filter(stepDone).length;
+  const g = document.createElement('div');
+  g.className = 'cv-group' + (finished ? ' is-finished' : '');
+  g.dataset.id = it.id;
+  g.innerHTML = `<div class="cv-head"><button type="button" class="cv-title"></button>${ddayHtml(it)}${timeChipHtml(it)}<span class="cv-count">${n}/${cl.length}</span></div><div class="cv-bar"><div style="width:${Math.round(n / cl.length * 100)}%"></div></div><div class="cv-rows"></div>`;
+  g.querySelector('.cv-title').textContent = it.title;
+  g.querySelector('.cv-title').addEventListener('click', () => openPeek(it.id));
+  const rows = g.querySelector('.cv-rows');
+  cl.forEach((e, i) => rows.appendChild(cvStepRow(it, e, i, finished)));
+  if (cl.length < 30) {
+    const add = document.createElement('input');
+    add.type = 'text'; add.className = 'cv-add'; add.maxLength = 120; add.placeholder = '항목 추가 후 Enter'; add.setAttribute('aria-label', '체크리스트 항목 추가');
+    add.addEventListener('keydown', async (ev) => {
+      if (ev.key !== 'Enter' || ev.isComposing) return;
+      ev.preventDefault();
+      const v = cleanText(add.value, 120);
+      if (!v) return;
+      const list = normChecklist(it.checklist); list.push({ t: v, d: false });
+      it.checklist = list; await saveItems(); refreshAll();
+      const again = document.querySelector(`#cvGroups .cv-group[data-id="${it.id}"] .cv-add`); if (again) again.focus();
     });
-
-    if (col.drop) {
-      body.addEventListener('dragover', (e) => { e.preventDefault(); body.classList.add('drop-over'); });
-      body.addEventListener('dragleave', () => body.classList.remove('drop-over'));
-      body.addEventListener('drop', async (e) => {
-        e.preventDefault();
-        body.classList.remove('drop-over');
-        const target = items.find(x => x.id === e.dataTransfer.getData('text/plain'));
-        if (!target) return;
-        col.drop(target);
-        await saveItems();
-        refreshAll();
-      });
-    }
-    colEl.appendChild(body);
-    wrap.appendChild(colEl);
-  });
+    g.appendChild(add);
+  }
+  return g;
+}
+function renderChecklistView() {
+  const box = document.getElementById('cvGroups'), sum = document.getElementById('cvSummary');
+  if (!box) return;
+  const withCl = items.filter(x => normChecklist(x.checklist).length);
+  const active = withCl.filter(x => !x.done).sort(cmpDue);
+  const finished = withCl.filter(x => x.done).sort((a, b) => String(b.doneAt || '').localeCompare(String(a.doneAt || '')));
+  let total = 0, doneN = 0;
+  active.forEach(x => { const cl = normChecklist(x.checklist); total += cl.length; doneN += cl.filter(stepDone).length; });
+  sum.textContent = active.length ? `진행 중인 일정 ${active.length}개 · 체크 항목 ${total}개 중 ${doneN}개 완료` : '';
+  box.innerHTML = '';
+  active.forEach(x => box.appendChild(cvGroup(x, false)));
+  if (!withCl.length) {
+    box.innerHTML = `<div class="cv-empty"><span class="big">${ic('checklist')}</span>체크리스트가 있는 일정이 없습니다.<br>일정의 상세 패널에서 항목을 추가하거나 "AI로 쪼개기"를 쓰면 여기에 일정별로 모입니다.</div>`;
+  } else if (!active.length) {
+    box.innerHTML = `<div class="cv-empty"><span class="big">${ic('check')}</span>진행 중인 체크리스트가 없습니다.</div>`;
+  }
+  if (finished.length) {
+    const det = document.createElement('details');
+    det.className = 'today-section cv-finished';
+    det.innerHTML = `<summary>${ic('check', 'ic sm')} 완료한 일정 ${finished.length}개</summary>`;
+    finished.forEach(x => det.appendChild(cvGroup(x, true)));
+    box.appendChild(det);
+  }
 }
 
 // ---- 상세 패널 (오른쪽 peek) ----
@@ -4544,23 +4541,17 @@ function peekPostponeHtml(it) {
 function buildChecklistBox(it) {
   const box = document.createElement('div');
   box.className = 'peek-checklist';
-  const cl = normChecklist(it.checklist), n = cl.filter(x => x.d).length;
+  const cl = normChecklist(it.checklist), n = cl.filter(stepDone).length;
   box.innerHTML = `<div class="cl-head">${ic('checklist', 'ic sm')}체크리스트${cl.length ? `<span class="cl-count">${n}/${cl.length}</span>` : ''}</div>` +
-    cl.map((x, i) => `<div class="cl-row${x.d ? ' is-done' : ''}"><input type="checkbox" class="cl-check" data-i="${i}" ${x.d ? 'checked' : ''} aria-label="완료"><div class="cl-main"><input type="text" class="cl-text" data-i="${i}" maxlength="120" value="${escapeHtml(x.t)}" aria-label="항목">${x.due || x.m ? `<div class="cl-sub">${x.due ? `<input type="date" class="cl-due${!x.d && x.due < todayISO() ? ' late' : ''}" data-i="${i}" value="${x.due}" aria-label="단계 날짜">` : ''}${x.m ? `<span class="cl-min">${fmtDuration(x.m)}</span>` : ''}</div>` : ''}</div><button type="button" class="cl-del" data-i="${i}" aria-label="항목 삭제">×</button></div>`).join('') +
+    cl.map((x, i) => { const dn = stepDone(x), ch = x.ref && items.find(y => y.id === x.ref); return `<div class="cl-row${dn ? ' is-done' : ''}"><input type="checkbox" class="cl-check" data-i="${i}" ${dn ? 'checked' : ''} aria-label="완료"><div class="cl-main"><input type="text" class="cl-text" data-i="${i}" maxlength="120" value="${escapeHtml(x.t)}" aria-label="항목">${x.due || x.m || ch ? `<div class="cl-sub">${x.due ? `<input type="date" class="cl-due${!dn && x.due < todayISO() ? ' late' : ''}" data-i="${i}" value="${x.due}" aria-label="단계 날짜">` : ''}${x.m ? `<span class="cl-min">${fmtDuration(x.m)}</span>` : ''}${ch ? `<button type="button" class="cl-open" data-i="${i}" title="연결된 별도 일정 열기">${ic('link', 'ic sm')}별도 일정</button>` : ''}</div>` : ''}</div><button type="button" class="cl-del" data-i="${i}" aria-label="항목 삭제">×</button></div>`; }).join('') +
     (cl.length < 30 ? '<input type="text" class="cl-add" maxlength="120" placeholder="항목 추가 후 Enter" aria-label="체크리스트 항목 추가">' : '');
   const save = async (list, rerender) => {
     if (list.length) it.checklist = list; else delete it.checklist;
     await saveItems(); refreshAll();
     if (rerender && peekId === it.id) renderPeek();
   };
-  box.querySelectorAll('.cl-check').forEach(c => c.addEventListener('change', async () => {
-    const list = normChecklist(it.checklist); list[+c.dataset.i].d = c.checked;
-    await save(list, true);
-    if (list.length && list.every(x => x.d) && !it.done) showToast('체크리스트를 모두 끝냈습니다', '일정도 완료', async () => {
-      if (!items.includes(it)) return;
-      markDone(it, true); await saveItems(); refreshAll(); if (peekId === it.id) renderPeek();
-    }, 6000);
-  }));
+  box.querySelectorAll('.cl-check').forEach(c => c.addEventListener('change', () => toggleStep(it, +c.dataset.i, c.checked)));
+  box.querySelectorAll('.cl-open').forEach(b => b.addEventListener('click', () => { const e = normChecklist(it.checklist)[+b.dataset.i]; if (e && e.ref && items.some(y => y.id === e.ref)) openPeek(e.ref); }));
   box.querySelectorAll('.cl-text').forEach(inp => inp.addEventListener('change', async () => {
     const list = normChecklist(it.checklist), i = +inp.dataset.i, v = cleanText(inp.value, 120);
     if (v) list[i].t = v; else list.splice(i, 1);
@@ -4726,7 +4717,7 @@ function paletteEntries(query) {
     { icon: 'month', label: '달력 보기', run: () => setViewMode('month', true) },
     { icon: 'week', label: '이번 주 보기', run: () => setViewMode('week', true) },
     { icon: 'list', label: '전체 표 보기', run: () => setViewMode('list', true) },
-    { icon: 'board', label: '보드 보기', run: () => setViewMode('board', true) },
+    { icon: 'checklist', label: '체크리스트 보기', run: () => setViewMode('checklist', true) },
     { icon: 'plus', label: '새 일정 입력', run: () => { window.scrollTo({ top: 0, behavior: 'smooth' }); document.getElementById('quickInput').focus(); } },
     { icon: 'chat', label: 'AI 비서 열기', run: () => toggleChat(true) },
     { icon: 'user', label: '프로필 열기 (계정 · 동기화 · AI 설정)', run: () => setViewMode('profile', true) },
@@ -5452,7 +5443,7 @@ function showPlanError(msg, retry) {
   addPlanButton('닫기', 'btn-ghost', closePlanModal);
 }
 
-// (1) 큰 마감 쪼개기: 오늘~마감일 사이의 중간 단계를 제안 → 확인 창에서 고르고 고쳐서 이 일정의 체크리스트에 넣는다(기본). 원하면 각 단계를 별도 일정으로 추가할 수도 있다.
+// (1) 큰 마감 쪼개기: 오늘~마감일 사이의 중간 단계를 제안 → 확인 창에서 고르고 고쳐서 각 단계를 별도 일정으로 추가하고, 원래 일정의 체크리스트에도 연결한다(ref).
 async function splitItemWithAI(it) {
   if (it.done) return;
   const left = daysUntil(it.dueDate);
@@ -5522,7 +5513,7 @@ ${topicBlock ? '\n' + topicBlock + '\n' : ''}
 function renderSplitReview(it, steps, tok) {
   const today = todayISO(), body = planEl('planBody');
   planEl('planActions').innerHTML = '';          // 로딩 중에 있던 취소 버튼을 비우고 다시 만든다(안 비우면 취소가 두 개 됨)
-  body.innerHTML = '<div class="plan-sub">넣을 단계를 고르고 제목·날짜를 고칠 수 있습니다. 체크리스트는 이 일정 안에 담기고, 별도 일정은 각 날짜에 따로 보입니다.</div>';
+  body.innerHTML = '<div class="plan-sub">추가할 단계를 고르고 제목·날짜를 고칠 수 있습니다. 각 단계는 별도 일정이 되고, 원래 일정의 체크리스트에도 연결됩니다.</div>';
   const rows = steps.map((s) => {
     const row = document.createElement('div'); row.className = 'plan-step';
     row.dataset.min = s.min || 0;
@@ -5531,41 +5522,36 @@ function renderSplitReview(it, steps, tok) {
   });
   const others = {}; items.forEach(x => { if (x.id !== it.id && !x.done) others[x.dueDate] = (others[x.dueDate] || 0) + 1; });
   const addBtn = addPlanButton('추가', 'btn-main', () => {});
-  const sepBtn = addPlanButton('별도 일정으로 추가', 'btn-ghost', () => {});
   const read = () => rows.filter(r => r.querySelector('.ps-chk').checked).map(r => ({ title: cleanText(r.querySelector('.ps-title').value, 60), date: r.querySelector('.ps-date').value, min: normDuration(r.dataset.min), note: r.querySelector('.ps-note').textContent })).filter(x => x.title && isValidISO(x.date) && x.date >= today && x.date <= it.dueDate);
   const refresh = () => {
     const chosen = rows.filter(r => r.querySelector('.ps-chk').checked);
     const perDay = {}; chosen.forEach(r => { const d = r.querySelector('.ps-date').value; perDay[d] = (perDay[d] || 0) + 1; });
     rows.forEach(r => { const d = r.querySelector('.ps-date').value, n = (others[d] || 0) + (perDay[d] || 0) - (r.querySelector('.ps-chk').checked ? 1 : 0); r.querySelector('.plan-warn').textContent = n >= 3 ? `이 날 이미 ${n}건 있습니다` : ''; r.style.opacity = r.querySelector('.ps-chk').checked ? '' : '0.5'; });
-    const n = read().length; addBtn.textContent = n ? `선택한 ${n}건 체크리스트에 추가` : '추가할 단계를 골라야 합니다'; addBtn.disabled = n === 0; sepBtn.disabled = n === 0;
+    const n = read().length; addBtn.textContent = n ? `선택한 ${n}건 추가` : '추가할 단계를 골라야 합니다'; addBtn.disabled = n === 0;
   };
   rows.forEach(r => r.addEventListener('input', refresh)); rows.forEach(r => r.addEventListener('change', refresh));
   refresh();
   addBtn.onclick = async () => {
     if (tok !== planToken) return;
     const chosen = read(); if (!chosen.length) return;
-    const cur = normChecklist(it.checklist), norm = (x) => String(x || '').replace(/\s+/g, '').toLowerCase();
-    const have = new Set(cur.map(x => norm(x.t)));
-    const fresh = chosen.filter(x => !have.has(norm(x.title)));
-    const add = fresh.slice(0, Math.max(0, 30 - cur.length));
-    if (!add.length) { planEl('planStatus').className = 'status err'; planEl('planStatus').textContent = fresh.length ? '체크리스트는 30개까지 담을 수 있습니다' : '선택한 단계가 이미 체크리스트에 들어 있습니다'; return; }
-    const prev = it.checklist ? JSON.parse(JSON.stringify(it.checklist)) : null;
-    it.checklist = cur.concat(add.map(x => { const o = { t: x.title, d: false, due: x.date }; if (x.min) o.m = x.min; return normChecklist([o])[0]; }).filter(Boolean));
-    await saveItems(); refreshAll(); closePlanModal();
+    const created = chosen.map(s => ({ id: uid(), title: s.title, shortLabel: '', type: it.type || '기타', dueDate: s.date, priority: it.priority || 'medium', notes: `「${it.title}」의 단계` + (s.note ? ' · ' + s.note : ''), aiComment: '', topicSuggestion: '', topicKeyword: '', done: false, ...(s.min ? { durationMin: s.min, durationAi: s.min } : {}) }));
+    // 원래 일정의 체크리스트에도 연결한다(이미 있는 항목·30개 한도를 넘는 것은 체크리스트에만 빠지고 일정은 그대로 만들어진다)
+    const norm = (x) => String(x || '').replace(/\s+/g, '').toLowerCase();
+    const cur = normChecklist(it.checklist), prevCL = it.checklist ? JSON.parse(JSON.stringify(it.checklist)) : null, have = new Set(cur.map(x => norm(x.t)));
+    let linked = 0;
+    created.forEach(c => {
+      if (cur.length >= 30 || have.has(norm(c.title))) return;
+      const o = { t: c.title, d: false, due: c.dueDate, ref: c.id }; if (c.durationMin) o.m = c.durationMin;
+      cur.push(normChecklist([o])[0]); have.add(norm(c.title)); linked++;
+    });
+    if (linked) it.checklist = cur;
+    items.push(...created); await saveItems(); refreshAll(); closePlanModal();
     if (peekId === it.id) renderPeek();
-    const skipped = chosen.length - add.length;
-    showToast(`체크리스트에 ${add.length}개를 추가했습니다${skipped ? ` (${skipped}개는 중복이거나 한도라 제외)` : ''}`, '되돌리기', async () => {
-      if (!items.includes(it)) return;
-      if (prev) it.checklist = prev; else delete it.checklist;
+    showToast(`${created.length}건 추가했습니다${linked ? ' (체크리스트에도 연결)' : ''}`, '되돌리기', async () => {
+      const ids = new Set(created.map(c => c.id)); items = items.filter(x => !ids.has(x.id));
+      if (items.includes(it)) { if (prevCL) it.checklist = prevCL; else delete it.checklist; }
       await saveItems(); refreshAll(); if (peekId === it.id) renderPeek();
     }, 7000);
-  };
-  sepBtn.onclick = async () => {
-    if (tok !== planToken) return;
-    const chosen = read(); if (!chosen.length) return;
-    const created = chosen.map(s => ({ id: uid(), title: s.title, shortLabel: '', type: it.type || '기타', dueDate: s.date, priority: it.priority || 'medium', notes: `「${it.title}」의 단계` + (s.note ? ' · ' + s.note : ''), aiComment: '', topicSuggestion: '', topicKeyword: '', done: false, ...(s.min ? { durationMin: s.min, durationAi: s.min } : {}) }));
-    items.push(...created); await saveItems(); refreshAll(); closePlanModal();
-    showToast(`${created.length}건 추가했습니다`, '되돌리기', async () => { const ids = new Set(created.map(c => c.id)); items = items.filter(x => !ids.has(x.id)); await saveItems(); refreshAll(); }, 7000);
   };
   addPlanButton('취소', 'btn-ghost', closePlanModal);
 }
@@ -5788,7 +5774,7 @@ function renderTopicChoices(it, topics, tok) {
   updateBackupSummary();
   setupAddRow('detailAddInput', 'detailAddType', () => selectedDate);
   let startView = 'today';
-  try { const v = await store.get('view'); if (v && ['today', 'month', 'week', 'list', 'board'].includes(v.value)) startView = v.value; } catch (e) {}
+  try { const v = await store.get('view'); if (v && ['today', 'month', 'week', 'list', 'checklist'].includes(v.value)) startView = v.value; } catch (e) {}
   setViewMode(startView);
   window.__plannerResolve();
   updateDiagState();
