@@ -575,7 +575,7 @@
   .bulk-bar { display: flex; align-items: center; gap: 8px; background: var(--accent-soft); border-radius: var(--radius); padding: 4px 10px; flex-wrap: wrap; }
   .bulk-bar span { font-size: 0.78rem; color: var(--accent); font-weight: 500; }
   .bulk-bar button { padding: 4px 10px; font-size: 0.78rem; }
-  .select-check { flex-shrink: 0; width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+  .select-check { flex-shrink: 0; width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; }
 
   .tbl { border-top: 1px solid var(--border); }
   .tbl-head, .tbl-row {
@@ -594,7 +594,7 @@
   .tbl-row { min-height: 38px; padding: 2px 0; border-radius: 12px; transition: background-color 0.22s var(--ease-out); }
   .tbl-row:hover { background: var(--sidebar); }
   .tbl-row.is-done .cell-title { text-decoration: line-through; color: var(--ink-faint); }
-  .tbl-row .check { width: 16px; height: 16px; margin: 0 auto; accent-color: var(--accent); cursor: pointer; }
+  .tbl-row .check { width: 20px; height: 20px; margin: 0 auto; accent-color: var(--accent); cursor: pointer; }
   .cell-title-wrap { display: flex; align-items: center; min-width: 0; }
   .cell-title { flex: 1; min-width: 0; border: 1px solid transparent; background: transparent; border-radius: var(--radius); font-size: 0.92rem; font-weight: 500; padding: 5px 6px; }
   .cell-title:hover { background: var(--hover); }
@@ -656,7 +656,7 @@
   .item .bar { width: 3px; align-self: stretch; border-radius: 2px; background: var(--sage); flex-shrink: 0; }
   .item .bar.high { background: var(--danger); }
   .item .bar.low { background: var(--teal); }
-  .item .check { margin-top: 3px; flex-shrink: 0; width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+  .item .check { margin-top: 1px; flex-shrink: 0; width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; }
   .item .body { flex: 1; min-width: 0; }
   .item .title { font-size: 0.94rem; font-weight: 500; }
   .item .title.done { text-decoration: line-through; color: var(--ink-faint); }
@@ -818,8 +818,8 @@
   .cv-count { font-size: 0.76rem; font-weight: 600; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
   .cv-bar { height: 4px; border-radius: 4px; background: var(--border); margin: 8px 0 6px; overflow: hidden; }
   .cv-bar > div { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.4s var(--ease-out); }
-  .cv-row { display: grid; grid-template-columns: 18px 1fr; align-items: start; gap: 8px; padding: 4px 0; }
-  .cv-row input[type="checkbox"] { width: 16px; height: 16px; margin-top: 2px; accent-color: var(--accent); }
+  .cv-row { display: grid; grid-template-columns: 26px 1fr; align-items: start; gap: 8px; padding: 4px 0; }
+  .cv-row input[type="checkbox"] { width: 22px; height: 22px; margin-top: -1px; accent-color: var(--accent); }
   .cv-main { min-width: 0; }
   .cv-text { display: block; width: 100%; text-align: left; background: none; border: none; color: var(--ink); font: inherit; font-size: 0.88rem; padding: 0; cursor: pointer; overflow-wrap: anywhere; }
   .cv-row.is-done .cv-text { text-decoration: line-through; color: var(--ink-faint); }
@@ -833,6 +833,15 @@
   .cv-add:hover { background: var(--hover); }
   .cv-add:focus { outline: none; border-color: var(--accent); background: var(--bg); }
   .cv-finished { margin-top: 8px; }
+
+  /* v54: 체크박스 영역 확대에 맞춘 목록 여백, 달력·상세의 체크리스트 단계 */
+  .step-bar { background: transparent !important; }
+  .step-item .step-parent { display: inline-flex; align-items: center; gap: 3px; border: none; background: transparent; color: var(--ink-dim); font: inherit; font-size: 0.78rem; padding: 0; cursor: pointer; }
+  .step-item .step-parent:hover { color: var(--ink); text-decoration: underline; }
+  .step-item .step-parent .ic { width: 11px; height: 11px; }
+  .step-item.is-step-done .title { text-decoration: line-through; color: var(--ink-faint); }
+  .cal-cell .item-label.step-pill { background: var(--sidebar); box-shadow: inset 0 0 0 1px var(--border); color: var(--ink-dim); }
+  .cal-cell .item-label.step-pill.done { text-decoration: line-through; opacity: 0.5; }
   /* v52: 체크리스트 단계의 날짜·소요, 카드의 다음 단계 */
   .cl-main { min-width: 0; }
   .cl-sub { display: flex; align-items: center; gap: 8px; padding: 0 6px 2px; }
@@ -865,8 +874,8 @@
   .peek-checklist { margin: 12px 0 4px; }
   .cl-head { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 600; color: var(--ink-dim); margin-bottom: 4px; }
   .cl-count { font-weight: 500; color: var(--ink-faint); }
-  .cl-row { display: grid; grid-template-columns: 18px 1fr 24px; align-items: center; gap: 6px; padding: 2px 0; }
-  .cl-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
+  .cl-row { display: grid; grid-template-columns: 26px 1fr 24px; align-items: center; gap: 6px; padding: 2px 0; }
+  .cl-row input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--accent); }
   .cl-text, .cl-add { width: 100%; border: 1px solid transparent; background: transparent; color: var(--ink); font: inherit; font-size: 0.86rem; padding: 4px 6px; border-radius: var(--radius); }
   .cl-add { margin-top: 2px; }
   .cl-text:hover, .cl-add:hover { background: var(--hover); }
@@ -894,7 +903,7 @@
   .time-chip.late { background: var(--danger-soft); color: var(--danger); }
   .cell-title-wrap .time-chip { margin-left: 4px; }
   .peek-row label { font-size: 0.86rem; display: flex; align-items: center; gap: 6px; cursor: pointer; }
-  .peek-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
+  .peek-row input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); }
   .peek-body .tbl-extras { padding: 14px 0 0; }
   .peek-actions { margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--border); }
   .peek-actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -1495,7 +1504,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v53';
+const APP_VERSION = 'v54';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2146,6 +2155,28 @@ function setItemActual(it, v) { const n = normActual(v); if (n) it.actualMin = n
 // 체크리스트: [{t: 글, d: 완료 여부, due?: 목표 날짜, m?: 예상 분, ref?: 연결된 별도 일정 id}] 최대 30개.
 // ref가 가리키는 일정이 있으면 그 일정의 완료 여부가 이 항목의 완료 여부다(stepDone). 어느 쪽에서 체크해도 양쪽이 맞춰진다.
 function stepDone(e) { const c = e.ref && items.find(x => x.id === e.ref); return c ? !!c.done : !!e.d; }
+// 날짜가 있고 별도 일정과 연결되지 않은 체크리스트 단계(연결된 것은 그 별도 일정이 이미 그 날짜에 보이므로 뺀다)
+function stepsOnDate(iso) {
+  const out = [];
+  items.forEach(it => normChecklist(it.checklist).forEach((e, i) => { if (e.due === iso && !e.ref) out.push({ it, i, e }); }));
+  return out;
+}
+function renderStepRow(it, i, e) {
+  const row = document.createElement('div');
+  row.className = 'item step-item' + (stepDone(e) ? ' is-step-done' : '');
+  row.innerHTML = `
+    <input type="checkbox" class="check step-check" ${stepDone(e) ? 'checked' : ''} aria-label="완료">
+    <div class="bar step-bar"></div>
+    <div class="body">
+      <div class="title${stepDone(e) ? ' done' : ''}">${escapeHtml(e.t)}</div>
+      <div class="meta"><button type="button" class="step-parent">${ic('link', 'ic sm')}<span>「${escapeHtml(cleanText(it.title, 30))}」의 단계</span></button>${e.m ? `<span class="time-chip">약 ${fmtDuration(e.m)}</span>` : ''}</div>
+    </div>
+  `;
+  row.querySelector('.step-check').addEventListener('change', (ev) => toggleStep(it, i, ev.target.checked));
+  row.querySelector('.step-parent').addEventListener('click', () => openPeek(it.id));
+  row.querySelector('.title').addEventListener('click', () => openPeek(it.id));
+  return row;
+}
 async function toggleStep(it, i, checked) {
   const list = normChecklist(it.checklist);
   if (!list[i]) return;
@@ -2857,8 +2888,9 @@ function renderCalendar() {
 
     const dayItems = items.filter(it => it.dueDate === iso)
       .sort(cmpDay);
+    const daySteps = stepsOnDate(iso);   // 별도 일정과 연결되지 않은 체크리스트 단계(연결된 것은 그 일정이 dayItems로 이미 보임)
 
-    if (dayItems.length) {
+    if (dayItems.length || daySteps.length) {
       const shown = dayItems.slice(0, 2);
       shown.forEach(it => {
         const label = document.createElement('div');
@@ -2871,16 +2903,26 @@ function renderCalendar() {
         // 지난 마감은 이모지 대신 빨간 테두리로 표시(좁은 칸에서 글자 자리를 뺏지 않게)
         cell.appendChild(label);
       });
-      if (dayItems.length > shown.length) {
+      const stepSlots = Math.max(0, 2 - shown.length);
+      const shownSteps = daySteps.slice(0, stepSlots);
+      shownSteps.forEach(({ it, e }) => {
+        const label = document.createElement('div');
+        label.className = 'item-label pill step-pill' + (stepDone(e) ? ' done' : '');
+        label.textContent = cleanText(e.t, 24);
+        label.title = `「${it.title}」의 단계: ${e.t}`;
+        cell.appendChild(label);
+      });
+      const shownCount = shown.length + shownSteps.length, totalCount = dayItems.length + daySteps.length;
+      if (totalCount > shownCount) {
         const more = document.createElement('div');
         more.className = 'item-label more';
-        more.textContent = `+${dayItems.length - shown.length}건 더`;
+        more.textContent = `+${totalCount - shownCount}건 더`;
         cell.appendChild(more);
       }
 
       const dots = document.createElement('div');
       dots.className = 'dots';
-      dayItems.slice(0,4).forEach(it => {
+      [...dayItems, ...daySteps.map(s => ({ priority: null, done: stepDone(s.e) }))].slice(0, 4).forEach(it => {
         const dot = document.createElement('div');
         dot.className = 'dot' + (it.priority === 'high' ? ' high' : '') + (it.done ? ' done' : '');
         dots.appendChild(dot);
@@ -3008,17 +3050,20 @@ function renderDetail() {
   const [y,m,d] = selectedDate.split('-');
   const dayItems = items.filter(it => it.dueDate === selectedDate)
     .sort(cmpDay);
+  const daySteps = stepsOnDate(selectedDate);
+  const dayTotal = dayItems.length + daySteps.length;
 
   const dHol = krHoliday(selectedDate);
   titleEl.innerHTML = `${y}년 ${parseInt(m)}월 ${parseInt(d)}일` + (dHol ? `<span class="hol-badge">${escapeHtml(dHol.name)}</span>` : '') +
-    (dayItems.length > 1 ? `<span class="conflict-badge">이 날 ${dayItems.length}건 겹침</span>` : '');
+    (dayTotal > 1 ? `<span class="conflict-badge">이 날 ${dayTotal}건 겹침</span>` : '');
 
   listEl.innerHTML = '';
-  if (!dayItems.length) {
+  if (!dayTotal) {
     listEl.innerHTML = '<div class="empty-state">이 날짜에는 등록된 일정이 없습니다</div>';
     return;
   }
   dayItems.forEach(it => listEl.appendChild(renderItemRow(it)));
+  daySteps.forEach(({ it, i, e }) => listEl.appendChild(renderStepRow(it, i, e)));
 }
 
 // ---- Week view ----
@@ -3035,6 +3080,8 @@ function renderWeekView() {
     const dow = WD_LABELS[new Date(iso + 'T00:00:00').getDay()];
     const dayItems = items.filter(it => it.dueDate === iso)
       .sort(cmpDay);
+    const daySteps = stepsOnDate(iso);
+    const dayTotal = dayItems.length + daySteps.length;
 
     const dayBox = document.createElement('div');
     dayBox.className = 'week-day' + (iso === today ? ' today' : '');
@@ -3042,16 +3089,17 @@ function renderWeekView() {
     label.className = 'wd-label';
     const wHol = krHoliday(iso);
     label.innerHTML = `${parseInt(m)}/${parseInt(d)} (${dow})` + (iso === today ? ' · 오늘' : '') + (wHol ? `<span class="hol-inline">${escapeHtml(wHol.name)}</span>` : '') +
-      (dayItems.length > 1 ? `<span class="conflict-badge">${dayItems.length}건 겹침</span>` : '');
+      (dayTotal > 1 ? `<span class="conflict-badge">${dayTotal}건 겹침</span>` : '');
     dayBox.appendChild(label);
 
-    if (!dayItems.length) {
+    if (!dayTotal) {
       const empty = document.createElement('div');
       empty.className = 'wd-empty';
       empty.textContent = '일정 없음';
       dayBox.appendChild(empty);
     } else {
       dayItems.forEach(it => dayBox.appendChild(renderItemRow(it)));
+      daySteps.forEach(({ it, i, e }) => dayBox.appendChild(renderStepRow(it, i, e)));
     }
     container.appendChild(dayBox);
   });
