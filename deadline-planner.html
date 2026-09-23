@@ -1507,7 +1507,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v55';
+const APP_VERSION = 'v56';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -4422,7 +4422,8 @@ function closeSidebar() {
 })();
 
 // Mac 앱: 트랙패드 두 손가락 좌우 스와이프로 탭 넘기기(폰의 좌우 스와이프와 같은 순서).
-// 손가락을 떼도 관성 스크롤 이벤트가 이어서 오므로, 이벤트가 끊길 때까지(250ms)를 한 번의 밀기로 보고 한 번만 넘긴다.
+// 손가락을 떼도 관성 스크롤 이벤트가 한참 이어서 오므로 한 번 넘긴 뒤에는 관성을 무시한다.
+// 관성은 크기가 점점 줄어들기만 하므로, 넘긴 뒤 가로 크기가 다시 커지거나(새로 민 것) 방향이 바뀌거나 이벤트가 끊기면(250ms) 새 밀기로 본다.
 (function setupTrackpadSwipe() {
   if (!document.documentElement.classList.contains('in-mac-app')) return;
   const otherLayerOpen = () => ['peekPanel', 'drawerPanel'].some(id => document.getElementById(id).classList.contains('open'))
@@ -4434,22 +4435,30 @@ function closeSidebar() {
     }
     return false;
   };
-  const MIN_DX = 60, RATIO = 1.5, IDLE_MS = 250;
+  const MIN_DX = 60, RATIO = 1.5, IDLE_MS = 250, REARM_MS = 200;
   let acc = null, idle = 0;
+  const start = (e) => {
+    const skip = viewMode === 'profile' || otherLayerOpen() || document.getElementById('sidebar').classList.contains('open')
+      || (e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"], .chat-panel')) || inHScroll(e.target);
+    return { x: 0, y: 0, done: false, skip: !!skip, low: Infinity, peak: 0, doneAt: 0 };
+  };
   document.addEventListener('wheel', (e) => {
     clearTimeout(idle);
     idle = setTimeout(() => { acc = null; }, IDLE_MS);
     if (e.ctrlKey) return;                                   // 핀치 확대
-    if (!acc) {
-      const skip = viewMode === 'profile' || otherLayerOpen() || document.getElementById('sidebar').classList.contains('open')
-        || (e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"], .chat-panel')) || inHScroll(e.target);
-      acc = { x: 0, y: 0, done: false, skip: !!skip };
-    }
-    if (acc.skip || acc.done) return;
     const k = e.deltaMode === 1 ? 16 : 1;                    // 줄 단위로 오는 경우
-    acc.x += e.deltaX * k; acc.y += e.deltaY * k;
+    const dx = e.deltaX * k, dy = e.deltaY * k, ax = Math.abs(dx);
+    if (acc && acc.done) {                                   // 넘긴 뒤: 관성인지 새 밀기인지 판단
+      acc.peak = Math.max(acc.peak, ax); acc.low = Math.min(acc.low, ax);
+      const rising = ax >= 6 && acc.low <= acc.peak * 0.4 && ax > acc.low * 2.5 + 3;   // 관성으로 줄어들던 크기가 다시 커짐
+      const reversed = ax >= 3 && Math.sign(dx) !== Math.sign(acc.x);
+      if (Date.now() - acc.doneAt >= REARM_MS && (rising || reversed)) acc = null;
+    }
+    if (!acc) acc = start(e);
+    if (acc.skip || acc.done) return;
+    acc.x += dx; acc.y += dy;
     if (Math.abs(acc.x) >= MIN_DX && Math.abs(acc.x) >= Math.abs(acc.y) * RATIO) {
-      acc.done = true;
+      acc.done = true; acc.doneAt = Date.now(); acc.low = ax; acc.peak = ax;
       const i = VIEW_ORDER.indexOf(viewMode), ni = i + (acc.x > 0 ? 1 : -1);
       if (i >= 0 && ni >= 0 && ni < VIEW_ORDER.length) setViewMode(VIEW_ORDER[ni], 'swipe');
     }
