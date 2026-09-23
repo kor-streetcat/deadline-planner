@@ -6,7 +6,7 @@
 <title>Δuenoτe — 마감일 정리기</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#ffffff">
-<script>try{var __t=localStorage.getItem("planner:theme");if(__t)document.documentElement.setAttribute("data-theme",__t);if(localStorage.getItem("planner:sidebar")==="1")document.documentElement.classList.add("sb-collapsed");}catch(e){}</script>
+<script>try{var __t=localStorage.getItem("planner:theme");if(__t)document.documentElement.setAttribute("data-theme",__t);if(localStorage.getItem("planner:sidebar")==="1")document.documentElement.classList.add("sb-collapsed");if(/\bElectron\//.test(navigator.userAgent))document.documentElement.classList.add("in-mac-app");}catch(e){}</script>
 <script>
 /* 문제 기록: 오류·처리 안 된 약속 실패·console.error를 최근 30개까지 이 기기에 남긴다(planner:errlog). 설정 > "문제 기록 복사"로 꺼내 쓴다.
    키·이메일·계정 번호처럼 보이는 글자는 저장하기 전에 가린다. 일정 제목·내용은 오류 문구에 들어갈 일이 없어 따로 저장하지 않는다. */
@@ -1031,6 +1031,9 @@
     html, body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
     input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
   }
+  /* Mac 앱(Electron)에서는 제목·버튼 글자를 두 번 누르면 파랗게 선택되던 것을 막는다(보통 Mac 앱처럼). 입력칸은 그대로 선택된다. */
+  html.in-mac-app, html.in-mac-app body { -webkit-user-select: none; user-select: none; }
+  html.in-mac-app input, html.in-mac-app textarea, html.in-mac-app [contenteditable="true"], html.in-mac-app [contenteditable="true"] *, html.in-mac-app .diag-text { -webkit-user-select: text; user-select: text; }
 
   /* 부드러운 등장: 원래는 갑자기 나타나던 창들 */
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -1504,7 +1507,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v54';
+const APP_VERSION = 'v55';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -3160,7 +3163,7 @@ function setViewMode(mode, animate) {
   // 앱을 다시 열어도 마지막에 보던 화면으로 돌아오게 기억
   if (!isProfile) store.set('view', mode).catch(() => {});
   if (isProfile) window.scrollTo({ top: 0 });
-  if (animate && !isProfile && prevMode !== mode && window.matchMedia('(max-width: 900px)').matches) slideInView(mode, VIEW_ORDER.indexOf(mode) > VIEW_ORDER.indexOf(prevMode));
+  if (animate && !isProfile && prevMode !== mode && (animate === 'swipe' || window.matchMedia('(max-width: 900px)').matches)) slideInView(mode, VIEW_ORDER.indexOf(mode) > VIEW_ORDER.indexOf(prevMode));
 }
 
 // 화면 전환 모션: 알약 순서상 오른쪽 화면이면 오른쪽에서, 왼쪽이면 왼쪽에서 밀려 들어옴
@@ -4416,6 +4419,41 @@ function closeSidebar() {
   };
   document.addEventListener('touchend', finish);
   document.addEventListener('touchcancel', finish);
+})();
+
+// Mac 앱: 트랙패드 두 손가락 좌우 스와이프로 탭 넘기기(폰의 좌우 스와이프와 같은 순서).
+// 손가락을 떼도 관성 스크롤 이벤트가 이어서 오므로, 이벤트가 끊길 때까지(250ms)를 한 번의 밀기로 보고 한 번만 넘긴다.
+(function setupTrackpadSwipe() {
+  if (!document.documentElement.classList.contains('in-mac-app')) return;
+  const otherLayerOpen = () => ['peekPanel', 'drawerPanel'].some(id => document.getElementById(id).classList.contains('open'))
+    || ['cmdOverlay', 'aiModalOverlay', 'planOverlay', 'dlgOverlay'].some(id => document.getElementById(id).classList.contains('open'));
+  const inHScroll = (el) => {
+    for (let n = el; n && n !== document.body; n = n.parentElement) {
+      const ox = getComputedStyle(n).overflowX;
+      if ((ox === 'auto' || ox === 'scroll') && n.scrollWidth > n.clientWidth + 1) return true;
+    }
+    return false;
+  };
+  const MIN_DX = 60, RATIO = 1.5, IDLE_MS = 250;
+  let acc = null, idle = 0;
+  document.addEventListener('wheel', (e) => {
+    clearTimeout(idle);
+    idle = setTimeout(() => { acc = null; }, IDLE_MS);
+    if (e.ctrlKey) return;                                   // 핀치 확대
+    if (!acc) {
+      const skip = viewMode === 'profile' || otherLayerOpen() || document.getElementById('sidebar').classList.contains('open')
+        || (e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"], .chat-panel')) || inHScroll(e.target);
+      acc = { x: 0, y: 0, done: false, skip: !!skip };
+    }
+    if (acc.skip || acc.done) return;
+    const k = e.deltaMode === 1 ? 16 : 1;                    // 줄 단위로 오는 경우
+    acc.x += e.deltaX * k; acc.y += e.deltaY * k;
+    if (Math.abs(acc.x) >= MIN_DX && Math.abs(acc.x) >= Math.abs(acc.y) * RATIO) {
+      acc.done = true;
+      const i = VIEW_ORDER.indexOf(viewMode), ni = i + (acc.x > 0 ? 1 : -1);
+      if (i >= 0 && ni >= 0 && ni < VIEW_ORDER.length) setViewMode(VIEW_ORDER[ni], 'swipe');
+    }
+  }, { passive: true });
 })();
 
 // 더블탭 확대 차단 (touch-action만으로 안 막히는 iOS 버전 대비).
