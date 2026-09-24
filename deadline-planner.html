@@ -1507,7 +1507,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v57';
+const APP_VERSION = 'v58';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -4438,6 +4438,15 @@ function closeSidebar() {
   };
   const MIN_DX = 60, RATIO = 1.5, IDLE_MS = 250;
   let acc = null, idle = 0;
+  // Mac 앱 본체가 "새로 손가락을 대고 밀기 시작함"(gestureScrollBegin)을 알려 주면 그 신호로만 다음 넘기기를 허용한다(아래 추측 규칙 대신).
+  let sigMode = false, stat = { n: 0, x: 0, sw: 0 };
+  window.__macGestureBegin = () => {
+    const r = `n=${stat.n} x=${Math.round(stat.x)} sw=${stat.sw} view=${viewMode}`;
+    stat = { n: 0, x: 0, sw: 0 };
+    sigMode = true;
+    if (acc && acc.done) acc = null;
+    return r;
+  };
   const start = (e) => {
     const skip = viewMode === 'profile' || otherLayerOpen() || document.getElementById('sidebar').classList.contains('open')
       || (e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"], .chat-panel')) || inHScroll(e.target);
@@ -4449,7 +4458,8 @@ function closeSidebar() {
     if (e.ctrlKey) return;                                   // 핀치 확대
     const k = e.deltaMode === 1 ? 16 : 1;                    // 줄 단위로 오는 경우
     const dx = e.deltaX * k, dy = e.deltaY * k, ax = Math.abs(dx);
-    if (acc && acc.done) {                                   // 넘긴 뒤: 관성인지 새 밀기인지 판단
+    stat.n++; stat.x += dx;
+    if (acc && acc.done && !sigMode) {                       // (신호가 없을 때만) 넘긴 뒤: 관성인지 새 밀기인지 추측
       if (!acc.settled) {
         acc.run = ax <= acc.prev ? acc.run + 1 : 0;
         if (acc.run >= 6 && ax <= 3) acc.settled = true;     // 관성이 거의 끝남
@@ -4462,7 +4472,7 @@ function closeSidebar() {
     if (Math.abs(acc.x) >= MIN_DX && Math.abs(acc.x) >= Math.abs(acc.y) * RATIO) {
       acc.done = true; acc.prev = ax;
       const i = VIEW_ORDER.indexOf(viewMode), ni = i + (acc.x > 0 ? 1 : -1);
-      if (i >= 0 && ni >= 0 && ni < VIEW_ORDER.length) setViewMode(VIEW_ORDER[ni], 'swipe');
+      if (i >= 0 && ni >= 0 && ni < VIEW_ORDER.length) { setViewMode(VIEW_ORDER[ni], 'swipe'); stat.sw++; }
     }
   }, { passive: true });
 })();

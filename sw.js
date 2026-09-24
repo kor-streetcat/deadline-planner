@@ -1,6 +1,6 @@
 // 앱 셸을 캐시해서 오프라인에서도 열리게 함.
 // 앱 파일을 수정하면 CACHE 버전을 올려야 기존 사용자에게 갱신됨.
-const CACHE = 'planner-shell-v60';
+const CACHE = 'planner-shell-v61';
 const SHELL = ['./', './deadline-planner.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-180.png'];
 
 self.addEventListener('install', (e) => {
