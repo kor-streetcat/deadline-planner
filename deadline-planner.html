@@ -1507,7 +1507,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v59';
+const APP_VERSION = 'v60';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -4036,8 +4036,9 @@ document.getElementById('aiToggleBtn').addEventListener('click', () => {
   try { localStorage.setItem('planner:quick-ai', quickAiOn ? '1' : '0'); } catch (e) {}
   renderAiToggle();
   showToast(quickAiOn ? 'AI 정리를 켰습니다' : 'AI 없이 바로 등록합니다');
-  document.getElementById('quickInput').focus();
 });
+// 버튼이 포커스를 가져가지 않게 한다: 쓰던 중이면 입력창 포커스가 그대로 남고, 안 쓰던 중이면 입력창을 건드리지 않아 폰 키보드가 뜨지 않는다.
+document.getElementById('aiToggleBtn').addEventListener('mousedown', (e) => e.preventDefault());
 renderAiToggle();
 function quickFallbackDate() { return viewMode === 'month' && selectedDate ? selectedDate : todayISO(); }
 async function registerWithoutAI(text) {
