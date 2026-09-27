@@ -1511,7 +1511,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v62';
+const APP_VERSION = 'v63';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -1913,6 +1913,13 @@ async function callGemini({ system, text, media, maxTokens, history }) {
   if (!response.ok) {
     let detail = '';
     try { detail = (await response.json()).error?.message || ''; } catch (e) {}
+    if (response.status === 429) {
+      // 무료 키의 분당·하루 요청 한도를 넘은 것. 원문(영어, 긴 주소 포함) 대신 짧게 안내한다.
+      const perDay = /per ?day|PerDay|daily/i.test(detail);
+      throw new Error(perDay
+        ? 'AI 사용 한도(하루)를 넘었습니다. 내일 다시 시도하면 됩니다'
+        : 'AI 사용 한도를 넘었습니다. 1분쯤 뒤에 다시 시도하면 됩니다');
+    }
     const hint = response.status === 404 ? ' (모델 이름이 잘못됐을 수 있습니다. 프로필 탭 → AI 설정에서 모델 칸을 비우면 기본 모델을 씁니다)' : '';
     throw new Error(`AI 응답 오류 ${response.status}${detail ? ': ' + detail : ''}${hint}`);
   }
@@ -5453,7 +5460,8 @@ async function buildDiagnostics() {
   L.push(`기기: ${window.plannerLog ? window.plannerLog.redact(navigator.userAgent) : navigator.userAgent}`);
   L.push(`화면: ${innerWidth}x${innerHeight} (배율 ${window.devicePixelRatio || 1}) · 홈 화면 앱 ${standalone ? '예' : '아니오'} · 온라인 ${navigator.onLine ? '예' : '아니오'}`);
   L.push(`현재 화면: ${viewMode} · 테마: ${theme || '자동'}`);
-  L.push(`로그인: ${signed ? '예' : '아니오'} · 동기화: ${(document.getElementById('syncSummaryState') || {}).textContent || '?'}`);
+  const syncTxt = (document.getElementById('syncSummaryState') || {}).textContent || '?';   // 로그인하면 이메일이 들어 있어서 가린다
+  L.push(`로그인: ${signed ? '예' : '아니오'} · 동기화: ${window.plannerLog ? window.plannerLog.redact(syncTxt) : syncTxt.replace(/[^\s@]+@[^\s@]+/g, '[이메일]')}`);
   L.push(`AI: ${aiLockedDoc ? '키가 잠겨 있음(보호 암호 필요)' : geminiKey ? '키 있음' : '키 없음'}`);
   L.push(`일정: ${items.length}건 (휴지통 ${trashedItems.length}건)`);
   L.push(`서비스 워커: ${sw} · 캐시: ${caches_}`);
@@ -5633,7 +5641,12 @@ function sanitizeSplitSteps(raw, parent) {
   let arr = null;
   try { const v = extractJsonArray(raw); if (Array.isArray(v)) arr = v; } catch (e) {}
   if (!arr) { const o = extractJsonObject(raw); if (o && Array.isArray(o.steps)) arr = o.steps; }
-  if (!Array.isArray(arr)) throw new Error('AI 답을 읽지 못했습니다');
+  if (!arr) {                                   // 답이 중간에 잘린 경우 등: 온전한 {…} 조각만 하나씩 읽는다
+    const parts = [];
+    for (const m of String(raw || '').matchAll(/\{[^{}]*\}/g)) { try { const v = JSON.parse(m[0]); if (v && v.title) parts.push(v); } catch (e) {} }
+    if (parts.length) arr = parts;
+  }
+  if (!Array.isArray(arr)) throw new Error('AI 답을 읽지 못했습니다. 다시 시도하면 됩니다');
   const today = todayISO(), due = parent.dueDate, seen = new Set(), out = [];
   const norm = (x) => String(x || '').replace(/\s+/g, '').toLowerCase();
   for (const s of arr) {
