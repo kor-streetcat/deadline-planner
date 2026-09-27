@@ -1507,7 +1507,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v60';
+const APP_VERSION = 'v61';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2389,7 +2389,9 @@ function showToast(msg, actionLabel, onAction, ms) {
   }
   el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(hideToast, ms || 5000);
+  // 버튼 없는 안내는 짧게(약 2초, 긴 글은 조금 더, 최대 3.5초). 되돌리기 같은 버튼이 있으면 누를 시간을 주려고 기본 5초.
+  const plainMs = Math.min(3500, 1800 + String(msg).length * 30);
+  toastTimer = setTimeout(hideToast, ms || (actionLabel ? 5000 : plainMs));
 }
 function toastUndoDelete(moved) {
   if (!moved || !moved.length) return;
