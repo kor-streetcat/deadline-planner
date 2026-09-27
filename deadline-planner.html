@@ -721,6 +721,10 @@
   .settings-actions { display: flex; gap: 8px; margin-top: 10px; }
   .settings-actions button { flex: 1; }
   .settings-link { color: var(--accent); }
+  .ai-usage { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: var(--sidebar); font-size: 0.76rem; color: var(--ink-dim); display: grid; gap: 3px; }
+  .ai-usage .ai-usage-main { color: var(--ink); font-weight: 600; }
+  .ai-usage .ai-usage-hit { color: var(--danger); font-weight: 600; }
+  .ai-usage .ai-usage-note { color: var(--ink-faint); font-size: 0.7rem; }
   .reference-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
   .reference-card { background: var(--sidebar); border-radius: var(--radius); padding: 8px 10px; }
   .reference-card .ref-name { font-size: 0.8rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; }
@@ -736,6 +740,13 @@
   .reference-card.ref-pending .ref-summary { color: var(--accent); animation: planPulse 1.2s ease-in-out infinite; }
   .reference-card.ref-pending.failed { border-color: var(--danger); background: var(--sidebar); }
   .reference-card.ref-pending.failed .ref-summary { color: var(--danger); animation: none; }
+  .reference-card .ref-actions { display: inline-flex; gap: 8px; flex-shrink: 0; }
+  .reference-card .ref-retry { color: var(--accent); font-weight: 600; }
+  .reference-card .ref-bar { height: 4px; border-radius: 999px; background: var(--border); margin-top: 8px; overflow: hidden; }
+  .reference-card .ref-bar i { display: block; height: 100%; width: 3%; border-radius: inherit; background: var(--accent); transition: width 1s linear; }
+  .reference-card .ref-bar.indeterminate i { width: 30%; animation: refSlide 1.4s var(--ease-out) infinite; }
+  @keyframes refSlide { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
+  @media (prefers-reduced-motion: reduce) { .reference-card .ref-bar.indeterminate i { animation: none; } }
   .reference-card .ref-meta { font-size: 0.7rem; color: var(--ink-faint); margin-top: 4px; }
   .reference-card .ref-more { background: none; color: var(--accent); font-size: 0.7rem; padding: 0; }
   .reference-card .ref-summary.ref-full { max-height: 320px; overflow-y: auto; -webkit-user-select: text; user-select: text; }
@@ -1303,6 +1314,7 @@
         <button class="btn-ghost" id="testAiBtn">연결 테스트</button>
       </div>
       <div class="status" id="aiSettingsStatus"></div>
+      <div class="ai-usage" id="aiUsage"></div>
     </details>
 
       <div class="drawer-group-label">백업</div>
@@ -1514,7 +1526,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v64';
+const APP_VERSION = 'v65';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -1709,11 +1721,19 @@ function renderReferenceList() {
   pendingRefs.forEach(p => {
     const card = document.createElement('div');
     card.className = 'reference-card ref-pending' + (p.failed ? ' failed' : '');
-    card.innerHTML = `<div class="ref-name"><span></span>${p.failed ? '<button class="ref-del" type="button">지우기</button>' : '<span class="ai-busy">등록 중</span>'}</div><div class="ref-summary"></div>`;
+    card.innerHTML = `<div class="ref-name"><span></span>${p.failed ? `<span class="ref-actions">${p.retry ? '<button class="ref-del ref-retry" type="button">다시 시도</button>' : ''}<button class="ref-del ref-drop" type="button">지우기</button></span>` : '<span class="ai-busy">등록 중</span>'}</div><div class="ref-summary"></div>${p.failed ? '' : '<div class="ref-bar"><i></i></div><div class="ref-meta ref-time"></div>'}`;
     card.querySelector('.ref-name span').textContent = p.name;
     card.querySelector('.ref-summary').textContent = p.failed ? p.msg : 'AI가 자료 원문을 옮기는 중입니다';
-    const del = card.querySelector('.ref-del');
+    p.timeEl = card.querySelector('.ref-time'); p.barEl = card.querySelector('.ref-bar i');
+    if (p.timeEl && p.startedAt) {
+      const el = Date.now() - p.startedAt;
+      p.timeEl.textContent = p.estMs ? `예상 남은 시간 약 ${fmtSec(Math.max(0, p.estMs - el))} · ${fmtSec(el)} 지남` : `${fmtSec(el)} 지남`;
+      if (p.estMs) p.barEl.style.width = Math.min(95, (el / p.estMs) * 90) + '%'; else p.barEl.parentElement.classList.add('indeterminate');
+    }
+    const del = card.querySelector('.ref-drop');
     if (del) del.addEventListener('click', () => { pendingRefs = pendingRefs.filter(x => x !== p); renderReferenceList(); });
+    const retry = card.querySelector('.ref-retry');
+    if (retry) retry.addEventListener('click', () => processReference(p));
     container.appendChild(card);
   });
   referenceMaterials.forEach(ref => {
@@ -1899,6 +1919,43 @@ async function loadAiSettings() {
   }
 }
 
+// AI 사용량(이 기기에서 보낸 요청 수만 센다: AI 서비스가 남은 한도를 알려주지 않음). 하루 한도는 미국 태평양 시간 자정에 초기화된다(Google 안내).
+const AI_USAGE_KEY = 'planner:ai-usage';
+let pacificFmt = null;
+function pacificDay(d) { try { pacificFmt = pacificFmt || new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }); return pacificFmt.format(d || new Date()); } catch (e) { return isoOfDate(d || new Date()); } }
+function aiUsage() {
+  let u = {};
+  try { u = JSON.parse(localStorage.getItem(AI_USAGE_KEY) || '{}') || {}; } catch (e) {}
+  const today = pacificDay();
+  if (u.day !== today) u = { day: today, count: 0, recent: [], last429: u.last429 || '', last429Day: !!u.last429Day };
+  u.recent = (Array.isArray(u.recent) ? u.recent : []).filter(t => Date.now() - t < 60000);
+  return u;
+}
+function aiUsageSave(u) { try { localStorage.setItem(AI_USAGE_KEY, JSON.stringify(u)); } catch (e) {} try { renderAiUsage(); } catch (e) {} }
+function aiResetAt(now) {                         // 다음 태평양 시간 자정(이 기기 시각)
+  now = now || new Date();
+  const t = new Date(now.getTime());
+  t.setSeconds(0, 0); t.setMinutes(Math.floor(t.getMinutes() / 15) * 15);   // 시차는 15분 단위라 15분씩 넘겨 보면 된다
+  const d0 = pacificDay(now);
+  for (let i = 0; i < 26 * 4; i++) { t.setMinutes(t.getMinutes() + 15); if (pacificDay(t) !== d0) return t; }
+  return t;
+}
+function fmtClockKo(d) { const h = d.getHours(), m = d.getMinutes(); return `${h < 12 ? '오전' : '오후'} ${h % 12 || 12}:${String(m).padStart(2, '0')}`; }
+function renderAiUsage() {
+  const box = document.getElementById('aiUsage'); if (!box) return;
+  const u = aiUsage(), reset = aiResetAt();
+  const hit = u.last429 && pacificDay(new Date(u.last429)) === u.day;
+  box.innerHTML = '';
+  const line = (t, cls) => { const d = document.createElement('div'); if (cls) d.className = cls; d.textContent = t; box.appendChild(d); };
+  line(`이 기기 사용량: 오늘 ${u.count}회 · 최근 1분 ${u.recent.length}회`, 'ai-usage-main');
+  line(`하루 한도 초기화: 매일 ${fmtClockKo(reset)}`);
+  if (hit) line(`한도 초과: ${fmtClockKo(new Date(u.last429))}${u.last429Day ? ' (하루 한도, ' + fmtClockKo(reset) + ' 이후 다시 사용 가능)' : ' (1분 한도)'}`, 'ai-usage-hit');
+  line('남은 한도는 AI 서비스가 알려주지 않아 이 기기에서 보낸 횟수만 셉니다.', 'ai-usage-note');
+}
+document.getElementById('aiSection').addEventListener('toggle', renderAiUsage);
+setInterval(() => { if (document.getElementById('aiSection').open) renderAiUsage(); }, 15000);
+renderAiUsage();
+
 // media: [{ mime, data(base64) }]
 async function callGemini({ system, text, media, maxTokens, history }) {
   const userParts = [{ text }];
@@ -1919,10 +1976,23 @@ async function callGemini({ system, text, media, maxTokens, history }) {
     }
   );
   // 503(서버 과부하)은 일시적인 경우가 많아서 잠깐 기다렸다가 최대 2번 재시도
-  let response = await doFetch();
+  { const u = aiUsage(); u.count++; u.recent.push(Date.now()); aiUsageSave(u); }
+  // 연결 자체가 끊긴 경우(사파리 "Load failed", 크롬 "Failed to fetch"): 인터넷이 잠깐 끊겼거나, 아이패드·아이폰에서 요청 중에
+  // 다른 앱으로 넘어가거나 화면이 꺼져 iOS가 요청을 끊은 것. 화면이 다시 보이면 한 번 더 시도하고, 그래도 안 되면 알아보기 쉬운 문구로 알린다.
+  const netFetch = async () => {
+    try { return await doFetch(); } catch (e) {
+      if (e && e.name === 'AbortError') throw e;
+      if (document.visibilityState === 'hidden') await new Promise(r => { const f = () => { if (document.visibilityState === 'visible') { document.removeEventListener('visibilitychange', f); r(); } }; document.addEventListener('visibilitychange', f); });
+      await new Promise(r => setTimeout(r, 1500));
+      try { return await doFetch(); } catch (e2) {
+        throw new Error('AI 서버에 연결하지 못했습니다. 인터넷 연결을 확인하고 다시 시도하면 됩니다 (AI가 처리하는 동안 다른 앱으로 넘어가거나 화면이 꺼지면 끊길 수 있습니다)');
+      }
+    }
+  };
+  let response = await netFetch();
   for (let attempt = 0; attempt < GEMINI_RETRY_DELAYS_MS.length && response.status === 503; attempt++) {
     await new Promise(r => setTimeout(r, GEMINI_RETRY_DELAYS_MS[attempt]));
-    response = await doFetch();
+    response = await netFetch();
   }
   if (!response.ok) {
     let detail = '';
@@ -1930,8 +2000,9 @@ async function callGemini({ system, text, media, maxTokens, history }) {
     if (response.status === 429) {
       // 무료 키의 분당·하루 요청 한도를 넘은 것. 원문(영어, 긴 주소 포함) 대신 짧게 안내한다.
       const perDay = /per ?day|PerDay|daily/i.test(detail);
+      { const u = aiUsage(); u.last429 = new Date().toISOString(); u.last429Day = perDay; aiUsageSave(u); }
       throw new Error(perDay
-        ? 'AI 사용 한도(하루)를 넘었습니다. 내일 다시 시도하면 됩니다'
+        ? `AI 사용 한도(하루)를 넘었습니다. ${fmtClockKo(aiResetAt())} 이후 다시 시도하면 됩니다`
         : 'AI 사용 한도를 넘었습니다. 1분쯤 뒤에 다시 시도하면 됩니다');
     }
     const hint = response.status === 404 ? ' (모델 이름이 잘못됐을 수 있습니다. 프로필 탭 → AI 설정에서 모델 칸을 비우면 기본 모델을 씁니다)' : '';
@@ -3478,24 +3549,41 @@ function refsContext(eachMax) {
   }).join('\n\n');
 }
 
-document.getElementById('addReferenceBtn').addEventListener('click', async () => {
-  const fileInput = document.getElementById('referenceFileInput');
-  const file = fileInput.files[0];
-  const statusEl = document.getElementById('referenceStatus');
+// 자료 옮기기에 걸린 시간 기록(이 기기에만): 다음 자료의 예상 시간을 계산하는 데 쓴다(AI가 진행률을 알려주지 않으므로 추정).
+const REF_SPEED_KEY = 'planner:ref-speed';
+function refSpeedLog() { try { const v = JSON.parse(localStorage.getItem(REF_SPEED_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+function refEstimateMs(bytes) {
+  const kb = Math.max(1, bytes / 1024), log = refSpeedLog().filter(x => x && x.b > 0 && x.ms > 0);
+  let est;
+  if (log.length) {
+    const per = log.map(x => x.ms / Math.max(1, x.b / 1024)).sort((x, y) => x - y)[Math.floor(log.length / 2)];   // KB당 걸린 시간(중앙값)
+    const base = log.map(x => x.ms).sort((x, y) => x - y)[0];                                                      // 가장 빨랐던 것(기본 시간)
+    est = Math.max(base * 0.8, per * kb);
+  } else est = 20000 + kb / 1024 * 30000;                                                                          // 처음: 20초 + MB당 30초
+  return Math.round(Math.min(300000, Math.max(8000, est)));
+}
+function refRecordSpeed(bytes, ms) {
+  try { const log = refSpeedLog(); log.push({ b: bytes, ms }); localStorage.setItem(REF_SPEED_KEY, JSON.stringify(log.slice(-10))); } catch (e) {}
+}
+function fmtSec(ms) { const s = Math.max(0, Math.round(ms / 1000)); return s >= 60 ? `${Math.floor(s / 60)}분 ${s % 60}초` : `${s}초`; }
+// 등록 중 카드의 남은 시간·막대를 1초마다 바꾼다(카드를 다시 그리지 않고 글자·막대만).
+setInterval(() => {
+  pendingRefs.forEach(p => {
+    if (p.failed || !p.timeEl || !p.startedAt) return;
+    const el = Date.now() - p.startedAt;
+    if (!p.estMs) { p.timeEl.textContent = `${fmtSec(el)} 지남`; return; }
+    const left = p.estMs - el;
+    p.timeEl.textContent = left > 0 ? `예상 남은 시간 약 ${fmtSec(left)} · ${fmtSec(el)} 지남` : `예상보다 오래 걸리는 중 · ${fmtSec(el)} 지남`;
+    if (p.barEl) p.barEl.style.width = Math.min(95, (el / p.estMs) * 90) + '%';
+  });
+}, 1000);
 
-  if (!file) {
-    statusEl.className = 'status err';
-    statusEl.textContent = '먼저 파일을 선택해야 합니다';
-    return;
-  }
-
-  statusEl.className = 'status';
-  statusEl.textContent = '';
-  const pend = { name: file.name, failed: false, msg: '' };
-  pendingRefs.unshift(pend);
-  fileInput.value = '';
+async function processReference(pend) {
+  const file = pend.file;
+  pend.failed = false; pend.msg = ''; pend.retry = false;
+  pend.startedAt = Date.now(); pend.estMs = 0;
   renderReferenceList();
-  const fail = (msg) => { pend.failed = true; pend.msg = msg; renderReferenceList(); };
+  const fail = (msg, retry) => { pend.failed = true; pend.msg = msg; pend.retry = !!retry; renderReferenceList(); };
   const done = () => { pendingRefs = pendingRefs.filter(x => x !== pend); renderReferenceList(); };
 
   try {
@@ -3522,9 +3610,14 @@ document.getElementById('addReferenceBtn').addEventListener('click', async () =>
       return;
     }
 
-    if (!isText) original = String(await runAI({ system: REFERENCE_EXTRACT_PROMPT, text, media, maxTokens: 30000, title: '참고 자료 원문 옮기기' }) || '').trim();
+    if (!isText) {
+      if (geminiKey) { pend.estMs = refEstimateMs(file.size); renderReferenceList(); }   // 키가 없으면(복사·붙여넣기) 예상 시간 없이 지난 시간만
+      const t0 = Date.now();
+      original = String(await runAI({ system: REFERENCE_EXTRACT_PROMPT, text, media, maxTokens: 30000, title: '참고 자료 원문 옮기기' }) || '').trim();
+      if (geminiKey && original) refRecordSpeed(file.size, Date.now() - t0);
+    }
     if (!original.trim()) {
-      fail(isText ? '파일이 비어 있습니다' : '자료의 글을 읽지 못했습니다. 다른 파일로 시도하시기 바랍니다.');
+      fail(isText ? '파일이 비어 있습니다' : '자료의 글을 읽지 못했습니다. 다시 시도하거나 다른 파일로 시도하면 됩니다.', !isText);
       return;
     }
     let body = original.slice(0, REF_TEXT_MAX);
@@ -3535,7 +3628,7 @@ document.getElementById('addReferenceBtn').addEventListener('click', async () =>
       let lo = 0, hi = body.length;
       while (lo < hi) { const mid = Math.ceil((lo + hi) / 2); entry.text = body.slice(0, mid); if (room() >= 0) lo = mid; else hi = mid - 1; }
       entry.text = body.slice(0, lo);
-      if (lo < 2000) { fail('저장 공간(동기화 한도)이 부족합니다. 오래된 자료를 지우면 됩니다.'); return; }
+      if (lo < 2000) { fail('저장 공간(동기화 한도)이 부족합니다. 오래된 자료를 지우고 다시 시도하면 됩니다.', true); return; }
     }
     const cut = original.length - entry.text.length;
     referenceMaterials.push(entry);
@@ -3546,8 +3639,25 @@ document.getElementById('addReferenceBtn').addEventListener('click', async () =>
   } catch (err) {
     console.error(err);
     if (err.message === '취소함') done();
-    else fail('처리 중 오류: ' + err.message);
+    else fail('처리 중 오류: ' + err.message, true);
   }
+}
+
+document.getElementById('addReferenceBtn').addEventListener('click', async () => {
+  const fileInput = document.getElementById('referenceFileInput');
+  const file = fileInput.files[0];
+  const statusEl = document.getElementById('referenceStatus');
+  if (!file) {
+    statusEl.className = 'status err';
+    statusEl.textContent = '먼저 파일을 선택해야 합니다';
+    return;
+  }
+  statusEl.className = 'status';
+  statusEl.textContent = '';
+  const pend = { name: file.name, file, failed: false, msg: '' };   // 파일은 메모리에만 둔다(다시 시도용)
+  pendingRefs.unshift(pend);
+  fileInput.value = '';
+  await processReference(pend);
 });
 
 // ---- Keyword chips ----
