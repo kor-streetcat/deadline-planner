@@ -736,6 +736,9 @@
   .reference-card.ref-pending .ref-summary { color: var(--accent); animation: planPulse 1.2s ease-in-out infinite; }
   .reference-card.ref-pending.failed { border-color: var(--danger); background: var(--sidebar); }
   .reference-card.ref-pending.failed .ref-summary { color: var(--danger); animation: none; }
+  .reference-card .ref-meta { font-size: 0.7rem; color: var(--ink-faint); margin-top: 4px; }
+  .reference-card .ref-more { background: none; color: var(--accent); font-size: 0.7rem; padding: 0; }
+  .reference-card .ref-summary.ref-full { max-height: 320px; overflow-y: auto; -webkit-user-select: text; user-select: text; }
   .reference-card .ref-summary { font-size: 0.74rem; color: var(--ink-dim); margin-top: 4px; white-space: pre-wrap; }
   
   /* ===== AI 복사·붙여넣기 모달 ===== */
@@ -1511,7 +1514,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v63';
+const APP_VERSION = 'v64';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -1708,7 +1711,7 @@ function renderReferenceList() {
     card.className = 'reference-card ref-pending' + (p.failed ? ' failed' : '');
     card.innerHTML = `<div class="ref-name"><span></span>${p.failed ? '<button class="ref-del" type="button">지우기</button>' : '<span class="ai-busy">등록 중</span>'}</div><div class="ref-summary"></div>`;
     card.querySelector('.ref-name span').textContent = p.name;
-    card.querySelector('.ref-summary').textContent = p.failed ? p.msg : 'AI가 자료를 읽고 요약하는 중입니다';
+    card.querySelector('.ref-summary').textContent = p.failed ? p.msg : 'AI가 자료 원문을 옮기는 중입니다';
     const del = card.querySelector('.ref-del');
     if (del) del.addEventListener('click', () => { pendingRefs = pendingRefs.filter(x => x !== p); renderReferenceList(); });
     container.appendChild(card);
@@ -1716,13 +1719,24 @@ function renderReferenceList() {
   referenceMaterials.forEach(ref => {
     const card = document.createElement('div');
     card.className = 'reference-card';
+    const full = ref.text || '';
+    const long = full.length > 240;
     card.innerHTML = `
       <div class="ref-name">
         <span>${escapeHtml(ref.name)}</span>
         <button class="ref-del" type="button">×</button>
       </div>
-      <div class="ref-summary">${escapeHtml(ref.summary)}</div>
+      <div class="ref-summary">${escapeHtml(full ? (long ? full.slice(0, 240) + '…' : full) : (ref.summary || ''))}</div>
+      ${full ? `<div class="ref-meta">원문 ${full.length.toLocaleString()}자${long ? ' · <button class="ref-more" type="button">원문 전체 보기</button>' : ''}</div>` : '<div class="ref-meta">요약만 저장된 옛 자료</div>'}
     `;
+    const more = card.querySelector('.ref-more');
+    if (more) more.addEventListener('click', () => {
+      const box = card.querySelector('.ref-summary');
+      const open = !box.classList.contains('ref-full');
+      box.classList.toggle('ref-full', open);
+      box.textContent = open ? full : full.slice(0, 240) + '…';
+      more.textContent = open ? '접기' : '원문 전체 보기';
+    });
     card.querySelector('.ref-del').addEventListener('click', async () => {
       referenceMaterials = referenceMaterials.filter(r => r.id !== ref.id);
       await saveReferenceMaterials();
@@ -2769,7 +2783,7 @@ function renderTableRow(it, opts) {
 
 async function elaborateTopic(it) {
   const referenceContext = referenceMaterials.length
-    ? `학생이 등록한 참고 자료 요약(가능하면 연결지어봐):\n` + referenceMaterials.slice(-5).map(r => `- [${r.name}] ${r.summary}`).join('\n')
+    ? `학생이 등록한 참고 자료(원문 발췌, 가능하면 연결지어봐):\n` + refsContext(6000)
     : '';
 
   const system = `너는 학생의 보고서/논문 주제를 더 구체적으로 발전시켜주는 도우미야. 이미 제안된 주제를 실제로 조사·집필 가능한 수준까지 구체화해줘.
@@ -3443,9 +3457,26 @@ document.getElementById('testAiBtn').addEventListener('click', async () => {
 });
 
 // ---- Reference materials for topic suggestion ----
-const REFERENCE_SUMMARY_PROMPT = `다음은 학생이 등록한 참고 자료(전공 서적, 강의자료 등)의 일부야. 이 자료의 핵심 주제·개념을 3~5개의 짧은 불릿 포인트로 뽑아줘.
 
-목적은 나중에 이 학생의 보고서/논문 주제를 추천할 때 참고하는 것뿐이야. 불릿마다 한 문장 이내로 짧게, 마크다운 기호(*, - 등) 없이 그냥 줄바꿈으로만 구분해서 순수 텍스트로만 답해. 다른 설명이나 인사말 없이 요약 내용만 출력해.`;
+// 원문 보존(v64, 사용자 요청: 요약이 너무 많이 줄어서 원본을 최대한 살리기): txt·md는 원문 그대로 저장하고(AI 안 씀),
+// PDF·이미지는 AI가 요약 대신 본문을 그대로 옮겨 적은 글을 저장한다. 설정 동기화 문서(서버 한도 1MB)에 함께 실리므로 전체 크기에 한도를 둔다.
+const REF_TEXT_MAX = 100000;            // 자료 하나의 원문 최대 글자 수
+const REF_SYNC_BUDGET = 850000;         // 참고 자료 전체(JSON, 바이트) 한도: 관심 분야 등 다른 설정과 합쳐 1MB 안에 들도록
+const REFERENCE_EXTRACT_PROMPT = `다음 자료(전공 서적, 강의자료 등)의 본문을 텍스트로 옮겨 적어줘. 요약하거나 줄이지 말고 원문 문장을 최대한 그대로, 빠짐없이 옮겨.
+- 제목·소제목·목록 구조는 줄바꿈으로 살려. 마크다운 기호(#, *, **)는 쓰지 마.
+- 표는 한 행을 한 줄로, 칸은 " | "로 구분해.
+- 수식은 읽을 수 있는 글자로 옮겨(예: E = mc^2).
+- 그림·도표는 [그림: 한 줄 설명]으로 적어.
+- 머리글·바닥글·쪽 번호처럼 반복되는 것은 빼도 돼.
+- 인사말이나 설명 없이 옮긴 본문만 출력해.`;
+function refJsonBytes(list) { try { return new Blob([JSON.stringify(list)]).size; } catch (e) { return JSON.stringify(list).length * 3; } }
+// AI 요청에 붙이는 참고 자료: 최근 5개, 자료마다 원문 앞부분 eachMax자(옛 자료는 요약)
+function refsContext(eachMax) {
+  return referenceMaterials.slice(-5).map(r => {
+    const body = r.text ? (r.text.length > eachMax ? r.text.slice(0, eachMax) + '\n…(이하 생략)' : r.text) : (r.summary || '');
+    return `- [${r.name}]\n${body}`;
+  }).join('\n\n');
+}
 
 document.getElementById('addReferenceBtn').addEventListener('click', async () => {
   const fileInput = document.getElementById('referenceFileInput');
@@ -3474,9 +3505,9 @@ document.getElementById('addReferenceBtn').addEventListener('click', async () =>
     const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
     const isImage = file.type.startsWith('image/');
 
+    let original = '';
     if (isText) {
-      const body = await file.text();
-      text = `[파일명: ${file.name}]\n\n${body.slice(0, 20000)}`;
+      original = (await file.text()).replace(/\r\n/g, '\n');
     } else if (isPdf || isImage) {
       const base64 = await new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -3485,23 +3516,33 @@ document.getElementById('addReferenceBtn').addEventListener('click', async () =>
         reader.readAsDataURL(file);
       });
       media.push({ mime: isPdf ? 'application/pdf' : file.type, data: base64 });
-      text = `[파일명: ${file.name}] 위 자료를 요약해줘.`;
+      text = `[파일명: ${file.name}] 위 자료의 본문을 옮겨 적어줘.`;
     } else {
       fail('지원하지 않는 파일 형식입니다 (이미지, PDF, txt, md만 가능)');
       return;
     }
 
-    const summary = await runAI({ system: REFERENCE_SUMMARY_PROMPT, text, media, maxTokens: 500, title: '참고 자료 요약' });
-
-    if (!summary) {
-      fail('요약을 만들지 못했습니다. 다른 파일로 시도하시기 바랍니다.');
+    if (!isText) original = String(await runAI({ system: REFERENCE_EXTRACT_PROMPT, text, media, maxTokens: 30000, title: '참고 자료 원문 옮기기' }) || '').trim();
+    if (!original.trim()) {
+      fail(isText ? '파일이 비어 있습니다' : '자료의 글을 읽지 못했습니다. 다른 파일로 시도하시기 바랍니다.');
       return;
     }
-
-    referenceMaterials.push({ id: uid(), name: file.name, summary, addedAt: new Date().toISOString() });
+    let body = original.slice(0, REF_TEXT_MAX);
+    const entry = { id: uid(), name: file.name, text: body, addedAt: new Date().toISOString() };
+    // 동기화 한도 안에 들도록: 넘치면 앞부분만 남긴다(너무 적게 남으면 등록하지 않음)
+    const room = () => REF_SYNC_BUDGET - refJsonBytes([...referenceMaterials, entry]);
+    if (room() < 0) {
+      let lo = 0, hi = body.length;
+      while (lo < hi) { const mid = Math.ceil((lo + hi) / 2); entry.text = body.slice(0, mid); if (room() >= 0) lo = mid; else hi = mid - 1; }
+      entry.text = body.slice(0, lo);
+      if (lo < 2000) { fail('저장 공간(동기화 한도)이 부족합니다. 오래된 자료를 지우면 됩니다.'); return; }
+    }
+    const cut = original.length - entry.text.length;
+    referenceMaterials.push(entry);
     await saveReferenceMaterials();
     done();
-    showToast(`"${file.name.length > 20 ? file.name.slice(0, 20) + '…' : file.name}" 자료를 등록했습니다`);
+    const nm = file.name.length > 20 ? file.name.slice(0, 20) + '…' : file.name;
+    showToast(cut > 0 ? `"${nm}" 자료를 등록했습니다 · 용량 한도로 앞 ${entry.text.length.toLocaleString()}자만 저장했습니다` : `"${nm}" 자료를 등록했습니다 · 원문 ${entry.text.length.toLocaleString()}자`, null, null, cut > 0 ? 6000 : 0);
   } catch (err) {
     console.error(err);
     if (err.message === '취소함') done();
@@ -3634,7 +3675,7 @@ function buildSystemPrompt(combinedKeyword) {
     : '(등록된 일정 없음)';
 
   const refs = referenceMaterials.length
-    ? referenceMaterials.slice(-5).map(r => `- [${r.name}] ${r.summary}`).join('\n')
+    ? refsContext(1500)
     : '(등록된 참고 자료 없음)';
 
   const effectiveKeyword = (combinedKeyword || '').trim();
@@ -4134,7 +4175,7 @@ function buildChatContext() {
     .join('\n') || '(없음)';
 
   const refs = referenceMaterials.length
-    ? referenceMaterials.slice(-5).map(r => `- [${r.name}] ${r.summary}`).join('\n')
+    ? refsContext(1500)
     : '(등록된 참고 자료 없음)';
 
   return `너는 이 사람의 개인 비서야. 질문/조언에는 아래 정보를 참고해서 자연스럽게 존댓말로 짧게 답해. 목록에 없는 내용을 지어내지 말고, 모르면 모른다고 솔직히 말해. 조언은 추상적으로 말고 실행 가능한 내용으로 구체적으로 답해. 불필요하게 길게 늘어놓지 마.
@@ -5417,7 +5458,7 @@ function readBackup(text) {
   const pr = o.prefs && typeof o.prefs === 'object' ? o.prefs : {};
   const presets = (Array.isArray(pr.keywordPresets) ? pr.keywordPresets : []).map(x => cleanText(x, 80)).filter(Boolean).slice(0, 100);
   const refs = (Array.isArray(pr.referenceMaterials) ? pr.referenceMaterials : []).filter(r => r && typeof r === 'object' && r.id)
-    .map(r => ({ id: String(r.id).slice(0, 80), name: cleanText(r.name, 120), summary: String(r.summary || '').slice(0, 4000) })).slice(0, 200);
+    .map(r => { const o = { id: String(r.id).slice(0, 80), name: cleanText(r.name, 120), summary: String(r.summary || '').slice(0, 4000) }; if (typeof r.text === 'string' && r.text) o.text = r.text.slice(0, REF_TEXT_MAX); if (typeof r.addedAt === 'string') o.addedAt = r.addedAt.slice(0, 40); return o; }).slice(0, 200);
   return { items: items2, trashed: trashed2, presets, refs, exportedAt: typeof o.exportedAt === 'string' ? o.exportedAt : '' };
 }
 async function applyBackupMerge(b) {
@@ -5870,7 +5911,7 @@ async function runTopicRecommend(it, tok) {
   planLoading('AI가 주제를 찾는 중…');
   const field = cleanText(it.topicKeyword, 80);
   const presets = keywordPresets.length ? keywordPresets.slice(0, 12).join(', ') : '(없음)';
-  const refs = referenceMaterials.length ? referenceMaterials.slice(-5).map(r => `- [${r.name}] ${r.summary}`).join('\n') : '(등록된 참고 자료 없음)';
+  const refs = referenceMaterials.length ? refsContext(6000) : '(등록된 참고 자료 없음)';
   const system = `너는 학생의 과제·보고서·논문 주제를 정해주는 도우미야. 아래 정보로, 서로 방향이 다른 구체적인 주제 3개를 제안해.
 
 ${USER_DIRECTION}
