@@ -732,6 +732,10 @@
   .trash-empty-btn { border: none; background: none; color: var(--ink-faint); font: inherit; font-size: 0.78rem; padding: 3px 6px; border-radius: var(--radius); cursor: pointer; }
   .trash-empty-btn:hover { color: var(--danger); background: var(--hover); }
   .reference-card .ref-del.restore-btn:hover { text-decoration: underline; }
+  .reference-card.ref-pending { border: 1px dashed var(--accent); background: var(--accent-soft); animation: riseIn 0.4s var(--ease-out); }
+  .reference-card.ref-pending .ref-summary { color: var(--accent); animation: planPulse 1.2s ease-in-out infinite; }
+  .reference-card.ref-pending.failed { border-color: var(--danger); background: var(--sidebar); }
+  .reference-card.ref-pending.failed .ref-summary { color: var(--danger); animation: none; }
   .reference-card .ref-summary { font-size: 0.74rem; color: var(--ink-dim); margin-top: 4px; white-space: pre-wrap; }
   
   /* ===== AI 복사·붙여넣기 모달 ===== */
@@ -1507,7 +1511,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v61';
+const APP_VERSION = 'v62';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -1694,9 +1698,21 @@ async function saveReferenceMaterials() {
   }
 }
 
+// 등록 중인 자료(메모리에만, 동기화 안 함): AI가 요약하는 동안 목록 맨 위에 따로 보여 준다. 실패하면 이유와 "지우기"가 남는다.
+let pendingRefs = [];
 function renderReferenceList() {
   const container = document.getElementById('referenceList');
   container.innerHTML = '';
+  pendingRefs.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'reference-card ref-pending' + (p.failed ? ' failed' : '');
+    card.innerHTML = `<div class="ref-name"><span></span>${p.failed ? '<button class="ref-del" type="button">지우기</button>' : '<span class="ai-busy">등록 중</span>'}</div><div class="ref-summary"></div>`;
+    card.querySelector('.ref-name span').textContent = p.name;
+    card.querySelector('.ref-summary').textContent = p.failed ? p.msg : 'AI가 자료를 읽고 요약하는 중입니다';
+    const del = card.querySelector('.ref-del');
+    if (del) del.addEventListener('click', () => { pendingRefs = pendingRefs.filter(x => x !== p); renderReferenceList(); });
+    container.appendChild(card);
+  });
   referenceMaterials.forEach(ref => {
     const card = document.createElement('div');
     card.className = 'reference-card';
@@ -3436,7 +3452,13 @@ document.getElementById('addReferenceBtn').addEventListener('click', async () =>
   }
 
   statusEl.className = 'status';
-  statusEl.textContent = 'AI가 자료를 읽고 요약하는 중...';
+  statusEl.textContent = '';
+  const pend = { name: file.name, failed: false, msg: '' };
+  pendingRefs.unshift(pend);
+  fileInput.value = '';
+  renderReferenceList();
+  const fail = (msg) => { pend.failed = true; pend.msg = msg; renderReferenceList(); };
+  const done = () => { pendingRefs = pendingRefs.filter(x => x !== pend); renderReferenceList(); };
 
   try {
     let text = '';
@@ -3458,30 +3480,25 @@ document.getElementById('addReferenceBtn').addEventListener('click', async () =>
       media.push({ mime: isPdf ? 'application/pdf' : file.type, data: base64 });
       text = `[파일명: ${file.name}] 위 자료를 요약해줘.`;
     } else {
-      statusEl.className = 'status err';
-      statusEl.textContent = '지원하지 않는 파일 형식입니다 (이미지, PDF, txt, md만 가능)';
+      fail('지원하지 않는 파일 형식입니다 (이미지, PDF, txt, md만 가능)');
       return;
     }
 
     const summary = await runAI({ system: REFERENCE_SUMMARY_PROMPT, text, media, maxTokens: 500, title: '참고 자료 요약' });
 
     if (!summary) {
-      statusEl.className = 'status err';
-      statusEl.textContent = '요약을 만들지 못했습니다. 다른 파일로 시도하시기 바랍니다.';
+      fail('요약을 만들지 못했습니다. 다른 파일로 시도하시기 바랍니다.');
       return;
     }
 
     referenceMaterials.push({ id: uid(), name: file.name, summary, addedAt: new Date().toISOString() });
     await saveReferenceMaterials();
-    renderReferenceList();
-
-    fileInput.value = '';
-    statusEl.className = 'status';
-    statusEl.textContent = '등록했습니다. 주제 추천에 참고하겠습니다';
+    done();
+    showToast(`"${file.name.length > 20 ? file.name.slice(0, 20) + '…' : file.name}" 자료를 등록했습니다`);
   } catch (err) {
     console.error(err);
-    statusEl.className = 'status err';
-    statusEl.textContent = err.message === '취소함' ? '' : '처리 중 오류: ' + err.message;
+    if (err.message === '취소함') done();
+    else fail('처리 중 오류: ' + err.message);
   }
 });
 
@@ -4590,7 +4607,27 @@ function toggleChat(force) {
     renderChatLog();
     document.getElementById('chatInput').focus();
   }
+  fitChatToKeyboard();
 }
+// 화면 키보드가 올라오면(아이패드·폰) AI 비서 창을 키보드 바로 위로 올린다. iOS는 화면 아래에 고정된 창을 키보드가 그대로 덮기 때문.
+// 보이는 영역(visualViewport)의 아래쪽과 페이지 아래쪽의 차이를 키보드 높이로 본다.
+function fitChatToKeyboard() {
+  const panel = document.getElementById('chatPanel');
+  const vv = window.visualViewport;
+  let kb = 0;
+  if (vv && panel.classList.contains('open')) kb = Math.max(0, window.innerHeight - (vv.offsetTop + vv.height));
+  if (kb > 60) {
+    panel.style.bottom = (kb + 10) + 'px';
+    panel.style.maxHeight = Math.max(160, vv.height - 20) + 'px';
+    const log = document.getElementById('chatLog'); log.scrollTop = log.scrollHeight;   // 최근 대화가 보이게
+  } else { panel.style.bottom = ''; panel.style.maxHeight = ''; }
+}
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', fitChatToKeyboard);
+  window.visualViewport.addEventListener('scroll', fitChatToKeyboard);
+}
+document.getElementById('chatInput').addEventListener('focus', () => { fitChatToKeyboard(); setTimeout(fitChatToKeyboard, 350); });
+document.getElementById('chatInput').addEventListener('blur', () => setTimeout(fitChatToKeyboard, 100));
 document.getElementById('chatFab').addEventListener('click', () => toggleChat());
 document.getElementById('sbChatBtn').addEventListener('click', () => toggleChat());
 document.getElementById('chatCloseBtn').addEventListener('click', () => toggleChat(false));
