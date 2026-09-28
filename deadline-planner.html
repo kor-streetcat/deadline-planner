@@ -740,6 +740,11 @@
   .reference-card.ref-pending .ref-summary { color: var(--accent); animation: planPulse 1.2s ease-in-out infinite; }
   .reference-card.ref-pending.failed { border-color: var(--danger); background: var(--sidebar); }
   .reference-card.ref-pending.failed .ref-summary { color: var(--danger); animation: none; }
+  .ref-pick-row { display: flex; align-items: center; gap: 8px; }
+  .ref-pick-row input[type=file] { flex: 1; min-width: 0; }
+  .ref-pick-row .ref-clear { flex-shrink: 0; width: auto; padding: 6px 10px; font-size: 0.78rem; }
+  .ref-pick-row .ref-clear[hidden] { display: none; }
+  .reference-card .ref-cancel { color: var(--ink-dim); }
   .reference-card .ref-actions { display: inline-flex; gap: 8px; flex-shrink: 0; }
   .reference-card .ref-retry { color: var(--accent); font-weight: 600; }
   .reference-card .ref-bar { height: 4px; border-radius: 999px; background: var(--border); margin-top: 8px; overflow: hidden; }
@@ -1405,7 +1410,10 @@
     <div class="drawer-section">
       <div class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg>주제 추천 참고 자료</div>
       <p class="drawer-desc">주제 추천에 참고됩니다</p>
-      <input type="file" id="referenceFileInput" accept="image/*,.pdf,.txt,.md,text/plain,text/markdown,application/pdf">
+      <div class="ref-pick-row">
+        <input type="file" id="referenceFileInput" accept="image/*,.pdf,.txt,.md,text/plain,text/markdown,application/pdf">
+        <button class="btn-ghost ref-clear" id="refClearBtn" type="button" hidden>선택 취소</button>
+      </div>
       <button class="btn-ghost" id="addReferenceBtn" style="margin-top:8px; width:100%;">자료 등록</button>
       <div class="status" id="referenceStatus"></div>
       <div id="referenceList" class="reference-list"></div>
@@ -1526,7 +1534,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v65';
+const APP_VERSION = 'v66';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -1721,7 +1729,7 @@ function renderReferenceList() {
   pendingRefs.forEach(p => {
     const card = document.createElement('div');
     card.className = 'reference-card ref-pending' + (p.failed ? ' failed' : '');
-    card.innerHTML = `<div class="ref-name"><span></span>${p.failed ? `<span class="ref-actions">${p.retry ? '<button class="ref-del ref-retry" type="button">다시 시도</button>' : ''}<button class="ref-del ref-drop" type="button">지우기</button></span>` : '<span class="ai-busy">등록 중</span>'}</div><div class="ref-summary"></div>${p.failed ? '' : '<div class="ref-bar"><i></i></div><div class="ref-meta ref-time"></div>'}`;
+    card.innerHTML = `<div class="ref-name"><span></span>${p.failed ? `<span class="ref-actions">${p.retry ? '<button class="ref-del ref-retry" type="button">다시 시도</button>' : ''}<button class="ref-del ref-drop" type="button">지우기</button></span>` : '<span class="ref-actions"><span class="ai-busy">등록 중</span><button class="ref-del ref-cancel" type="button">취소</button></span>'}</div><div class="ref-summary"></div>${p.failed ? '' : '<div class="ref-bar"><i></i></div><div class="ref-meta ref-time"></div>'}`;
     card.querySelector('.ref-name span').textContent = p.name;
     card.querySelector('.ref-summary').textContent = p.failed ? p.msg : 'AI가 자료 원문을 옮기는 중입니다';
     p.timeEl = card.querySelector('.ref-time'); p.barEl = card.querySelector('.ref-bar i');
@@ -1734,6 +1742,8 @@ function renderReferenceList() {
     if (del) del.addEventListener('click', () => { pendingRefs = pendingRefs.filter(x => x !== p); renderReferenceList(); });
     const retry = card.querySelector('.ref-retry');
     if (retry) retry.addEventListener('click', () => processReference(p));
+    const cancel = card.querySelector('.ref-cancel');
+    if (cancel) cancel.addEventListener('click', () => cancelReference(p));
     container.appendChild(card);
   });
   referenceMaterials.forEach(ref => {
@@ -1957,7 +1967,7 @@ setInterval(() => { if (document.getElementById('aiSection').open) renderAiUsage
 renderAiUsage();
 
 // media: [{ mime, data(base64) }]
-async function callGemini({ system, text, media, maxTokens, history }) {
+async function callGemini({ system, text, media, maxTokens, history, signal }) {
   const userParts = [{ text }];
   (media || []).forEach(m => userParts.push({ inlineData: { mimeType: m.mime, data: m.data } }));
   const contents = [...(history || []), { role: 'user', parts: userParts }];
@@ -1966,6 +1976,7 @@ async function callGemini({ system, text, media, maxTokens, history }) {
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel)}:generateContent`,
     {
       method: 'POST',
+      signal,
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: system }] },
@@ -2068,9 +2079,9 @@ function askViaClipboard({ title, prompt, note }) {
   });
 }
 
-async function runAI({ system, text, media, maxTokens, title, history }) {
+async function runAI({ system, text, media, maxTokens, title, history, signal }) {
   if (geminiKey) {
-    return callGemini({ system, text, media, maxTokens, history });
+    return callGemini({ system, text, media, maxTokens, history, signal });
   }
   const hasMedia = media && media.length;
   const nonImage = hasMedia && media.some(m => !m.mime.startsWith('image/'));
@@ -3580,7 +3591,8 @@ setInterval(() => {
 
 async function processReference(pend) {
   const file = pend.file;
-  pend.failed = false; pend.msg = ''; pend.retry = false;
+  pend.failed = false; pend.msg = ''; pend.retry = false; pend.cancelled = false;
+  pend.ctrl = typeof AbortController === 'function' ? new AbortController() : null;
   pend.startedAt = Date.now(); pend.estMs = 0;
   renderReferenceList();
   const fail = (msg, retry) => { pend.failed = true; pend.msg = msg; pend.retry = !!retry; renderReferenceList(); };
@@ -3613,9 +3625,11 @@ async function processReference(pend) {
     if (!isText) {
       if (geminiKey) { pend.estMs = refEstimateMs(file.size); renderReferenceList(); }   // 키가 없으면(복사·붙여넣기) 예상 시간 없이 지난 시간만
       const t0 = Date.now();
-      original = String(await runAI({ system: REFERENCE_EXTRACT_PROMPT, text, media, maxTokens: 30000, title: '참고 자료 원문 옮기기' }) || '').trim();
+      original = String(await runAI({ system: REFERENCE_EXTRACT_PROMPT, text, media, maxTokens: 30000, title: '참고 자료 원문 옮기기', signal: pend.ctrl && pend.ctrl.signal }) || '').trim();
+      if (pend.cancelled) return;                                    // 기다리는 동안 취소함: 늦게 온 답은 버린다
       if (geminiKey && original) refRecordSpeed(file.size, Date.now() - t0);
     }
+    if (pend.cancelled) return;
     if (!original.trim()) {
       fail(isText ? '파일이 비어 있습니다' : '자료의 글을 읽지 못했습니다. 다시 시도하거나 다른 파일로 시도하면 됩니다.', !isText);
       return;
@@ -3637,11 +3651,28 @@ async function processReference(pend) {
     const nm = file.name.length > 20 ? file.name.slice(0, 20) + '…' : file.name;
     showToast(cut > 0 ? `"${nm}" 자료를 등록했습니다 · 용량 한도로 앞 ${entry.text.length.toLocaleString()}자만 저장했습니다` : `"${nm}" 자료를 등록했습니다 · 원문 ${entry.text.length.toLocaleString()}자`, null, null, cut > 0 ? 6000 : 0);
   } catch (err) {
+    if (pend.cancelled || (err && err.name === 'AbortError')) return;
     console.error(err);
     if (err.message === '취소함') done();
     else fail('처리 중 오류: ' + err.message, true);
   }
 }
+function cancelReference(pend) {
+  pend.cancelled = true;
+  try { if (pend.ctrl) pend.ctrl.abort(); } catch (e) {}
+  pendingRefs = pendingRefs.filter(x => x !== pend);
+  renderReferenceList();
+  showToast('자료 등록을 취소했습니다');
+}
+
+// 파일을 고르기만 하고 아직 등록하지 않았을 때 빼는 버튼
+function syncRefClear() { const i = document.getElementById('referenceFileInput'); document.getElementById('refClearBtn').hidden = !(i.files && i.files.length); }
+document.getElementById('referenceFileInput').addEventListener('change', syncRefClear);
+document.getElementById('refClearBtn').addEventListener('click', () => {
+  document.getElementById('referenceFileInput').value = '';
+  document.getElementById('referenceStatus').textContent = '';
+  syncRefClear();
+});
 
 document.getElementById('addReferenceBtn').addEventListener('click', async () => {
   const fileInput = document.getElementById('referenceFileInput');
@@ -3657,6 +3688,7 @@ document.getElementById('addReferenceBtn').addEventListener('click', async () =>
   const pend = { name: file.name, file, failed: false, msg: '' };   // 파일은 메모리에만 둔다(다시 시도용)
   pendingRefs.unshift(pend);
   fileInput.value = '';
+  syncRefClear();
   await processReference(pend);
 });
 
