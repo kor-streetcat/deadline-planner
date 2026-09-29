@@ -416,8 +416,11 @@
   .pf-row.static { cursor: default; color: var(--ink-dim); }
   .pf-row.static:hover { background: transparent; }
   .pf-row .ic { width: 18px; height: 18px; color: var(--ink-dim); flex-shrink: 0; }
-  #profileView .drawer-section { margin-bottom: 14px; }
-  #profileView .drawer-group-label { border-top: none; padding-top: 6px; margin: 14px 0 6px; }
+  #profileView .drawer-section, #settingsView .drawer-section { margin-bottom: 14px; }
+  #profileView .drawer-group-label, #settingsView .drawer-group-label { border-top: none; padding-top: 6px; margin: 14px 0 6px; }
+  .pf-links { margin-top: 18px; }
+  .pf-link .pf-sub-inline { margin-left: auto; font-size: 0.74rem; color: var(--ink-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .pf-link .pf-chev { transform: rotate(180deg); width: 16px; height: 16px; color: var(--ink-faint); }
   /* 프로필 화면에서는 일정 입력·요약이 필요 없으니 숨김 */
   body.view-profile .page-title, body.view-profile .page-sub, body.view-profile #summaryBanner, body.view-profile .quick-wrap, body.view-profile #status, body.view-profile #pendingLane { display: none; }
 
@@ -1155,6 +1158,7 @@
   <button class="sb-item" id="sbSearchBtn"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg><span>검색 · 명령</span><span class="sb-kbd">⌘K</span></button>
   <button class="sb-item" id="sbChatBtn"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg><span>AI 비서</span></button>
   <button class="sb-item" id="openDrawerBtn"><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg><span>자료 · 휴지통</span></button>
+  <button class="sb-item" id="sbSettingsBtn"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg><span>설정</span></button>
   <button class="sb-item" id="sbThemeBtn"><svg class="ic" aria-hidden="true"><use href="#i-theme"/></svg><span id="sbThemeLabel">테마: 자동</span></button>
   <div class="sb-spacer"></div>
   <div class="sb-version" id="sbVersion"></div>
@@ -1293,7 +1297,7 @@
     </div>
 
     <div id="profileView" style="display:none;">
-      <div class="pf-head"><button class="pf-back" id="pfBackBtn" aria-label="돌아가기"><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg></button><h2 class="pf-title">프로필 · 설정</h2></div>
+      <div class="pf-head"><button class="pf-back" id="pfBackBtn" aria-label="돌아가기"><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg></button><h2 class="pf-title">프로필</h2></div>
       <div class="pf-card">
         <span class="pf-avatar lg" id="pfAvatar"></span>
         <div class="pf-info"><div class="pf-name" id="pfName">로그인 안 됨</div><div class="pf-sub" id="pfSub">이 기기에만 저장됩니다</div></div>
@@ -1319,6 +1323,14 @@
       <div class="status" id="syncStatus"></div>
     </details>
 
+      <div class="pf-rows pf-links">
+        <button class="pf-row pf-link" id="pfSettingsBtn"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg><span>설정</span><span class="pf-sub-inline">AI · 화면 · 백업 · 연결 · 도움</span><svg class="ic pf-chev" aria-hidden="true"><use href="#i-back"/></svg></button>
+      </div>
+
+    </div>
+
+    <div id="settingsView" style="display:none;">
+      <div class="pf-head"><button class="pf-back" id="stBackBtn" aria-label="돌아가기"><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg></button><h2 class="pf-title">설정</h2></div>
       <div class="drawer-group-label">AI</div>
     <details class="drawer-section fold" id="aiSection">
       <summary class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-sparkle"/></svg>AI 설정 · API 키 <span class="fold-state" id="aiSummaryState">키 없음</span></summary>
@@ -1395,7 +1407,6 @@
       <textarea id="diagText" class="settings-input diag-text" readonly style="display:none;"></textarea>
       <div class="status" id="diagStatus"></div>
     </details>
-
     </div>
 
     <div id="todayView" style="display:none;">
@@ -1569,7 +1580,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v68';
+const APP_VERSION = 'v69';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2126,7 +2137,7 @@ async function callGemini({ system, text, media, maxTokens, history, signal }) {
     if (response.status === 503 || response.status === 500) {
       throw new Error('AI 서버가 지금 붐빕니다. 몇 번 다시 시도했지만 응답이 없어 잠시 뒤 다시 시도하면 됩니다');
     }
-    const hint = response.status === 404 ? ' (모델 이름이 잘못됐을 수 있습니다. 프로필 · 설정 → AI 설정에서 모델 칸을 비우면 기본 모델을 씁니다)' : '';
+    const hint = response.status === 404 ? ' (모델 이름이 잘못됐을 수 있습니다. 설정 → AI 설정에서 모델 칸을 비우면 기본 모델을 씁니다)' : '';
     throw new Error(`AI 응답 오류 ${response.status}${detail ? ': ' + detail : ''}${hint}`);
   }
   const data = await response.json();
@@ -3257,7 +3268,7 @@ function refreshAll() {
   else if (viewMode === 'week') renderWeekView();
   else if (viewMode === 'list') renderListView();
   else if (viewMode === 'checklist') renderChecklistView();
-  else if (viewMode !== 'profile') renderDetail();
+  else if (viewMode !== 'profile' && viewMode !== 'settings') renderDetail();
 }
 
 function renderDetail() {
@@ -3347,10 +3358,12 @@ function setViewMode(mode, animate) {
     if (b.classList.contains('tb-pill') || b.classList.contains('sb-pill')) b.setAttribute('aria-current', on ? 'page' : 'false');
   });
   closeSidebar();
-  const isProfile = mode === 'profile';
+  const isProfile = mode === 'profile' || mode === 'settings';      // 프로필·설정: 일정 입력·요약을 숨기는 별도 화면(마지막 화면으로 기억하지 않음)
   document.body.classList.toggle('view-profile', isProfile);
-  document.getElementById('profileView').style.display = isProfile ? 'block' : 'none';
-  ['sbProfileBtn', 'tbProfileBtn'].forEach(id => document.getElementById(id).classList.toggle('active', isProfile));
+  document.getElementById('profileView').style.display = mode === 'profile' ? 'block' : 'none';
+  document.getElementById('settingsView').style.display = mode === 'settings' ? 'block' : 'none';
+  ['sbProfileBtn', 'tbProfileBtn'].forEach(id => document.getElementById(id).classList.toggle('active', mode === 'profile'));
+  document.getElementById('sbSettingsBtn').classList.toggle('active', mode === 'settings');
   if (!isProfile) profilePrevView = mode;
   document.getElementById('monthView').style.display = mode === 'month' ? 'block' : 'none';
   document.getElementById('weekView').style.display = mode === 'week' ? 'flex' : 'none';
@@ -3369,6 +3382,7 @@ function setViewMode(mode, animate) {
     renderWeekView();
   } else if (isProfile) {
     renderProfileUi();
+    if (mode === 'settings') renderAiUsage();
   } else if (mode === 'checklist') {
     document.getElementById('monthLabel').textContent = '체크리스트';
     renderChecklistView();
@@ -4539,7 +4553,7 @@ async function sendChatMessage() {
   const text = input.value.trim();
   if (!text) return;
   if (!geminiKey) {
-    chatHistory.push({ role: 'assistant', text: 'AI 비서는 AI 키가 있어야 쓸 수 있습니다. 프로필 · 설정 → AI 설정에서 키를 넣으면 됩니다.' });
+    chatHistory.push({ role: 'assistant', text: 'AI 비서는 AI 키가 있어야 쓸 수 있습니다. 설정 → AI 설정에서 키를 넣으면 됩니다.' });
     renderChatLog();
     return;
   }
@@ -4613,6 +4627,12 @@ function toggleProfile() { setViewMode(viewMode === 'profile' ? (profilePrevView
 document.getElementById('tbProfileBtn').addEventListener('click', toggleProfile);
 document.getElementById('sbProfileBtn').addEventListener('click', toggleProfile);
 document.getElementById('pfBackBtn').addEventListener('click', () => setViewMode(profilePrevView || 'today', true));
+// 설정 화면: 사이드바 "설정", 프로필의 "설정" 줄, 명령창에서 연다. 돌아가기는 프로필에서 왔으면 프로필로, 아니면 보던 화면으로.
+let settingsFrom = null;
+function openSettings(from) { settingsFrom = from || null; setViewMode('settings', true); }
+document.getElementById('pfSettingsBtn').addEventListener('click', () => openSettings('profile'));
+document.getElementById('sbSettingsBtn').addEventListener('click', () => openSettings(null));
+document.getElementById('stBackBtn').addEventListener('click', () => setViewMode(settingsFrom === 'profile' ? 'profile' : (profilePrevView || 'today'), true));
 document.getElementById('pfThemeBtn').addEventListener('click', () => cycleTheme());
 document.getElementById('backupSaveBtn').addEventListener('click', () => {
   try {
@@ -4724,7 +4744,7 @@ function closeSidebar() {
       g = { x0: t.clientX, y0: t.clientY, t0: Date.now(), locked: false, progress: 1, last: t.clientX, w: sidebar.getBoundingClientRect().width || 280 };
       return;
     }
-    if (viewMode === 'profile') return;
+    if (viewMode === 'profile' || viewMode === 'settings') return;
     const el = e.target;
     if (el.closest && el.closest('input:not([type=checkbox]):not([type=radio]), textarea, select, [contenteditable="true"], .chat-panel')) return;
     if (inHScroll(el)) return;
@@ -4803,7 +4823,7 @@ function closeSidebar() {
     return r;
   };
   const start = (e) => {
-    const skip = viewMode === 'profile' || otherLayerOpen() || document.getElementById('sidebar').classList.contains('open')
+    const skip = viewMode === 'profile' || viewMode === 'settings' || otherLayerOpen() || document.getElementById('sidebar').classList.contains('open')
       || (e.target.closest && e.target.closest('input:not([type=checkbox]):not([type=radio]), textarea, select, [contenteditable="true"], .chat-panel')) || inHScroll(e.target);
     return { x: 0, y: 0, done: false, skip: !!skip, prev: 0, run: 0, settled: false };
   };
@@ -5202,7 +5222,8 @@ function paletteEntries(query) {
     { icon: 'checklist', label: '체크리스트 보기', run: () => setViewMode('checklist', true) },
     { icon: 'plus', label: '새 일정 입력', run: () => { window.scrollTo({ top: 0, behavior: 'smooth' }); document.getElementById('quickInput').focus(); } },
     { icon: 'chat', label: 'AI 비서 열기', run: () => toggleChat(true) },
-    { icon: 'user', label: '프로필 열기 (계정 · 동기화 · AI 설정)', run: () => setViewMode('profile', true) },
+    { icon: 'user', label: '프로필 열기 (계정 · 동기화)', run: () => setViewMode('profile', true) },
+    { icon: 'settings', label: '설정 열기 (AI · 화면 · 백업 · 연결 · 도움)', run: () => openSettings(null) },
     { icon: 'library', label: '자료 · 휴지통 열기', run: openDrawer },
     { icon: 'theme', label: '테마 바꾸기 (자동 → 라이트 → 다크)', run: cycleTheme }
   ].filter(c => !q || c.label.toLowerCase().includes(q)).map(c => ({ ...c, group: '명령' }));
@@ -5790,7 +5811,7 @@ document.getElementById('diagClearBtn').addEventListener('click', () => {
 });
 if (window.plannerLog) window.plannerLog.onchange = updateDiagState;
 
-// 빠른 입력 주소: 프로필 · 설정 탭(연결)의 예시 주소와 복사 버튼
+// 빠른 입력 주소: 설정 화면(연결)의 예시 주소와 복사 버튼
 (function () {
   const base = location.origin + location.pathname;
   const sample = base + '?add=발표 준비&due=tomorrow&type=과제';
