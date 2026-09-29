@@ -400,6 +400,7 @@
   .pf-back { width: 36px; height: 36px; padding: 0; border: none; background: transparent; border-radius: var(--radius); color: var(--ink-dim); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s var(--ease-out); }
   .pf-back:hover { background: var(--hover); }
   .pf-back .ic { width: 20px; height: 20px; }
+  .pf-card .pf-sub, .pf-card .pf-name { word-break: keep-all; overflow-wrap: anywhere; }
   .pf-card { display: flex; align-items: center; gap: 14px; padding: 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--sidebar); margin-bottom: 8px; }
   .pf-avatar { flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem; font-weight: 700; }
   .pf-avatar .ic { width: 18px; height: 18px; }
@@ -429,8 +430,11 @@
     transition: border-color 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out);
   }
   .quick-bar:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-  .quick-bar { display: flex; align-items: flex-start; gap: 8px; padding: 6px 6px 6px 12px; }
-  .quick-bar .qicon { color: var(--accent); display: inline-flex; margin-top: 8px; }
+  /* 버튼·아이콘은 입력창 첫 줄 높이(--qline)에 맞춰 가운데 정렬하고, 여러 줄로 늘어나면 아래(마지막 줄)에 붙는다 */
+  .quick-bar { --qline: 34px; display: flex; align-items: flex-end; gap: 8px; padding: 6px 6px 6px 12px; }
+  .quick-bar .qicon { color: var(--accent); display: inline-flex; align-items: center; height: var(--qline); }
+  .quick-bar button { height: var(--qline); display: inline-flex; align-items: center; justify-content: center; }
+  @media (max-width: 900px) { .quick-bar { --qline: 36px; } }
   .quick-bar textarea { flex: 1; min-width: 0; border: none; outline: none !important; box-shadow: none !important; background: transparent; font-size: 0.92rem; line-height: 1.5; padding: 6px 0; resize: none; overflow-y: auto; max-height: 168px; min-height: 0; margin: 0; }
   .quick-bar button { flex-shrink: 0; }
   .quick-bar .qbtn { background: var(--accent); color: #fff; padding: 6px 12px; font-weight: 600; }
@@ -1150,7 +1154,7 @@
   <div class="sb-label">도구</div>
   <button class="sb-item" id="sbSearchBtn"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg><span>검색 · 명령</span><span class="sb-kbd">⌘K</span></button>
   <button class="sb-item" id="sbChatBtn"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg><span>AI 비서</span></button>
-  <button class="sb-item" id="openDrawerBtn"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg><span>설정 · 자료</span></button>
+  <button class="sb-item" id="openDrawerBtn"><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg><span>자료 · 휴지통</span></button>
   <button class="sb-item" id="sbThemeBtn"><svg class="ic" aria-hidden="true"><use href="#i-theme"/></svg><span id="sbThemeLabel">테마: 자동</span></button>
   <div class="sb-spacer"></div>
   <div class="sb-version" id="sbVersion"></div>
@@ -1289,7 +1293,7 @@
     </div>
 
     <div id="profileView" style="display:none;">
-      <div class="pf-head"><button class="pf-back" id="pfBackBtn" aria-label="돌아가기"><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg></button><h2 class="pf-title">프로필</h2></div>
+      <div class="pf-head"><button class="pf-back" id="pfBackBtn" aria-label="돌아가기"><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg></button><h2 class="pf-title">프로필 · 설정</h2></div>
       <div class="pf-card">
         <span class="pf-avatar lg" id="pfAvatar"></span>
         <div class="pf-info"><div class="pf-name" id="pfName">로그인 안 됨</div><div class="pf-sub" id="pfSub">이 기기에만 저장됩니다</div></div>
@@ -1347,6 +1351,11 @@
       </div>
     </details>
 
+      <div class="drawer-group-label">화면</div>
+      <div class="pf-rows">
+        <button class="pf-row" id="pfThemeBtn"><svg class="ic" aria-hidden="true"><use href="#i-theme"/></svg><span id="pfThemeLabel">테마: 자동</span></button>
+      </div>
+
       <div class="drawer-group-label">백업</div>
       <details class="drawer-section fold" id="backupSection">
         <summary class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg>내보내기 · 가져오기 <span class="fold-state" id="backupState"></span></summary>
@@ -1360,9 +1369,20 @@
         <div class="status" id="backupStatus"></div>
       </details>
 
-      <div class="drawer-group-label">화면 · 정보</div>
+      <div class="drawer-group-label">연결</div>
+      <details class="drawer-section fold" id="quickUrlSection">
+        <summary class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>빠른 입력 주소 (단축어 · Siri)</summary>
+        <p class="drawer-desc">주소 뒤에 <b>?add=제목</b>을 붙여 열면 일정이 바로 추가됩니다. 옵션: <b>&amp;due=</b> 날짜(2026-10-01·내일·+3), <b>&amp;type=</b> 유형, <b>&amp;priority=</b> high, <b>&amp;notes=</b> 메모, <b>&amp;time=</b> 15:30, <b>&amp;min=</b> 분.</p>
+        <input type="text" id="quickUrlSample" class="settings-input" readonly>
+        <div class="settings-actions">
+          <button class="btn-ghost" id="quickUrlCopyBtn">주소 형식 복사</button>
+        </div>
+        <p class="drawer-desc" style="margin-top:10px;"><b>아이폰 단축어로 쓰기</b><br>1. 단축어 앱 → ＋ → "입력 요청"<br>2. "URL"에 위 주소를 넣고 끝에 입력값을 이어 붙이기<br>3. "URL 열기"<br>4. 이름을 "마감 추가"로 하면 "시리야, 마감 추가"로 실행됩니다<br><br>사파리에서 열리므로 사파리에서 한 번 로그인해 두면 됩니다.</p>
+        <div class="status" id="quickUrlStatus"></div>
+      </details>
+
+      <div class="drawer-group-label">도움 · 정보</div>
       <div class="pf-rows">
-        <button class="pf-row" id="pfThemeBtn"><svg class="ic" aria-hidden="true"><use href="#i-theme"/></svg><span id="pfThemeLabel">테마: 자동</span></button>
         <div class="pf-row static"><svg class="ic" aria-hidden="true"><use href="#i-notebook"/></svg><span id="pfVersion"></span></div>
       </div>
     <details class="drawer-section fold" id="diagSection">
@@ -1375,6 +1395,7 @@
       <textarea id="diagText" class="settings-input diag-text" readonly style="display:none;"></textarea>
       <div class="status" id="diagStatus"></div>
     </details>
+
     </div>
 
     <div id="todayView" style="display:none;">
@@ -1428,7 +1449,7 @@
 <div id="drawerOverlay" class="drawer-overlay"></div>
 <div id="drawerPanel" class="drawer-panel">
   <div class="drawer-header">
-    <span>설정 · 자료</span>
+    <span>자료 · 휴지통</span>
     <button id="closeDrawerBtn" class="drawer-close" aria-label="닫기">×</button>
   </div>
   <div class="drawer-body">
@@ -1452,17 +1473,6 @@
 
 
 
-    <div class="drawer-group-label">도움</div>
-    <details class="drawer-section fold" id="quickUrlSection">
-      <summary class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>빠른 입력 주소 (단축어 · Siri)</summary>
-      <p class="drawer-desc">주소 뒤에 <b>?add=제목</b>을 붙여 열면 일정이 바로 추가됩니다. 옵션: <b>&amp;due=</b> 날짜(2026-10-01·내일·+3), <b>&amp;type=</b> 유형, <b>&amp;priority=</b> high, <b>&amp;notes=</b> 메모, <b>&amp;time=</b> 15:30, <b>&amp;min=</b> 분.</p>
-      <input type="text" id="quickUrlSample" class="settings-input" readonly>
-      <div class="settings-actions">
-        <button class="btn-ghost" id="quickUrlCopyBtn">주소 형식 복사</button>
-      </div>
-      <p class="drawer-desc" style="margin-top:10px;"><b>아이폰 단축어로 쓰기</b><br>1. 단축어 앱 → ＋ → "입력 요청"<br>2. "URL"에 위 주소를 넣고 끝에 입력값을 이어 붙이기<br>3. "URL 열기"<br>4. 이름을 "마감 추가"로 하면 "시리야, 마감 추가"로 실행됩니다<br><br>사파리에서 열리므로 사파리에서 한 번 로그인해 두면 됩니다.</p>
-      <div class="status" id="quickUrlStatus"></div>
-    </details>
 
   </div>
 </div>
@@ -1518,7 +1528,7 @@ const AI_PASS_KEY = 'ai-pass'; // 보호 암호에서 만든 암호화 키(이 �
 const GEMINI_UPDATED_KEY = 'gemini-updated'; // 키를 마지막으로 바꾼 시각(ms). 기기 간에 나중에 저장한 쪽이 이기게 하는 기준
 const DEFAULT_GEMINI_MODEL = 'gemini-3.6-flash';
 const THINKING_TOKEN_BUFFER = 2000;
-const GEMINI_RETRY_DELAYS_MS = [2000, 5000];
+const GEMINI_RETRY_DELAYS_MS = [2000, 5000, 10000];   // 503(서버 붐빔)일 때 기다렸다 다시 시도하는 간격
 // 예전 기본값. 이 값이 저장돼 있으면 사용자가 직접 고른 게 아니라 옛 기본값이므로 무시함
 const RETIRED_GEMINI_MODELS = ['gemini-2.5-flash'];
 
@@ -1559,7 +1569,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v67';
+const APP_VERSION = 'v68';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2113,7 +2123,10 @@ async function callGemini({ system, text, media, maxTokens, history, signal }) {
         ? `AI 사용 한도(하루)를 넘었습니다. ${fmtClockKo(aiResetAt())} 이후 다시 시도하면 됩니다`
         : 'AI 사용 한도를 넘었습니다. 1분쯤 뒤에 다시 시도하면 됩니다');
     }
-    const hint = response.status === 404 ? ' (모델 이름이 잘못됐을 수 있습니다. 프로필 탭 → AI 설정에서 모델 칸을 비우면 기본 모델을 씁니다)' : '';
+    if (response.status === 503 || response.status === 500) {
+      throw new Error('AI 서버가 지금 붐빕니다. 몇 번 다시 시도했지만 응답이 없어 잠시 뒤 다시 시도하면 됩니다');
+    }
+    const hint = response.status === 404 ? ' (모델 이름이 잘못됐을 수 있습니다. 프로필 · 설정 → AI 설정에서 모델 칸을 비우면 기본 모델을 씁니다)' : '';
     throw new Error(`AI 응답 오류 ${response.status}${detail ? ': ' + detail : ''}${hint}`);
   }
   const data = await response.json();
@@ -4526,7 +4539,7 @@ async function sendChatMessage() {
   const text = input.value.trim();
   if (!text) return;
   if (!geminiKey) {
-    chatHistory.push({ role: 'assistant', text: 'AI 비서는 AI 키가 있어야 쓸 수 있습니다. 프로필 탭 → AI 설정에서 키를 넣으면 됩니다.' });
+    chatHistory.push({ role: 'assistant', text: 'AI 비서는 AI 키가 있어야 쓸 수 있습니다. 프로필 · 설정 → AI 설정에서 키를 넣으면 됩니다.' });
     renderChatLog();
     return;
   }
@@ -4683,8 +4696,9 @@ function closeSidebar() {
   };
   const EDGE = 8, MIN_DX = 28, RATIO = 1.1, MAX_MS = 1500, FLICK_DX = 14, FLICK_V = 0.22;   // 편하게: 28px 이상이거나 짧아도 빠르게 튕기면(14px·0.22px/ms) 넘김
   const LIVE_DX = 56, LIVE_RATIO = 1.2;       // 손을 떼기 전이라도 56px 넘게 가로로 밀면 바로 넘김(느긋하게 끌어도, 손가락을 못 떼는 상황에도 반응)
-  const switchTab = (step) => {               // step: +1 다음 탭, -1 이전 탭(양 끝에서는 그대로)
+  const switchTab = (step) => {               // step: +1 다음 탭, -1 이전 탭. 맨 앞(오늘)에서 더 오른쪽으로 밀면 메뉴가 열린다(메뉴가 오늘 왼쪽의 한 쪽처럼)
     const i = VIEW_ORDER.indexOf(viewMode), ni = i + step;
+    if (i === 0 && step < 0) { openSidebar(); return; }
     if (i >= 0 && ni >= 0 && ni < VIEW_ORDER.length) setViewMode(VIEW_ORDER[ni], true);
   };
   let g = null;                                // 메뉴 닫기 드래그
@@ -5189,7 +5203,7 @@ function paletteEntries(query) {
     { icon: 'plus', label: '새 일정 입력', run: () => { window.scrollTo({ top: 0, behavior: 'smooth' }); document.getElementById('quickInput').focus(); } },
     { icon: 'chat', label: 'AI 비서 열기', run: () => toggleChat(true) },
     { icon: 'user', label: '프로필 열기 (계정 · 동기화 · AI 설정)', run: () => setViewMode('profile', true) },
-    { icon: 'settings', label: '설정 · 자료 열기', run: openDrawer },
+    { icon: 'library', label: '자료 · 휴지통 열기', run: openDrawer },
     { icon: 'theme', label: '테마 바꾸기 (자동 → 라이트 → 다크)', run: cycleTheme }
   ].filter(c => !q || c.label.toLowerCase().includes(q)).map(c => ({ ...c, group: '명령' }));
 
@@ -5776,7 +5790,7 @@ document.getElementById('diagClearBtn').addEventListener('click', () => {
 });
 if (window.plannerLog) window.plannerLog.onchange = updateDiagState;
 
-// 빠른 입력 주소: 설정 창(설정 · 자료)의 예시 주소와 복사 버튼
+// 빠른 입력 주소: 프로필 · 설정 탭(연결)의 예시 주소와 복사 버튼
 (function () {
   const base = location.origin + location.pathname;
   const sample = base + '?add=발표 준비&due=tomorrow&type=과제';
