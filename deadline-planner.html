@@ -6,7 +6,7 @@
 <title>Δuenoτe — 마감일 정리기</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#ffffff">
-<script>try{var __t=localStorage.getItem("planner:theme");if(__t)document.documentElement.setAttribute("data-theme",__t);if(localStorage.getItem("planner:sidebar")==="1")document.documentElement.classList.add("sb-collapsed");if(/\bElectron\//.test(navigator.userAgent))document.documentElement.classList.add("in-mac-app");}catch(e){}</script>
+<script>try{var __t=localStorage.getItem("planner:theme");if(__t)document.documentElement.setAttribute("data-theme",__t);if(localStorage.getItem("planner:sidebar")==="1")document.documentElement.classList.add("sb-collapsed");if(/\bElectron\//.test(navigator.userAgent))document.documentElement.classList.add("in-mac-app");if(/\bDuenoteMac\/2\b/.test(navigator.userAgent))document.documentElement.classList.add("mac-frameless");}catch(e){}</script>
 <script>
 /* 문제 기록: 오류·처리 안 된 약속 실패·console.error를 최근 30개까지 이 기기에 남긴다(planner:errlog). 설정 > "문제 기록 복사"로 꺼내 쓴다.
    키·이메일·계정 번호처럼 보이는 글자는 저장하기 전에 가린다. 일정 제목·내용은 오류 문구에 들어갈 일이 없어 따로 저장하지 않는다. */
@@ -56,7 +56,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #ffffff;
@@ -158,7 +158,8 @@
     margin: 0;
     background: var(--bg);
     color: var(--ink);
-    font-family: 'Inter', -apple-system, "Apple SD Gothic Neo", "Pretendard", sans-serif;
+    /* 영문·숫자는 Claude 앱 글꼴(Anthropic Sans)과 닮은 Hanken Grotesk, 그리스 문자(Δ·τ)는 Inter, 한글은 Claude 앱과 같은 Apple SD Gothic Neo */
+    font-family: 'Hanken Grotesk', 'Inter', -apple-system, "Apple SD Gothic Neo", "Pretendard", sans-serif;
     min-height: 100vh;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
@@ -1084,6 +1085,26 @@
   }
   /* Mac 앱(Electron)에서는 제목·버튼 글자를 두 번 누르면 파랗게 선택되던 것을 막는다(보통 Mac 앱처럼). 입력칸은 그대로 선택된다. */
   html.in-mac-app, html.in-mac-app body { -webkit-user-select: none; user-select: none; }
+  /* Mac 앱을 앱답게: 손가락 커서 대신 화살표(노션·Claude 앱처럼), 끝에서 튕기는 스크롤·그림 끌기 없음 */
+  html.in-mac-app, html.in-mac-app body { overscroll-behavior: none; }
+  html.in-mac-app *:not(input):not(textarea):not(select):not([contenteditable="true"]) { cursor: default !important; }
+  html.in-mac-app img, html.in-mac-app a, html.in-mac-app svg { -webkit-user-drag: none; }
+  /* 제목 막대 없는 창(v70, mac-frameless): 신호등 버튼이 사이드바 왼쪽 위에 겹쳐 떠 있으므로 그 자리를 비우고, 창 맨 위 띠를 끌어서 창을 옮긴다 */
+  .mac-drag { display: none; }
+  html.mac-frameless .mac-drag { display: block; position: fixed; top: 0; left: 0; right: 0; height: 38px; -webkit-app-region: drag; z-index: 1; }
+  html.mac-frameless button, html.mac-frameless input, html.mac-frameless textarea, html.mac-frameless select, html.mac-frameless a, html.mac-frameless label, html.mac-frameless [role="button"], html.mac-frameless .ctx-menu { -webkit-app-region: no-drag; }
+  html.mac-frameless .sidebar { padding-top: 44px; }
+  html.mac-frameless .sb-brand { -webkit-app-region: drag; }
+  @media (min-width: 901px) { html.mac-frameless .sb-expand { top: 7px; left: 84px; } }
+  @media (max-width: 900px) { html.mac-frameless .topbar { padding-left: 84px; min-height: 44px; } }
+  /* 일정 카드 오른쪽 클릭 메뉴(Mac 앱) */
+  .ctx-menu { position: fixed; z-index: 90; min-width: 200px; padding: 5px; border-radius: 10px; background: var(--bg); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.18); animation: popIn 0.2s var(--ease-out); }
+  .ctx-menu button { display: flex; width: 100%; align-items: center; gap: 8px; padding: 6px 10px; border: none; background: transparent; border-radius: 6px; font-size: 0.84rem; color: var(--ink); text-align: left; }
+  .ctx-menu button:hover, .ctx-menu button:focus-visible { background: var(--accent); color: #fff; outline: none; }
+  .ctx-menu button.danger { color: var(--danger); }
+  .ctx-menu button.danger:hover { background: var(--danger); color: #fff; }
+  .ctx-menu hr { border: none; border-top: 1px solid var(--border); margin: 4px 6px; }
+  .ctx-menu .ctx-title { font-size: 0.72rem; color: var(--ink-faint); padding: 4px 10px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
   html.in-mac-app input, html.in-mac-app textarea, html.in-mac-app [contenteditable="true"], html.in-mac-app [contenteditable="true"] *, html.in-mac-app .diag-text { -webkit-user-select: text; user-select: text; }
 
   /* 부드러운 등장: 원래는 갑자기 나타나던 창들 */
@@ -1140,6 +1161,7 @@
 <symbol id="i-panel-left-close" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M9.5 4.5v15M16 9.5l-2.5 2.5 2.5 2.5"/></symbol>
 <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4h-4"/></symbol>
 </defs></svg>
+<div class="mac-drag" aria-hidden="true"></div>
 <div id="sbOverlay" class="sb-overlay"></div>
 
 <aside id="sidebar" class="sidebar">
@@ -1580,7 +1602,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v69';
+const APP_VERSION = 'v70';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2758,6 +2780,7 @@ function renderItemRow(it, opts) {
 
   const row = document.createElement('div');
   row.className = 'item';
+  row.dataset.itemId = it.id;
   const dateLabel = opts.showDate ? formatShortDate(it.dueDate) : '';
   const isOverdue = it.dueDate < todayISO() && !it.done;
   const selectCheckbox = opts.selectable
@@ -2910,6 +2933,7 @@ function renderTableRow(it, opts) {
   const overdue = it.dueDate < todayISO() && !it.done;
   const expanded = expandedIds.has(it.id);
   row.className = 'tbl-row' + (opts.selectable ? ' selectable' : '') + (it.done ? ' is-done' : '');
+  row.dataset.itemId = it.id;
   row.innerHTML = `
     ${opts.selectable ? `<input type="checkbox" class="select-check cell-select" ${opts.selected ? 'checked' : ''} aria-label="선택">` : ''}
     <input type="checkbox" class="check cell-done" ${it.done ? 'checked' : ''} aria-label="완료">
@@ -3131,6 +3155,7 @@ function renderCalendar() {
         const label = document.createElement('div');
         const overdue = it.dueDate < today && !it.done;
         label.className = 'item-label pill t-' + (it.type || '기타') + (it.priority === 'high' ? ' high' : '') + (overdue ? ' overdue' : '') + (it.done ? ' done' : '');
+        label.dataset.itemId = it.id;
         label.textContent = getShortLabel(it);
         const tm = normTime(it.dueTime);
         if (tm) { const sp = document.createElement('span'); sp.className = 'pill-time'; sp.textContent = tm; label.prepend(sp); }   // 시각은 넓은 화면에서만 글자로, 좁은 칸에서는 마우스를 올리면(title) 보임
@@ -5299,6 +5324,9 @@ document.getElementById('sbSearchBtn').addEventListener('click', openPalette);
 
 // 전역 단축키: Cmd/Ctrl+K 명령창, Esc로 가장 위에 열린 것부터 닫기
 document.addEventListener('keydown', (e) => {
+  // 새 Mac 앱은 ⌘K·⌘\를 메뉴 막대 단축키로 처리한다(여기서도 처리하면 두 번 눌린 것처럼 되돌아감)
+  const menuOwns = document.documentElement.classList.contains('mac-frameless');
+  if (menuOwns && (e.metaKey || e.ctrlKey) && (e.key === '\\' || e.key.toLowerCase() === 'k')) return;
   if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key === '\\') {
     e.preventDefault();
     toggleSidebarCollapsed();
@@ -5450,7 +5478,77 @@ async function unlockAi(pass) {
   renderChatLog();
 }
 
+// Mac 앱 메뉴 막대(파일·보기 등)에서 부르는 동작
+function plannerMenuAction(a) {
+  const closeLayers = () => { closePalette && document.getElementById('cmdOverlay').classList.contains('open') && closePalette(); };
+  if (a && a.startsWith('view:')) { const m = a.slice(5); if (VIEW_ORDER.includes(m)) setViewMode(m, true); return true; }
+  switch (a) {
+    case 'new': closeLayers(); if (viewMode === 'profile' || viewMode === 'settings') setViewMode(profilePrevView || 'today', true); window.scrollTo({ top: 0, behavior: 'smooth' }); document.getElementById('quickInput').focus(); return true;
+    case 'settings': openSettings(null); return true;
+    case 'profile': setViewMode('profile', true); return true;
+    case 'search': if (document.getElementById('cmdOverlay').classList.contains('open')) closePalette(); else openPalette(); return true;
+    case 'chat': toggleChat(); return true;
+    case 'drawer': openDrawer(); return true;
+    case 'sidebar': toggleSidebarCollapsed(); return true;
+    case 'theme': cycleTheme(); return true;
+    case 'diag': openSettings(null); document.getElementById('diagSection').open = true; document.getElementById('diagCopyBtn').click(); return true;
+  }
+  return false;
+}
+// 일정 카드·표 행·달력 알약을 오른쪽 클릭하면 앱 메뉴(Mac 앱에서만; 브라우저에서는 브라우저 메뉴 그대로)
+let ctxEl = null;
+function closeCtxMenu() { if (ctxEl) { ctxEl.remove(); ctxEl = null; } }
+function openCtxMenu(it, x, y) {
+  closeCtxMenu();
+  const m = document.createElement('div'); m.className = 'ctx-menu'; m.setAttribute('role', 'menu');
+  const title = document.createElement('div'); title.className = 'ctx-title'; title.textContent = it.title; m.appendChild(title);
+  const add = (label, fn, cls) => { const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'menuitem'); b.textContent = label; if (cls) b.className = cls; b.addEventListener('click', async () => { closeCtxMenu(); await fn(); }); m.appendChild(b); };
+  const hr = () => m.appendChild(document.createElement('hr'));
+  add('열기', () => openPeek(it.id));
+  add(it.done ? '완료 취소' : '완료로 표시', async () => { markDone(it, !it.done); await saveItems(); refreshAll(); if (peekId === it.id) renderPeek(); });
+  if (!it.done) {
+    hr();
+    const t = todayISO(), tm = (() => { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + 1); return isoOfDate(d); })(), nm = nextMondayISO();
+    if (it.dueDate !== t) add('오늘로 미루기', () => postponeItems([it], t, '오늘'));
+    if (it.dueDate !== tm) add('내일로 미루기', () => postponeItems([it], tm, '내일'));
+    if (it.dueDate !== nm) add('다음 주 월요일로 미루기', () => postponeItems([it], nm, '다음 주 월요일'));
+  }
+  hr();
+  add('삭제', async () => { const moved = await deleteItemWithGroupCheck(it); if (moved && moved.length) toastUndoDelete(moved); }, 'danger');
+  document.body.appendChild(m);
+  const r = m.getBoundingClientRect();
+  m.style.left = Math.max(6, Math.min(x, innerWidth - r.width - 6)) + 'px';
+  m.style.top = Math.max(6, Math.min(y, innerHeight - r.height - 6)) + 'px';
+  ctxEl = m;
+  const first = m.querySelector('button'); if (first) first.focus({ preventScroll: true });
+}
+(function setupCtxMenu() {
+  if (typeof document.addEventListener !== 'function') return;   // 동기화 시뮬레이터처럼 화면이 없는 곳에서는 건너뜀
+  document.addEventListener('contextmenu', (e) => {
+    if (!document.documentElement.classList.contains('in-mac-app')) return;
+    const host = e.target.closest && e.target.closest('[data-item-id]');
+    if (!host || e.target.closest('input, textarea, [contenteditable="true"]')) return;   // 글자 칸은 Mac 기본 메뉴(복사·붙여넣기)
+    const it = items.find(x => x.id === host.dataset.itemId);
+    if (!it) return;
+    e.preventDefault();
+    openCtxMenu(it, e.clientX, e.clientY);
+  });
+  document.addEventListener('mousedown', (e) => { if (ctxEl && !ctxEl.contains(e.target)) closeCtxMenu(); }, true);
+  document.addEventListener('keydown', (e) => {
+    if (!ctxEl) return;
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeCtxMenu(); return; }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const bs = [...ctxEl.querySelectorAll('button')], i = bs.indexOf(document.activeElement);
+      bs[(i + (e.key === 'ArrowDown' ? 1 : -1) + bs.length) % bs.length].focus();
+    }
+  }, true);
+  window.addEventListener('scroll', closeCtxMenu, { passive: true });
+  window.addEventListener('blur', closeCtxMenu);
+})();
+
 window.plannerApp = {
+  menu(action) { try { return plannerMenuAction(String(action || '')); } catch (e) { console.error(e); return false; } },
   // Mac 앱의 빠른 추가 창이 부르는 입구. 앱이 다 불러오기 전에 추가하면 불러오기가 덮어쓸 수 있어서 준비될 때까지 기다린다.
   async addQuick(title, dueDate, type, dueTime) {
     await window.plannerReadyPromise;
