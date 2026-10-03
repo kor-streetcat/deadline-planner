@@ -72,6 +72,7 @@
     --teal: #448361;
     --border: #e9e9e7;
     --danger: #eb5757;
+    --sat: #2f74d6;
     --danger-soft: #fdebec;
     --sage: #9b9a97;
     --radius: 10px;
@@ -108,6 +109,7 @@
     --teal: #6bb08a;
     --border: #2f2f2f;
     --danger: #ff7369;
+    --sat: #6aa6ff;
     --danger-soft: #ff736929;
     --sage: #6f6e6b;
     --topbar-bg: rgba(25,25,25,0.92);
@@ -137,6 +139,7 @@
     --teal: #6bb08a;
     --border: #2f2f2f;
     --danger: #ff7369;
+    --sat: #6aa6ff;
     --danger-soft: #ff736929;
     --sage: #6f6e6b;
     --topbar-bg: rgba(25,25,25,0.92);
@@ -565,7 +568,24 @@
   /* 공휴일: 날짜 숫자와 이름을 빨갛게(오늘 표시는 그대로) */
   .cal-cell.holiday .day-num { color: var(--danger); font-weight: 600; }
   .cal-cell.today.holiday .day-num { color: #fff; }
-  .cal-cell .hol-tag { font-size: 0.6rem; line-height: 1.2; color: var(--danger); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: -1px 0 1px 2px; }
+  /* 공휴일은 애플 캘린더처럼 칸 안의 알약(★ 이름), 누르면 정보 창 */
+  .cal-cell .hol-tag { font-size: 0.66rem; line-height: 1.35; padding: 1px 7px; border-radius: 8px; background: var(--danger); color: #fff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; flex-shrink: 0; }
+  .cal-cell .hol-tag::before { content: '★ '; font-size: 0.85em; }
+  @media (max-width: 900px) { .cal-cell .hol-tag::before { content: none; } .cal-cell .hol-tag { padding: 1px 4px; } }   /* 좁은 폰 칸에서는 별을 빼서 이름을 한 글자라도 더 */
+  .cal-cell .hol-tag:hover, .cal-cell .hol-tag:focus-visible { filter: brightness(0.92); outline: none; }
+  .hol-inline[data-hol], .hol-badge[data-hol] { cursor: pointer; }
+  .hol-pop { position: fixed; z-index: 95; width: min(280px, calc(100vw - 16px)); padding: 12px; border-radius: 16px; background: var(--bg); border: 1px solid var(--border); box-shadow: 0 14px 40px rgba(0,0,0,0.2); display: grid; gap: 6px; animation: popIn 0.22s var(--ease-out); }
+  .hol-pop > div { border-radius: 10px; background: var(--sidebar); padding: 8px 12px; font-size: 0.82rem; color: var(--ink-dim); }
+  .hol-pop .hol-pop-title { font-size: 0.98rem; font-weight: 700; color: var(--ink); border-left: 4px solid var(--danger); }
+  .hol-pop .hol-pop-cal { display: flex; align-items: center; gap: 8px; }
+  .hol-pop .hol-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--danger); flex-shrink: 0; }
+  .hol-pop .hol-pop-note { background: transparent; padding: 2px 4px 0; font-size: 0.74rem; color: var(--ink-faint); word-break: keep-all; }
+  /* 토요일 파랑, 일요일 빨강(공휴일도 빨강, 오늘 동그라미는 그대로) */
+  .cal-dow.sun, .week-day .wd-label.sun { color: var(--danger); }
+  .cal-dow.sat, .week-day .wd-label.sat { color: var(--sat); }
+  .cal-cell.sun .day-num { color: var(--danger); }
+  .cal-cell.sat .day-num { color: var(--sat); }
+  .cal-cell.holiday .day-num { color: var(--danger); }
   .hol-inline, .hol-badge { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--danger-soft); color: var(--danger); font-size: 0.7rem; font-weight: 600; vertical-align: middle; }
   .cal-cell.today .day-num { background: var(--danger); color: #fff; font-weight: 600; }
   .cal-cell .item-label { font-size: 0.68rem; line-height: 1.35; padding: 1px 7px; border-radius: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1602,7 +1622,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v70';
+const APP_VERSION = 'v71';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2282,30 +2302,78 @@ function krHolidaysOf(y) {
     [[lun[0], '설날'], [lun[2], '추석']].forEach(([d, n]) => { const g = [plus(d, -1), d, plus(d, 1)]; g.forEach((x, i) => add(x, i === 1 ? n : n + ' 연휴')); groups.push(g); });
   }
   // 대체공휴일: 연휴가 일요일이거나 다른 공휴일과 겹치면 하루씩, 그 밖의 공휴일은 토·일요일이거나 다른 공휴일과 겹치면 하루(겹친 날짜당 하나)
-  const need = [];                                    // [기준 날짜, 개수]
-  groups.forEach(g => {
+  const need = [];                                    // [기준 날짜, 개수, 대신하는 공휴일, 이유]
+  const md = (iso) => `${+iso.slice(5, 7)}월 ${+iso.slice(8, 10)}일`;
+  groups.forEach((g, gi) => {
     let n = g.some(x => dow(x) === 0) ? 1 : 0;
     g.forEach(x => { if (raw[x].some(nm => !/설날|추석/.test(nm))) n++; });
-    if (n) need.push([g[2], n]);
+    const base = gi === 0 ? '설날' : '추석';
+    if (n) need.push([g[2], n, base, `${base} 연휴가 일요일이나 다른 공휴일과 겹쳐 대신 쉬는 날입니다`]);
   });
   Object.keys(raw).forEach(iso => {
     const eligible = raw[iso].filter(nm => KR_SUB_FROM[nm] && y >= KR_SUB_FROM[nm]);
     if (!eligible.length || raw[iso].some(nm => /설날|추석/.test(nm))) return;
-    if (dow(iso) === 0 || dow(iso) === 6 || raw[iso].length > 1) need.push([iso, 1]);
+    const why = dow(iso) === 0 ? '일요일' : dow(iso) === 6 ? '토요일' : '다른 공휴일';
+    if (dow(iso) === 0 || dow(iso) === 6 || raw[iso].length > 1) need.push([iso, 1, eligible.join('·'), `${md(iso)} ${eligible.join('·')}이 ${why}과 겹쳐 대신 쉬는 날입니다`]);
   });
   const out = {};
   Object.keys(raw).forEach(iso => { out[iso] = { name: raw[iso].slice().reverse().join('·'), sub: false }; });
-  need.sort((a, b) => a[0].localeCompare(b[0])).forEach(([from, n]) => {
+  need.sort((a, b) => a[0].localeCompare(b[0])).forEach(([from, n, of, reason]) => {
     for (let k = 0; k < n; k++) {
       let x = plus(from, 1);
       while (dow(x) === 0 || dow(x) === 6 || out[x]) x = plus(x, 1);
-      out[x] = { name: '대체공휴일', sub: true };
+      out[x] = { name: '대체공휴일', sub: true, of, reason };
     }
   });
   krHolidayCache[y] = out;
   return out;
 }
 function krHoliday(iso) { const h = krHolidaysOf(+String(iso).slice(0, 4)); return h[iso] || null; }
+// 화면에 보이는 이름: 대체공휴일은 "개천절(대체공휴일)"처럼 무엇을 대신하는지 붙인다
+function holLabel(h) { return h ? (h.sub && h.of ? `${h.of}(대체공휴일)` : h.name) : ''; }
+function holKind(h, iso) {
+  if (h.sub) return '대체공휴일';
+  if (KR_EXTRA[iso]) return /선거/.test(KR_EXTRA[iso]) ? '선거일 공휴일' : '임시공휴일';
+  return '법정 공휴일';
+}
+// 공휴일 알약·배지를 누르면 뜨는 작은 정보 창(애플 캘린더처럼): 이름 · 날짜 · 대한민국 공휴일 · (대체공휴일이면) 이유
+let holPopEl = null;
+function closeHolPop() { if (holPopEl) { holPopEl.remove(); holPopEl = null; } }
+function openHolPop(iso, anchor) {
+  closeHolPop();
+  const h = krHoliday(iso); if (!h) return;
+  const d = new Date(iso + 'T12:00:00'), WDN = ['일', '월', '화', '수', '목', '금', '토'];
+  const pop = document.createElement('div'); pop.className = 'hol-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', holLabel(h));
+  const row = (cls, txt) => { const e = document.createElement('div'); e.className = cls; e.textContent = txt; pop.appendChild(e); return e; };
+  row('hol-pop-title', holLabel(h));
+  row('hol-pop-date', `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 ${WDN[d.getDay()]}요일`);
+  const cal = row('hol-pop-cal', `대한민국 공휴일 · ${holKind(h, iso)}`); cal.insertAdjacentHTML('afterbegin', '<i class="hol-dot"></i>');
+  if (h.sub && h.reason) row('hol-pop-note', h.reason);
+  document.body.appendChild(pop);
+  const a = anchor.getBoundingClientRect(), r = pop.getBoundingClientRect(), gap = 8;
+  let left = a.right + gap, top = a.top + a.height / 2 - 28;
+  if (left + r.width > innerWidth - 8) left = a.left - r.width - gap;                 // 오른쪽에 자리가 없으면 왼쪽
+  if (left < 8) { left = Math.max(8, Math.min(innerWidth - r.width - 8, a.left + a.width / 2 - r.width / 2)); top = a.bottom + gap; }   // 양옆 다 좁으면(폰) 아래
+  if (top + r.height > innerHeight - 8) top = Math.max(8, a.top - r.height - gap);
+  pop.style.left = left + 'px'; pop.style.top = Math.max(8, top) + 'px';
+  holPopEl = pop;
+}
+(function setupHolPop() {
+  if (typeof document.addEventListener !== 'function') return;   // 화면이 없는 검사 환경에서는 건너뜀
+  // 칸을 누르면 날짜가 선택되는 동작보다 먼저 받아서(capture) 정보 창만 연다
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest && e.target.closest('[data-hol]');
+    if (t) { e.stopPropagation(); e.preventDefault(); if (holPopEl && holPopEl.dataset.for === t.dataset.hol) closeHolPop(); else { openHolPop(t.dataset.hol, t); if (holPopEl) holPopEl.dataset.for = t.dataset.hol; } return; }
+    if (holPopEl && !holPopEl.contains(e.target)) closeHolPop();
+  }, true);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && holPopEl) { e.stopPropagation(); closeHolPop(); return; }
+    const t = (e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('[data-hol]');
+    if (t) { e.preventDefault(); openHolPop(t.dataset.hol, t); if (holPopEl) holPopEl.dataset.for = t.dataset.hol; }
+  }, true);
+  window.addEventListener('scroll', closeHolPop, { passive: true, capture: true });
+  window.addEventListener('resize', closeHolPop);
+})();
 
 // ---- D-day / 알림(토스트) / 바로 추가 / 앱 아이콘 배지 ----
 function daysUntil(iso) {
@@ -2695,7 +2763,7 @@ function renderTodayView() {
   const now = new Date();
   const WD = ['일', '월', '화', '수', '목', '금', '토'];
   const tHol = krHoliday(todayISO());
-  document.getElementById('todayDate').textContent = `${now.getMonth() + 1}월 ${now.getDate()}일 ${WD[now.getDay()]}요일` + (tHol ? ` · ${tHol.name}` : '');
+  document.getElementById('todayDate').textContent = `${now.getMonth() + 1}월 ${now.getDate()}일 ${WD[now.getDay()]}요일` + (tHol ? ` · ${holLabel(tHol)}` : '');
   const t = todayISO();
   const active = items.filter(it => !it.done);
   const byDate = cmpDue;
@@ -3115,9 +3183,9 @@ function renderCalendar() {
 
   const dowRow = document.getElementById('dowRow');
   dowRow.innerHTML = '';
-  ['일','월','화','수','목','금','토'].forEach(d => {
+  ['일','월','화','수','목','금','토'].forEach((d, i) => {
     const el = document.createElement('div');
-    el.className = 'cal-dow';
+    el.className = 'cal-dow' + (i === 0 ? ' sun' : i === 6 ? ' sat' : '');
     el.textContent = d;
     dowRow.appendChild(el);
   });
@@ -3141,9 +3209,11 @@ function renderCalendar() {
     cell.className = 'cal-cell';
     if (iso === today) cell.classList.add('today');
     if (iso === selectedDate) cell.classList.add('selected');
+    const wd = (firstDay + day - 1) % 7;
+    if (wd === 0) cell.classList.add('sun'); else if (wd === 6) cell.classList.add('sat');
     cell.innerHTML = `<div class="day-num">${day}</div>`;
     const hol = krHoliday(iso);
-    if (hol) { cell.classList.add('holiday'); cell.title = hol.name; cell.insertAdjacentHTML('beforeend', `<div class="hol-tag">${escapeHtml(hol.name)}</div>`); }
+    if (hol) { cell.classList.add('holiday'); cell.title = holLabel(hol); cell.insertAdjacentHTML('beforeend', `<div class="hol-tag hol-pill" data-hol="${iso}" role="button" tabindex="0">${escapeHtml(holLabel(hol))}</div>`); }
 
     const dayItems = items.filter(it => it.dueDate === iso)
       .sort(cmpDay);
@@ -3313,7 +3383,7 @@ function renderDetail() {
   const dayTotal = dayItems.length + daySteps.length;
 
   const dHol = krHoliday(selectedDate);
-  titleEl.innerHTML = `${y}년 ${parseInt(m)}월 ${parseInt(d)}일` + (dHol ? `<span class="hol-badge">${escapeHtml(dHol.name)}</span>` : '') +
+  titleEl.innerHTML = `${y}년 ${parseInt(m)}월 ${parseInt(d)}일` + (dHol ? `<span class="hol-badge" data-hol="${selectedDate}" role="button" tabindex="0">${escapeHtml(holLabel(dHol))}</span>` : '') +
     (dayTotal > 1 ? `<span class="conflict-badge">이 날 ${dayTotal}건 겹침</span>` : '');
 
   listEl.innerHTML = '';
@@ -3347,7 +3417,9 @@ function renderWeekView() {
     const label = document.createElement('div');
     label.className = 'wd-label';
     const wHol = krHoliday(iso);
-    label.innerHTML = `${parseInt(m)}/${parseInt(d)} (${dow})` + (iso === today ? ' · 오늘' : '') + (wHol ? `<span class="hol-inline">${escapeHtml(wHol.name)}</span>` : '') +
+    const wdN = new Date(iso + 'T00:00:00').getDay();
+    if (wHol || wdN === 0) label.classList.add('sun'); else if (wdN === 6) label.classList.add('sat');
+    label.innerHTML = `${parseInt(m)}/${parseInt(d)} (${dow})` + (iso === today ? ' · 오늘' : '') + (wHol ? `<span class="hol-inline" data-hol="${iso}" role="button" tabindex="0">${escapeHtml(holLabel(wHol))}</span>` : '') +
       (dayTotal > 1 ? `<span class="conflict-badge">${dayTotal}건 겹침</span>` : '');
     dayBox.appendChild(label);
 
