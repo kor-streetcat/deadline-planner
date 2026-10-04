@@ -1237,6 +1237,10 @@
   .btn-main:active, .btn-ghost:active, .quick-bar .qbtn:active, .quick-bar .qmore:active, .dlg-btn:active, .sb-item:active, .sb-new:active, .sb-profile:active, .tb-menu:active, .tb-avatar:active, .pf-row:active, .cal-nav button:active, .pending-btn:active, .hol-tag:active, .peek-mini:active, .timer-bar .tm-btn:active {
     scale: 0.96; transition-duration: 0.3s, 0.3s, 0.3s, 0.35s, 0.3s, 0.14s; transition-timing-function: var(--ease-out);
   }
+  /* 창의 × 버튼(v85): 누르면 회색으로 차며 작게 눌렸다가 스프링으로 돌아옴 */
+  .hol-pop .hol-pop-close { transition: background-color 0.3s var(--ease-out), scale 0.55s var(--spring-bounce); }
+  .hol-pop .hol-pop-close:active { scale: 0.86; background: var(--hover); transition-duration: 0.12s, 0.12s; transition-timing-function: var(--ease-out); }
+  @media (hover: hover) { .hol-pop .hol-pop-close:hover { background: var(--hover); } }
   .chat-fab:active { scale: 0.9; transition-duration: 0.3s, 0.3s, 0.3s, 0.35s, 0.3s, 0.14s; }
   .cal-cell { transition: background-color 0.3s var(--ease-out), scale 0.5s var(--spring-bounce); }
   .cal-cell:not(.empty):active { scale: 0.97; transition-duration: 0.3s, 0.14s; }
@@ -1777,7 +1781,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v84';
+const APP_VERSION = 'v85';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
