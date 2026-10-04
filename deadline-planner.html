@@ -288,7 +288,7 @@
   .page {
     max-width: 960px;
     margin: 0 auto;
-    padding: 56px calc(48px + env(safe-area-inset-right)) 120px calc(48px + env(safe-area-inset-left));
+    padding: 56px calc(48px + env(safe-area-inset-right)) 64px calc(48px + env(safe-area-inset-left));   /* 아래 여백(v84): 120→64px, 끝까지 내렸을 때 빈 곳이 덜 보이게 */
   }
   /* 오른쪽 위 검색(v83, 애플 캘린더처럼): 일정 제목·메모·유형·주제에서 찾고 누르면 상세 */
   .page-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 4px; }
@@ -379,7 +379,7 @@
     .view-in-r { animation: viewInR 0.55s var(--ease-out); }
     .view-in-l { animation: viewInL 0.55s var(--ease-out); }
     @media (prefers-reduced-motion: reduce) { .view-in-r, .view-in-l { animation: none; } .tb-pill, .tb-pill .tb-label { transition: none; } }
-    .page { padding: 24px calc(16px + env(safe-area-inset-right)) 120px calc(16px + env(safe-area-inset-left)); }
+    .page { padding: 24px calc(16px + env(safe-area-inset-right)) calc(76px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left)); }   /* AI 비서 버튼(오른쪽 아래)에 마지막 줄이 가리지 않을 만큼만 */
     .page-title { font-size: 1.6rem; }
     .page-title .page-emoji .ic { width: 1.7rem; height: 1.7rem; }
   }
@@ -611,6 +611,7 @@
   .hol-pop .hol-pop-cal { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--ink-dim); min-width: 0; text-align: right; }
   .hol-pop.day-pop { width: min(380px, calc(100vw - 16px)); max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); grid-template-rows: auto minmax(0, 1fr); }
   .day-pop .day-pop-body { overflow-y: auto; overscroll-behavior: contain; min-height: 0; margin: 0 -12px -14px; padding: 0 12px 14px; }
+  .hol-pop.closing { pointer-events: none; animation: none; }
   .hol-pop .pop-arrow { position: absolute; width: 14px; height: 14px; background: var(--bg); border: 1px solid var(--border); transform: rotate(45deg); pointer-events: none; }
   .hol-pop .pop-arrow.right { left: -8px; margin-top: -7px; border-top: 0; border-right: 0; }
   .hol-pop .pop-arrow.left { right: -8px; margin-top: -7px; border-bottom: 0; border-left: 0; }
@@ -1776,7 +1777,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v83';
+const APP_VERSION = 'v84';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2492,7 +2493,16 @@ function holKind(h, iso) {
 }
 // 공휴일 알약·배지를 누르면 뜨는 작은 정보 창(애플 캘린더처럼): 이름 · 날짜 · 대한민국 공휴일 · (대체공휴일이면) 이유
 let holPopEl = null;
-function closeHolPop() { if (holPopEl) { holPopEl.remove(); holPopEl = null; } document.querySelectorAll('[data-hol].is-open, .cal-cell.is-open').forEach(x => x.classList.remove('is-open')); }
+function closeHolPop() {
+  if (holPopEl) {   // 사라질 때도 움직임(v84): 꼬리 쪽으로 살짝 작아지며 흐려진 뒤 지움. 그 사이 다시 열리는 창과는 상관없음
+    const el = holPopEl; holPopEl = null;
+    el.classList.add('closing'); el.removeAttribute('id');
+    const done = () => el.remove();
+    if (typeof el.animate === 'function' && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      try { el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(0.94)' }], { duration: 160, easing: 'cubic-bezier(0.4, 0, 1, 1)', fill: 'forwards' }).onfinish = done; setTimeout(done, 400); }
+      catch (e) { done(); }
+    } else done();
+  } document.querySelectorAll('[data-hol].is-open, .cal-cell.is-open').forEach(x => x.classList.remove('is-open')); }
 // 떠 있는 창을 누른 것 옆에 두고, 그쪽을 가리키는 꼬리를 붙인다(애플 캘린더처럼). fit이면 높이가 모자랄 때 줄여서 안에서 스크롤
 function placePop(pop, anchor, fit) {
   const a = anchor.getBoundingClientRect(), w = pop.offsetWidth, M = 8, gap = 12;   // offsetWidth: 튀어나오는 애니메이션(scale) 중에도 실제 크기
@@ -5115,7 +5125,8 @@ function closeSidebar() {
   };
   const EDGE = 8, MIN_DX = 28, RATIO = 1.1, MAX_MS = 1500, FLICK_DX = 14, FLICK_V = 0.22;   // 편하게: 28px 이상이거나 짧아도 빠르게 튕기면(14px·0.22px/ms) 넘김
   const LIVE_DX = 56, LIVE_RATIO = 1.2;       // 손을 떼기 전이라도 56px 넘게 가로로 밀면 바로 넘김(느긋하게 끌어도, 손가락을 못 떼는 상황에도 반응)
-  const switchTab = (step) => {               // step: +1 다음 탭, -1 이전 탭. 맨 앞(오늘)에서 더 오른쪽으로 밀면 메뉴가 열린다(메뉴가 오늘 왼쪽의 한 쪽처럼)
+  const switchTab = (step, onCal) => {       // step: +1 다음 탭, -1 이전 탭. 맨 앞(오늘)에서 더 오른쪽으로 밀면 메뉴가 열린다(메뉴가 오늘 왼쪽의 한 쪽처럼)
+    if (onCal && viewMode === 'month') { closeHolPop(); document.getElementById(step > 0 ? 'nextBtn' : 'prevBtn').click(); return; }   // v84: 달력 칸 위에서 밀면 달을 넘김
     const i = VIEW_ORDER.indexOf(viewMode), ni = i + step;
     if (i === 0 && step < 0) { openSidebar(); return; }
     if (i >= 0 && ni >= 0 && ni < VIEW_ORDER.length) setViewMode(VIEW_ORDER[ni], true);
@@ -5148,14 +5159,15 @@ function closeSidebar() {
     if (el.closest && el.closest('input:not([type=checkbox]):not([type=radio]), textarea, select, [contenteditable="true"], .chat-panel')) return;
     if (inHScroll(el)) return;
     if (t.clientX < EDGE || t.clientX > window.innerWidth - EDGE) return;
-    tab = { x0: t.clientX, y0: t.clientY, t0: Date.now() };
+    if (holPopEl && holPopEl.contains(el)) return;   // 떠 있는 일정 창 안에서 민 것은 무시
+    tab = { x0: t.clientX, y0: t.clientY, t0: Date.now(), cal: !!(el.closest && el.closest('#calGrid')) };
   }, { passive: true });
 
   document.addEventListener('touchmove', (e) => {
     if (tab && e.touches.length !== 1) tab = null;
     if (tab && !tab.done) {                    // 크게 가로로 밀면 손을 떼기 전에 바로 넘김
       const t0 = e.touches[0], dx0 = t0.clientX - tab.x0, dy0 = t0.clientY - tab.y0;
-      if (Math.abs(dx0) >= LIVE_DX && Math.abs(dx0) >= Math.abs(dy0) * LIVE_RATIO) { tab.done = true; switchTab(dx0 < 0 ? 1 : -1); }
+      if (Math.abs(dx0) >= LIVE_DX && Math.abs(dx0) >= Math.abs(dy0) * LIVE_RATIO) { tab.done = true; switchTab(dx0 < 0 ? 1 : -1, tab.cal); }
     }
     if (!g) return;
     const t = e.touches[0];
@@ -5179,7 +5191,7 @@ function closeSidebar() {
         const dx = t.clientX - c.x0, dy = t.clientY - c.y0;
         const dt = Math.max(1, Date.now() - c.t0), horizontal = Math.abs(dx) >= Math.abs(dy) * RATIO;
         if (horizontal && dt <= MAX_MS && (Math.abs(dx) >= MIN_DX || (Math.abs(dx) >= FLICK_DX && Math.abs(dx) / dt >= FLICK_V))) {
-          switchTab(dx < 0 ? 1 : -1);
+          switchTab(dx < 0 ? 1 : -1, c.cal);
         }
       }
     }
