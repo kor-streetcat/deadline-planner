@@ -894,6 +894,9 @@
   .chat-input-row button { flex-shrink: 0; width: auto; margin-top: 0; padding: 8px 14px; }
 
   .sb-kbd { margin-left: auto; font-size: 0.68rem; color: var(--ink-faint); border: 1px solid var(--border); border-radius: 999px; padding: 0 5px; }
+  .sb-foot { display: flex; gap: 4px; padding-top: 8px; border-top: 1px solid var(--border); }
+  .sb-foot .sb-item { flex: 1 1 auto; width: auto; min-width: 0; white-space: nowrap; }
+  .sb-foot .sb-item span { overflow: hidden; text-overflow: ellipsis; }
   .sb-version { font-size: 0.68rem; color: var(--ink-faint); padding: 6px 8px 0; }
 
   /* ===== 보드 뷰 ===== */
@@ -1390,11 +1393,11 @@
     <button class="sb-pill" data-view="list" aria-label="전체 표" title="전체 표"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg><span class="sp-label"><span>전체 표</span></span><span class="sp-badge" id="sbPillListBadge" style="display:none;"></span></button>
     <button class="sb-pill" data-view="checklist" aria-label="체크리스트" title="체크리스트"><svg class="ic" aria-hidden="true"><use href="#i-checklist"/></svg><span class="sp-label"><span>체크리스트</span></span></button>
   </nav>
-  <div class="sb-label">도구</div>
-  <button class="sb-item" id="openDrawerBtn"><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg><span>자료 · 휴지통</span></button>
-  <button class="sb-item" id="sbSettingsBtn"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg><span>설정</span></button>
-  <button class="sb-item" id="sbThemeBtn"><svg class="ic" aria-hidden="true"><use href="#i-theme"/></svg><span id="sbThemeLabel">테마: 자동</span></button>
   <div class="sb-spacer"></div>
+  <div class="sb-foot">   <!-- v92: "도구" 칸 대신 맨 아래에 설정(왼쪽) · 자료 · 휴지통. 테마는 설정 화면에 -->
+    <button class="sb-item" id="sbSettingsBtn"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg><span>설정</span></button>
+    <button class="sb-item" id="openDrawerBtn"><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg><span>자료 · 휴지통</span></button>
+  </div>
   <div class="sb-version" id="sbVersion"></div>
 </aside>
 
@@ -1815,7 +1818,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v91';
+const APP_VERSION = 'v92';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -5703,7 +5706,6 @@ function applyTheme() {
   if (theme) document.documentElement.setAttribute('data-theme', theme);
   else document.documentElement.removeAttribute('data-theme');
   try { syncThemeColor(); } catch (e) {}
-  document.getElementById('sbThemeLabel').textContent = '테마: ' + THEME_LABEL[theme];
   document.getElementById('pfThemeLabel').textContent = '테마: ' + THEME_LABEL[theme];
 }
 async function cycleTheme() {
@@ -5711,7 +5713,6 @@ async function cycleTheme() {
   applyTheme();
   try { await store.set('theme', theme); } catch (e) { console.error('저장 실패', e); }
 }
-document.getElementById('sbThemeBtn').addEventListener('click', cycleTheme);
 
 // ---- 명령창 (Command/Ctrl + K) ----
 let cmdRows = [];
