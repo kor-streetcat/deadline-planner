@@ -234,8 +234,8 @@
     .sidebar { padding-top: calc(env(safe-area-inset-top) + 32px); }
     .sb-expand { top: calc(env(safe-area-inset-top) + 26px); }
   }
-  .sb-brand { display: flex; align-items: center; gap: 8px; padding: 6px 8px 10px; font-weight: 600; font-size: 0.95rem; }
-  .sb-brand .ic { width: 1.35rem; height: 1.35rem; color: var(--accent); }
+  .sb-brand { display: flex; align-items: center; gap: 9px; padding: 6px 8px 10px; font-weight: 700; font-size: 1.12rem; letter-spacing: -0.01em; }
+  .sb-brand > .ic { width: 1.6rem; height: 1.6rem; color: var(--accent); }
   .sb-label { font-size: 0.7rem; font-weight: 600; color: var(--ink-faint); padding: 14px 8px 4px; letter-spacing: 0.02em; }
   .sb-item .ic { width: 18px; height: 18px; }
   .sb-profile { display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px 8px; margin-bottom: 6px; border: none; background: transparent; border-radius: var(--radius); text-align: left; cursor: pointer; font-family: inherit; color: var(--ink); transition: background 0.2s var(--ease-out); }
@@ -290,6 +290,25 @@
     margin: 0 auto;
     padding: 56px calc(48px + env(safe-area-inset-right)) 120px calc(48px + env(safe-area-inset-left));
   }
+  /* 오른쪽 위 검색(v83, 애플 캘린더처럼): 일정 제목·메모·유형·주제에서 찾고 누르면 상세 */
+  .page-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 4px; }
+  .page-head .page-title { margin: 0; min-width: 0; }
+  .hdr-search { position: relative; flex: 0 1 240px; min-width: 0; display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg); box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: border-color 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out); }
+  .hdr-search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+  .hdr-search > .ic { width: 17px; height: 17px; color: var(--ink-dim); flex-shrink: 0; }
+  .hdr-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; font-size: 0.9rem; padding: 0; box-shadow: none; }
+  .hdr-search input::-webkit-search-cancel-button { cursor: pointer; }
+  .hdr-search input, .hdr-search input:focus, .hdr-search input:hover { border: 0 !important; outline: 0 !important; box-shadow: none !important; background: transparent !important; height: auto; padding: 0; margin: 0; border-radius: 0; }
+  .search-pop { position: absolute; z-index: 96; top: calc(100% + 8px); right: 0; width: min(380px, calc(100vw - 32px)); max-height: min(460px, 70vh); overflow-y: auto; overscroll-behavior: contain; padding: 6px; border-radius: 18px; background: var(--bg); border: 1px solid var(--border); box-shadow: 0 14px 40px rgba(0,0,0,0.2); animation: glassDrop 0.46s var(--spring-bounce); transform-origin: 100% 0; }
+  .search-pop .sr-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 10px; width: 100%; text-align: left; padding: 9px 12px; border: 0; border-radius: 12px; background: none; color: var(--ink); cursor: pointer; font: inherit; box-shadow: none; }
+  .search-pop .sr-row.active, .search-pop .sr-row:hover { background: var(--hover); }
+  .search-pop .sr-title { font-size: 0.9rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .search-pop .sr-row.done .sr-title { text-decoration: line-through; color: var(--ink-dim); }
+  .search-pop .sr-date { grid-column: 1; font-size: 0.76rem; color: var(--ink-dim); }
+  .search-pop .sr-row .type-tag { grid-row: 1 / span 2; grid-column: 2; }
+  .search-pop .sr-empty { padding: 14px 12px; font-size: 0.86rem; color: var(--ink-dim); }
+  .search-pop mark { background: color-mix(in srgb, var(--accent) 22%, transparent); color: inherit; border-radius: 3px; }
+  @media (max-width: 900px) { .hdr-search { flex-basis: 170px; height: 36px; padding: 0 12px; } .hdr-search input { font-size: 16px; } }
   .page-title { display: flex; align-items: center; gap: 10px; font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 4px; }
   .page-title .page-emoji { display: inline-flex; margin-right: 10px; vertical-align: middle; color: var(--accent); }
   .page-title .page-emoji .ic { width: 2rem; height: 2rem; stroke-width: 1.5; vertical-align: 0; }
@@ -428,7 +447,7 @@
   .pf-link .pf-sub-inline { margin-left: auto; font-size: 0.74rem; color: var(--ink-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   .pf-link .pf-chev { transform: rotate(180deg); width: 16px; height: 16px; color: var(--ink-faint); }
   /* 프로필 화면에서는 일정 입력·요약이 필요 없으니 숨김 */
-  body.view-profile .page-title, body.view-profile .page-sub, body.view-profile #summaryBanner, body.view-profile .quick-wrap, body.view-profile #status, body.view-profile #pendingLane { display: none; }
+  body.view-profile .page-head, body.view-profile .page-sub, body.view-profile #summaryBanner, body.view-profile .quick-wrap, body.view-profile #status, body.view-profile #pendingLane { display: none; }
 
   /* ===== 빠른 입력 + 새 일정 카드 ===== */
   .quick-bar {
@@ -590,7 +609,13 @@
   .hol-pop .hol-pop-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-radius: 999px; background: var(--sidebar); box-shadow: inset 0 0 0 1px var(--border); }
   .hol-pop .hol-pop-label { display: inline-flex; align-items: center; gap: 8px; font-size: 0.86rem; color: var(--ink); flex-shrink: 0; }
   .hol-pop .hol-pop-cal { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--ink-dim); min-width: 0; text-align: right; }
-  .hol-pop.day-pop { width: min(380px, calc(100vw - 16px)); max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); overflow-y: auto; overscroll-behavior: contain; }
+  .hol-pop.day-pop { width: min(380px, calc(100vw - 16px)); max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); grid-template-rows: auto minmax(0, 1fr); }
+  .day-pop .day-pop-body { overflow-y: auto; overscroll-behavior: contain; min-height: 0; margin: 0 -12px -14px; padding: 0 12px 14px; }
+  .hol-pop .pop-arrow { position: absolute; width: 14px; height: 14px; background: var(--bg); border: 1px solid var(--border); transform: rotate(45deg); pointer-events: none; }
+  .hol-pop .pop-arrow.right { left: -8px; margin-top: -7px; border-top: 0; border-right: 0; }
+  .hol-pop .pop-arrow.left { right: -8px; margin-top: -7px; border-bottom: 0; border-left: 0; }
+  .hol-pop .pop-arrow.below { top: -8px; margin-left: -7px; border-right: 0; border-bottom: 0; }
+  .hol-pop .pop-arrow.above { bottom: -8px; margin-left: -7px; border-top: 0; border-left: 0; }
   .day-pop .hol-pop-head::before { background: var(--accent); }
   .day-pop .hol-pop-head.is-hol::before { background: var(--danger); }
   .day-pop .day-pop-hol { margin-top: 4px; }
@@ -1320,7 +1345,6 @@
     <button class="sb-pill" data-view="checklist" aria-label="체크리스트" title="체크리스트"><svg class="ic" aria-hidden="true"><use href="#i-checklist"/></svg><span class="sp-label"><span>체크리스트</span></span></button>
   </nav>
   <div class="sb-label">도구</div>
-  <button class="sb-item" id="sbSearchBtn"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg><span>검색 · 명령</span><span class="sb-kbd">⌘K</span></button>
   <button class="sb-item" id="sbChatBtn"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg><span>AI 비서</span></button>
   <button class="sb-item" id="openDrawerBtn"><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg><span>자료 · 휴지통</span></button>
   <button class="sb-item" id="sbSettingsBtn"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg><span>설정</span></button>
@@ -1345,7 +1369,14 @@
   </div>
 
   <div class="page">
-    <h1 class="page-title"><span class="page-emoji"><svg class="ic" aria-hidden="true"><use href="#i-notebook"/></svg></span>Δuenoτe</h1>
+    <div class="page-head">
+      <h1 class="page-title"><span class="page-emoji"><svg class="ic" aria-hidden="true"><use href="#i-notebook"/></svg></span>Δuenoτe</h1>
+      <div class="hdr-search" id="hdrSearchWrap">
+        <svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>
+        <input type="search" id="hdrSearch" placeholder="검색" autocomplete="off" enterkeyhint="search" aria-label="일정 검색" aria-controls="hdrSearchPop">
+        <div class="search-pop" id="hdrSearchPop" role="listbox" hidden></div>
+      </div>
+    </div>
     <p class="page-sub">마감일과 일정을 한곳에서 정리합니다.</p>
 
     <div class="timer-bar" id="timerBar" role="status" hidden></div>
@@ -1745,7 +1776,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v82';
+const APP_VERSION = 'v83';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2462,6 +2493,32 @@ function holKind(h, iso) {
 // 공휴일 알약·배지를 누르면 뜨는 작은 정보 창(애플 캘린더처럼): 이름 · 날짜 · 대한민국 공휴일 · (대체공휴일이면) 이유
 let holPopEl = null;
 function closeHolPop() { if (holPopEl) { holPopEl.remove(); holPopEl = null; } document.querySelectorAll('[data-hol].is-open, .cal-cell.is-open').forEach(x => x.classList.remove('is-open')); }
+// 떠 있는 창을 누른 것 옆에 두고, 그쪽을 가리키는 꼬리를 붙인다(애플 캘린더처럼). fit이면 높이가 모자랄 때 줄여서 안에서 스크롤
+function placePop(pop, anchor, fit) {
+  const a = anchor.getBoundingClientRect(), w = pop.offsetWidth, M = 8, gap = 12;   // offsetWidth: 튀어나오는 애니메이션(scale) 중에도 실제 크기
+  let h = pop.offsetHeight, side = null, left, top;
+  const fitTo = (room) => { if (fit && h > room) { pop.style.maxHeight = room + 'px'; h = room; } };
+  if (a.right + gap + w <= innerWidth - M) { side = 'right'; left = a.right + gap; }
+  else if (a.left - gap - w >= M) { side = 'left'; left = a.left - gap - w; }
+  if (side) {
+    fitTo(innerHeight - 2 * M);
+    top = Math.max(M, Math.min(innerHeight - M - h, a.top + a.height / 2 - Math.min(h / 2, 40)));
+  } else {   // 양옆이 좁으면(폰) 가운데 정렬해서 위나 아래
+    left = Math.max(M, Math.min(innerWidth - M - w, a.left + a.width / 2 - w / 2));
+    const below = innerHeight - M - (a.bottom + gap), above = a.top - gap - M;
+    if (h <= below || (fit && below >= Math.min(h, 300))) { side = 'below'; fitTo(below); top = a.bottom + gap; }
+    else if (h <= above || (fit && above >= Math.min(h, 300))) { side = 'above'; fitTo(above); top = a.top - gap - h; }
+    else top = Math.max(M, innerHeight - M - h);   // 둘 다 모자라면 꼬리 없이 화면 안에
+  }
+  pop.style.left = left + 'px'; pop.style.top = top + 'px';
+  pop.querySelectorAll(':scope > .pop-arrow').forEach(x => x.remove());
+  if (!side) return;
+  const ar = document.createElement('i'); ar.className = 'pop-arrow ' + side; ar.setAttribute('aria-hidden', 'true');
+  if (side === 'right' || side === 'left') ar.style.top = Math.max(22, Math.min(h - 22, a.top + a.height / 2 - top)) + 'px';
+  else ar.style.left = Math.max(26, Math.min(w - 26, a.left + a.width / 2 - left)) + 'px';
+  pop.appendChild(ar);
+  pop.style.transformOrigin = side === 'right' ? `0 ${ar.style.top}` : side === 'left' ? `100% ${ar.style.top}` : side === 'below' ? `${ar.style.left} 0` : `${ar.style.left} 100%`;
+}
 function openHolPop(iso, anchor) {
   closeHolPop();
   const h = krHoliday(iso); if (!h) return;
@@ -2484,12 +2541,7 @@ function openHolPop(iso, anchor) {
   const cal = el('div', 'hol-pop-cal', `대한민국 공휴일 · ${holKind(h, iso)}`, calRow); cal.insertAdjacentHTML('afterbegin', '<i class="hol-dot"></i>');
   anchor.classList.add('is-open');
   document.body.appendChild(pop);
-  const a = anchor.getBoundingClientRect(), r = { width: pop.offsetWidth, height: pop.offsetHeight }, gap = 8;   // 튀어나오는 애니메이션(scale) 중에도 실제 크기로
-  let left = a.right + gap, top = a.top + a.height / 2 - 28;
-  if (left + r.width > innerWidth - 8) left = a.left - r.width - gap;                 // 오른쪽에 자리가 없으면 왼쪽
-  if (left < 8) { left = Math.max(8, Math.min(innerWidth - r.width - 8, a.left + a.width / 2 - r.width / 2)); top = a.bottom + gap; }   // 양옆 다 좁으면(폰) 아래
-  if (top + r.height > innerHeight - 8) top = Math.max(8, a.top - r.height - gap);
-  pop.style.left = left + 'px'; pop.style.top = Math.max(8, top) + 'px';
+  placePop(pop, anchor);
   holPopEl = pop;
 }
 
@@ -2521,18 +2573,7 @@ function openDayPop(iso, anchor) {
   fillDayPop(pop, iso);
   anchor.classList.add('is-open');
   document.body.appendChild(pop);
-  const a = anchor.getBoundingClientRect(), r = { width: pop.offsetWidth, height: pop.offsetHeight }, gap = 8;
-  let left = a.right + gap, top = a.top;
-  if (left + r.width > innerWidth - 8) left = a.left - r.width - gap;
-  if (left < 8) {   // 폰: 가운데 정렬, 칸 아래(자리가 넉넉하면 높이를 줄여 안에서 스크롤) 아니면 칸 위
-    left = Math.max(8, (innerWidth - r.width) / 2);
-    const below = innerHeight - 8 - (a.bottom + gap), above = a.top - gap - 8;
-    if (r.height <= below || below >= Math.min(r.height, 300)) { top = a.bottom + gap; if (r.height > below) pop.style.maxHeight = below + 'px'; }
-    else if (r.height <= above || above >= Math.min(r.height, 300)) { top = Math.max(8, a.top - gap - r.height); if (r.height > above) pop.style.maxHeight = above + 'px'; }
-    else top = innerHeight - 8 - r.height;
-  }
-  else if (top + r.height > innerHeight - 8) top = innerHeight - 8 - r.height;
-  pop.style.left = left + 'px'; pop.style.top = Math.max(8, top) + 'px';
+  placePop(pop, anchor, true);
 }
 (function setupHolPop() {
   if (typeof document.addEventListener !== 'function') return;   // 화면이 없는 검사 환경에서는 건너뜀
@@ -2558,6 +2599,49 @@ function openDayPop(iso, anchor) {
   }, true);
   window.addEventListener('scroll', (e) => { if (holPopEl && e.target instanceof Node && holPopEl.contains(e.target)) return; closeHolPop(); }, { passive: true, capture: true });
   window.addEventListener('resize', closeHolPop);
+})();
+
+// ---- 오른쪽 위 검색(v83) ----
+(function setupHdrSearch() {
+  if (typeof document.addEventListener !== 'function') return;
+  const input = document.getElementById('hdrSearch'), pop = document.getElementById('hdrSearchPop'), wrap = document.getElementById('hdrSearchWrap');
+  if (!input) return;
+  const WDN = ['일', '월', '화', '수', '목', '금', '토'];
+  let rows = [], act = -1;
+  const hl = (text, q) => { const t = String(text || ''), i = t.toLowerCase().indexOf(q); return i < 0 ? escapeHtml(t) : escapeHtml(t.slice(0, i)) + '<mark>' + escapeHtml(t.slice(i, i + q.length)) + '</mark>' + escapeHtml(t.slice(i + q.length)); };
+  const close = () => { pop.hidden = true; pop.innerHTML = ''; rows = []; act = -1; input.setAttribute('aria-expanded', 'false'); };
+  const setAct = (n) => { act = n; rows.forEach((r, i) => r.classList.toggle('active', i === act)); if (rows[act]) rows[act].scrollIntoView({ block: 'nearest' }); };
+  const choose = (id) => { input.value = ''; close(); input.blur(); openPeek(id); };
+  function render() {
+    const q = input.value.trim().toLowerCase();
+    if (!q) { close(); return; }
+    const today = todayISO();
+    const hits = items.filter(it => [it.title, it.notes, it.type, it.topicSuggestion, it.topicKeyword].some(v => String(v || '').toLowerCase().includes(q)))
+      .sort((a, b) => (a.done - b.done) || ((a.dueDate < today) - (b.dueDate < today)) || (a.dueDate < today ? cmpDue(b, a) : cmpDue(a, b))).slice(0, 30);
+    pop.innerHTML = '';
+    if (!hits.length) pop.innerHTML = '<div class="sr-empty">검색 결과가 없습니다</div>';
+    hits.forEach(it => {
+      const d = new Date(it.dueDate + 'T12:00:00'), tm = normTime(it.dueTime);
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'sr-row' + (it.done ? ' done' : ''); b.setAttribute('role', 'option'); b.dataset.id = it.id;
+      b.innerHTML = `<span class="sr-title">${hl(it.title, q)}</span><span class="type-tag t-${escapeHtml(it.type || '기타')}">${escapeHtml(it.type || '기타')}</span>` +
+        `<span class="sr-date">${d.getFullYear() !== new Date().getFullYear() ? d.getFullYear() + '년 ' : ''}${d.getMonth() + 1}월 ${d.getDate()}일 (${WDN[d.getDay()]})${tm ? ' · ' + fmtTime(tm) : ''}${it.done ? ' · 완료' : ''}</span>`;
+      b.addEventListener('mousedown', e => e.preventDefault());   // 입력칸 포커스를 뺏지 않게
+      b.addEventListener('click', () => choose(it.id));
+      pop.appendChild(b);
+    });
+    rows = [...pop.querySelectorAll('.sr-row')]; act = -1;
+    pop.hidden = false; input.setAttribute('aria-expanded', 'true');
+  }
+  input.addEventListener('input', render);
+  input.addEventListener('focus', () => { if (input.value.trim()) render(); });
+  input.addEventListener('keydown', (e) => {
+    if (e.isComposing) return;
+    if (e.key === 'ArrowDown' && rows.length) { e.preventDefault(); setAct((act + 1) % rows.length); }
+    else if (e.key === 'ArrowUp' && rows.length) { e.preventDefault(); setAct((act - 1 + rows.length) % rows.length); }
+    else if (e.key === 'Enter') { e.preventDefault(); const r = rows[act >= 0 ? act : 0]; if (r) choose(r.dataset.id); }
+    else if (e.key === 'Escape') { e.stopPropagation(); if (input.value) { input.value = ''; close(); } else input.blur(); }
+  });
+  document.addEventListener('pointerdown', (e) => { if (!wrap.contains(e.target)) close(); }, true);
 })();
 
 // ---- D-day / 알림(토스트) / 바로 추가 / 앱 아이콘 배지 ----
@@ -5621,7 +5705,7 @@ document.getElementById('cmdInput').addEventListener('keydown', (e) => {
   else if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); runPaletteRow(cmdIndex); }
 });
 document.getElementById('cmdOverlay').addEventListener('click', (e) => { if (e.target.id === 'cmdOverlay') closePalette(); });
-document.getElementById('sbSearchBtn').addEventListener('click', openPalette);
+
 
 // 전역 단축키: Cmd/Ctrl+K 명령창, Esc로 가장 위에 열린 것부터 닫기
 document.addEventListener('keydown', (e) => {
@@ -6680,9 +6764,7 @@ function renderTopicChoices(it, topics, tok) {
   renderProfileUi();
   renderTimerBar();
   updateBackupSummary();
-  let startView = 'today';
-  try { const v = await store.get('view'); if (v && ['today', 'month', 'week', 'list', 'checklist'].includes(v.value)) startView = v.value; } catch (e) {}
-  setViewMode(startView);
+  setViewMode('today');   // v83: 앱을 켜면 마지막에 본 화면이 아니라 항상 오늘 탭(사용자 요청)
   window.__plannerResolve();
   updateDiagState();
   handleUrlAdd();
