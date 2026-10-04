@@ -599,16 +599,6 @@
   .day-pop .day-pop-list .item { margin: 0; }
   .day-pop .empty-state { padding: 14px 8px; }
   .cal-cell.is-open { box-shadow: inset 0 0 0 2px var(--accent); }
-  .item-pop .hol-pop-head.is-hot::before { background: var(--danger); }
-  .item-pop .hol-pop-head::before { background: var(--accent); }
-  .item-pop .hol-pop-head.is-done::before { background: var(--ink-faint); }
-  .item-pop .is-done .hol-pop-title { text-decoration: line-through; color: var(--ink-dim); }
-  .item-pop .hol-pop-status { font-size: 0.84rem; color: var(--ink-dim); }
-  .item-pop .hol-pop-status.over { color: var(--danger); }
-  .item-pop .hol-pop-row { padding: 8px 14px; }
-  .item-pop .item-pop-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
-  .item-pop .item-pop-acts button { border-radius: 999px; padding: 9px 10px; font-size: 0.86rem; }
-  .cal-cell .item-label.pill.is-open { box-shadow: 0 0 0 2px var(--accent); }
   .hol-pop .hol-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--danger); flex-shrink: 0; }
   /* 토요일 파랑, 일요일 빨강(공휴일도 빨강, 오늘 동그라미는 그대로) */
   .cal-dow.sun, .week-day .wd-label.sun { color: var(--danger); }
@@ -1755,7 +1745,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v81';
+const APP_VERSION = 'v82';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2471,7 +2461,7 @@ function holKind(h, iso) {
 }
 // 공휴일 알약·배지를 누르면 뜨는 작은 정보 창(애플 캘린더처럼): 이름 · 날짜 · 대한민국 공휴일 · (대체공휴일이면) 이유
 let holPopEl = null;
-function closeHolPop() { if (holPopEl) { holPopEl.remove(); holPopEl = null; } document.querySelectorAll('[data-hol].is-open, .item-label.is-open, .cal-cell.is-open').forEach(x => x.classList.remove('is-open')); }
+function closeHolPop() { if (holPopEl) { holPopEl.remove(); holPopEl = null; } document.querySelectorAll('[data-hol].is-open, .cal-cell.is-open').forEach(x => x.classList.remove('is-open')); }
 function openHolPop(iso, anchor) {
   closeHolPop();
   const h = krHoliday(iso); if (!h) return;
@@ -2544,69 +2534,21 @@ function openDayPop(iso, anchor) {
   else if (top + r.height > innerHeight - 8) top = innerHeight - 8 - r.height;
   pop.style.left = left + 'px'; pop.style.top = Math.max(8, top) + 'px';
 }
-function openItemPop(id, anchor) {
-  closeHolPop();
-  const it = items.find(x => x.id === id); if (!it) return;
-  const d = new Date(it.dueDate + 'T12:00:00'), WDN = ['일', '월', '화', '수', '목', '금', '토'];
-  const pop = document.createElement('div'); pop.className = 'hol-pop item-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', it.title || '일정');
-  const el = (tag, cls, txt, parent) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; (parent || pop).appendChild(e); return e; };
-  const close = el('button', 'hol-pop-close'); close.type = 'button'; close.setAttribute('aria-label', '닫기');
-  close.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>';
-  close.addEventListener('click', (e) => { e.stopPropagation(); closeHolPop(); });
-  const overdue = !it.done && it.dueDate < todayISO();
-  const head = el('div', 'hol-pop-head' + (it.done ? ' is-done' : overdue || it.priority === 'high' ? ' is-hot' : ''));
-  el('div', 'hol-pop-title', it.title || '(제목 없음)', head);
-  el('div', 'hol-pop-date', `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 ${WDN[d.getDay()]}요일`, head);
-  const tm = normTime(it.dueTime), dur = normDuration(it.durationMin);
-  el('div', 'hol-pop-allday', (tm ? fmtTime(tm) + ' 마감' : '하루 종일') + (dur ? ' · 예상 ' + fmtDuration(dur) : ''), head);
-  let status;
-  if (it.done) {
-    const t = it.doneAt ? new Date(it.doneAt) : null;
-    status = t && !isNaN(t) ? `완료함 · ${t.getMonth() + 1}월 ${t.getDate()}일 ${fmtTime(String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0'))}` : '완료함';
-  } else {
-    const n = daysUntil(it.dueDate);
-    status = n === 0 ? '오늘 마감' : n > 0 ? `D-${n} · ${n}일 남음` : `D+${-n} · 마감이 ${-n}일 지남`;
-  }
-  el('div', 'hol-pop-status' + (overdue ? ' over' : ''), status, head);
-  const cl = Array.isArray(it.checklist) ? it.checklist.filter(Boolean) : [];
-  if (cl.length) el('div', 'hol-pop-repeat', `체크리스트 ${cl.filter(stepDone).length}/${cl.length}`, head);
-  el('div', 'hol-pop-sec', '옵션');
-  const row = el('div', 'hol-pop-row');
-  el('span', 'hol-pop-label', '유형', row);
-  const tg = el('span', 'type-tag t-' + (it.type || '기타'), it.type || '기타', row);
-  const row2 = el('div', 'hol-pop-row');
-  el('span', 'hol-pop-label', '우선순위', row2);
-  el('span', 'hol-pop-cal', priorityLabel(it.priority), row2);
-  const acts = el('div', 'item-pop-acts');
-  const doneBtn = el('button', 'btn-ghost', it.done ? '완료 취소' : '완료로 표시', acts); doneBtn.type = 'button';
-  doneBtn.addEventListener('click', async (e) => {
-    e.stopPropagation(); closeHolPop();
-    const was = it.done; markDone(it, !was); await saveItems(); refreshAll(); if (peekId === it.id) renderPeek();
-    showToast(was ? '완료를 취소했습니다' : '완료로 표시했습니다', '되돌리기', async () => { markDone(it, was); await saveItems(); refreshAll(); if (peekId === it.id) renderPeek(); });
-  });
-  const openBtn = el('button', 'btn-main', '자세히 보기', acts); openBtn.type = 'button';
-  openBtn.addEventListener('click', (e) => { e.stopPropagation(); closeHolPop(); openPeek(it.id); });
-  anchor.classList.add('is-open');
-  document.body.appendChild(pop);
-  const a = anchor.getBoundingClientRect(), r = { width: pop.offsetWidth, height: pop.offsetHeight }, gap = 8;
-  let left = a.right + gap, top = a.top + a.height / 2 - 28;
-  if (left + r.width > innerWidth - 8) left = a.left - r.width - gap;
-  if (left < 8) { left = Math.max(8, Math.min(innerWidth - r.width - 8, a.left + a.width / 2 - r.width / 2)); top = a.bottom + gap; }
-  if (top + r.height > innerHeight - 8) top = Math.max(8, a.top - r.height - gap);
-  pop.style.left = left + 'px'; pop.style.top = Math.max(8, top) + 'px';
-  pop.dataset.for = 'item:' + it.id;
-  holPopEl = pop;
-}
 (function setupHolPop() {
   if (typeof document.addEventListener !== 'function') return;   // 화면이 없는 검사 환경에서는 건너뜀
   // 칸을 누르면 날짜가 선택되는 동작보다 먼저 받아서(capture) 정보 창만 연다
   document.addEventListener('click', (e) => {
     const t = e.target.closest && e.target.closest('[data-hol]');
     if (t) { e.stopPropagation(); e.preventDefault(); if (holPopEl && holPopEl.dataset.for === t.dataset.hol) closeHolPop(); else { openHolPop(t.dataset.hol, t); if (holPopEl) holPopEl.dataset.for = t.dataset.hol; } return; }
-    const c = e.target.closest && e.target.closest('.cal-cell[data-date]');
-    if (c && !e.target.closest('[data-hol], .item-label.pill') && holPopEl && holPopEl.dataset.for === 'day:' + c.dataset.date) { e.stopPropagation(); e.preventDefault(); closeHolPop(); return; }
-    const p = e.target.closest && e.target.closest('.cal-cell .item-label.pill[data-item-id]');
-    if (p) { e.stopPropagation(); e.preventDefault(); if (holPopEl && holPopEl.dataset.for === 'item:' + p.dataset.itemId) closeHolPop(); else openItemPop(p.dataset.itemId, p); return; }
+    const p = e.target.closest && e.target.closest('.cal-cell[data-date] .item-label');   // 일정 알약을 누르면 그날 전체 일정 창(v82)
+    if (p) {
+      e.stopPropagation(); e.preventDefault();
+      const iso = p.closest('.cal-cell').dataset.date;
+      if (holPopEl && holPopEl.dataset.for === 'day:' + iso) { closeHolPop(); return; }
+      closeHolPop(); selectedDate = iso; renderCalendar(); renderDetail();
+      const c = document.querySelector(`.cal-cell[data-date="${iso}"]`); if (c) openDayPop(iso, c);
+      return;
+    }
     if (holPopEl && !holPopEl.contains(e.target)) closeHolPop();
   }, true);
   document.addEventListener('keydown', (e) => {
@@ -3516,8 +3458,6 @@ function renderCalendar() {
       selectedDate = iso;
       renderCalendar();
       renderDetail();
-      const c = document.querySelector(`.cal-cell[data-date="${iso}"]`);
-      if (c) openDayPop(iso, c);   // 아래 목록 대신 그날 일정을 창으로(v81)
     });
     grid.appendChild(cell);
   }
