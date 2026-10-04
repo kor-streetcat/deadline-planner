@@ -1736,7 +1736,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v79';
+const APP_VERSION = 'v80';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2884,6 +2884,7 @@ function updateAppBadge(n) {
 // ---- 오늘 화면 ----
 const ic = (n, cls = 'ic') => `<svg class="${cls}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 
+let todayDoneOpen = false;   // 오늘 완료 칸을 펼쳐 뒀는지(다시 그려도 유지)
 function renderTodayView() {
   const now = new Date();
   const WD = ['일', '월', '화', '수', '목', '금', '토'];
@@ -2936,11 +2937,17 @@ function renderTodayView() {
     box.appendChild(empty);
   }
 
-  if (todayDone.length) {
+  // 오늘 완료: 오늘이 마감인 완료 일정 + 마감일과 상관없이 오늘 완료한 일정(내일 일을 미리 끝냈거나 밀린 일을 끝낸 것도 사라지지 않게, v80).
+  // 눌러 펼친 상태는 화면을 다시 그려도 유지한다(체크하자마자 접히지 않게).
+  const doneToday = items.filter(it => it.done && (it.dueDate === t || (typeof it.doneAt === 'string' && isoOfDate(new Date(it.doneAt)) === t)))
+    .sort((a, b) => String(b.doneAt || '').localeCompare(String(a.doneAt || '')));
+  if (doneToday.length) {
     const det = document.createElement('details');
-    det.className = 'today-section';
-    det.innerHTML = `<summary>${ic('check', 'ic sm')} 오늘 완료 ${todayDone.length}건</summary>`;
-    todayDone.forEach(it => det.appendChild(renderItemRow(it, { showDate: true })));
+    det.className = 'today-section today-done';
+    det.open = todayDoneOpen;
+    det.innerHTML = `<summary>${ic('check', 'ic sm')} 오늘 완료 ${doneToday.length}건</summary>`;
+    det.addEventListener('toggle', () => { todayDoneOpen = det.open; });
+    doneToday.forEach(it => det.appendChild(renderItemRow(it, { showDate: true })));
     box.appendChild(det);
   }
 }
