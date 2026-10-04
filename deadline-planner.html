@@ -155,7 +155,7 @@
     color-scheme: dark;
     }
   }
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }   /* 누를 때 사파리가 덮는 회색 덮개를 끈다(v75) */
   html { -webkit-text-size-adjust: 100%; overscroll-behavior-x: none; }
   body { overscroll-behavior-x: none; }   /* 세로는 앱처럼 끝에서 탄성 있게 튕긴다(v73에서 되살림), 가로는 막음 */
   body {
@@ -577,11 +577,20 @@
   .cal-cell .hol-tag:hover, .cal-cell .hol-tag:focus-visible { filter: brightness(0.92); outline: none; }
   .hol-inline[data-hol], .hol-badge[data-hol] { cursor: pointer; }
   .hol-pop { position: fixed; z-index: 95; width: min(280px, calc(100vw - 16px)); padding: 12px; border-radius: 16px; background: var(--bg); border: 1px solid var(--border); box-shadow: 0 14px 40px rgba(0,0,0,0.2); display: grid; gap: 6px; animation: popIn 0.22s var(--ease-out); }
-  .hol-pop > div { border-radius: 10px; background: var(--sidebar); padding: 8px 12px; font-size: 0.82rem; color: var(--ink-dim); }
-  .hol-pop .hol-pop-title { font-size: 0.98rem; font-weight: 700; color: var(--ink); border-left: 4px solid var(--danger); }
-  .hol-pop .hol-pop-cal { display: flex; align-items: center; gap: 8px; }
+  .hol-pop .hol-pop-close { justify-self: start; width: 34px; height: 34px; padding: 0; border-radius: 50%; border: 1px solid var(--glass-edge, var(--border)); background: var(--glass-card, var(--bg)); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--glass-rim, none); }
+  .hol-pop .hol-pop-close svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+  .hol-pop .hol-pop-head { position: relative; padding: 2px 4px 2px 16px; display: grid; gap: 2px; margin-top: 6px; }
+  .hol-pop .hol-pop-head::before { content: ''; position: absolute; left: 2px; top: 3px; bottom: 3px; width: 4px; border-radius: 4px; background: var(--danger); }
+  .hol-pop .hol-pop-title { font-size: 1.25rem; font-weight: 700; color: var(--ink); line-height: 1.3; word-break: keep-all; margin-bottom: 2px; }
+  .hol-pop .hol-pop-date, .hol-pop .hol-pop-allday { font-size: 0.86rem; color: var(--ink); }
+  .hol-pop .hol-pop-repeat { display: flex; align-items: center; gap: 6px; font-size: 0.84rem; color: var(--ink-faint); }
+  .hol-pop .hol-pop-repeat svg, .hol-pop .hol-pop-label svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .hol-pop .hol-pop-note { padding-top: 4px; font-size: 0.74rem; color: var(--ink-faint); word-break: keep-all; }
+  .hol-pop .hol-pop-sec { margin: 10px 0 0 6px; font-size: 0.8rem; font-weight: 600; color: var(--ink-faint); }
+  .hol-pop .hol-pop-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-radius: 999px; background: var(--glass-card, var(--sidebar)); box-shadow: inset 0 0 0 1px var(--glass-edge, var(--border)); }
+  .hol-pop .hol-pop-label { display: inline-flex; align-items: center; gap: 8px; font-size: 0.86rem; color: var(--ink); flex-shrink: 0; }
+  .hol-pop .hol-pop-cal { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--ink-dim); min-width: 0; text-align: right; }
   .hol-pop .hol-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--danger); flex-shrink: 0; }
-  .hol-pop .hol-pop-note { background: transparent; padding: 2px 4px 0; font-size: 0.74rem; color: var(--ink-faint); word-break: keep-all; }
   /* 토요일 파랑, 일요일 빨강(공휴일도 빨강, 오늘 동그라미는 그대로) */
   .cal-dow.sun, .week-day .wd-label.sun { color: var(--danger); }
   .cal-dow.sat, .week-day .wd-label.sat { color: var(--sat); }
@@ -1317,9 +1326,7 @@
   .chat-panel.open { animation: glassRise 0.6s var(--spring-bounce); transform-origin: 100% 100%; }
   .ctx-menu { border-radius: 14px; animation: glassPop 0.46s var(--spring-bounce); transform-origin: 0 0; }
   .ctx-menu button { border-radius: 8px; }
-  .hol-pop { border-radius: 20px; animation: glassPop 0.5s var(--spring-bounce); transform-origin: 0 50%; }
-  .hol-pop > div { background: var(--glass-card); box-shadow: inset 0 0 0 1px var(--glass-edge); }
-  .hol-pop .hol-pop-note { background: transparent; box-shadow: none; }
+  .hol-pop { border-radius: 26px; padding: 12px 12px 14px; width: min(320px, calc(100vw - 16px)); animation: glassPop 0.5s var(--spring-bounce); transform-origin: 0 50%; }
   .dlg-btn { background: var(--glass-card); box-shadow: inset 0 0 0 1px var(--glass-edge), var(--glass-rim); }
   .dlg-btn:hover { background: var(--glass-card-hover); }
   .dlg-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent), inset 0 0 0 1px var(--glass-edge), var(--glass-rim); }
@@ -1368,10 +1375,14 @@
   .cal-cell.empty { box-shadow: none; }
   .cal-cell.selected { background: color-mix(in srgb, var(--accent) 12%, var(--glass-card-hover)); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 45%, transparent), var(--glass-rim); }
   /* 공휴일은 매년 깔려 있는 정보라 일정보다 작고 조용하게: 옅은 빨강 바탕의 작은 글자(누르면 정보 창은 그대로) */
-  .cal-cell .hol-tag { align-self: flex-start; max-width: 100%; font-size: 0.58rem; font-weight: 500; line-height: 1.3; padding: 0 5px; border-radius: 6px;
-    background: color-mix(in srgb, var(--danger) 10%, transparent); color: var(--danger); box-shadow: none; }
-  .cal-cell .hol-tag::before { content: none; }
+  .cal-cell .hol-tag { align-self: stretch; display: block; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.6rem; font-weight: 500; line-height: 1.4; padding: 1px 6px 1px 3px; border-radius: 7px;
+    background: color-mix(in srgb, var(--danger) 11%, transparent); color: color-mix(in srgb, var(--danger) 85%, var(--ink)); box-shadow: none;
+    transition: background-color 0.3s var(--ease-out), color 0.3s var(--ease-out), scale 0.55s var(--spring-bounce); }
+  .cal-cell .hol-tag::before { content: '★'; display: inline-block; vertical-align: -0.12em; margin-right: 4px; width: 1.25em; height: 1.25em; border-radius: 50%; background: var(--danger); color: #fff; font-size: 0.78em; line-height: 1.25em; text-align: center; }
   .cal-cell .hol-tag:hover, .cal-cell .hol-tag:focus-visible { filter: none; background: color-mix(in srgb, var(--danger) 18%, transparent); }
+  .cal-cell .hol-tag.is-open { background: var(--danger); color: #fff; }
+  .cal-cell .hol-tag.is-open::before { background: #fff; color: var(--danger); }
+  @media (max-width: 900px) { .cal-cell .hol-tag { padding: 1px 4px; } .cal-cell .hol-tag::before { content: none; } }   /* 좁은 폰 칸은 별 없이 이름만 */
   .week-day, .cv-group, .summary-banner, .pf-card, .ai-meter, .reference-card, .pending-row, .timer-bar {
     background: var(--glass-sheen), var(--glass-card); border: 1px solid var(--glass-edge); box-shadow: var(--glass-shadow), var(--glass-rim);
   }
@@ -1886,7 +1897,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v74';
+const APP_VERSION = 'v75';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2602,17 +2613,28 @@ function holKind(h, iso) {
 }
 // 공휴일 알약·배지를 누르면 뜨는 작은 정보 창(애플 캘린더처럼): 이름 · 날짜 · 대한민국 공휴일 · (대체공휴일이면) 이유
 let holPopEl = null;
-function closeHolPop() { if (holPopEl) { holPopEl.remove(); holPopEl = null; } }
+function closeHolPop() { if (holPopEl) { holPopEl.remove(); holPopEl = null; } document.querySelectorAll('[data-hol].is-open').forEach(x => x.classList.remove('is-open')); }
 function openHolPop(iso, anchor) {
   closeHolPop();
   const h = krHoliday(iso); if (!h) return;
   const d = new Date(iso + 'T12:00:00'), WDN = ['일', '월', '화', '수', '목', '금', '토'];
+  // 애플 캘린더의 일정 창처럼: 왼쪽 위 닫기(×), 색 막대가 붙은 큰 제목 · 날짜 · 하루 종일 · 매년 반복, 아래 "옵션"에 캘린더 줄
   const pop = document.createElement('div'); pop.className = 'hol-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', holLabel(h));
-  const row = (cls, txt) => { const e = document.createElement('div'); e.className = cls; e.textContent = txt; pop.appendChild(e); return e; };
-  row('hol-pop-title', holLabel(h));
-  row('hol-pop-date', `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 ${WDN[d.getDay()]}요일`);
-  const cal = row('hol-pop-cal', `대한민국 공휴일 · ${holKind(h, iso)}`); cal.insertAdjacentHTML('afterbegin', '<i class="hol-dot"></i>');
-  if (h.sub && h.reason) row('hol-pop-note', h.reason);
+  const el = (tag, cls, txt, parent) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; (parent || pop).appendChild(e); return e; };
+  const close = el('button', 'hol-pop-close'); close.type = 'button'; close.setAttribute('aria-label', '닫기');
+  close.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>';
+  close.addEventListener('click', (e) => { e.stopPropagation(); closeHolPop(); });
+  const head = el('div', 'hol-pop-head');
+  el('div', 'hol-pop-title', holLabel(h), head);
+  el('div', 'hol-pop-date', `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 ${WDN[d.getDay()]}요일`, head);
+  el('div', 'hol-pop-allday', '하루 종일', head);
+  if (!h.sub && !KR_EXTRA[iso]) { const rp = el('div', 'hol-pop-repeat', '매년 반복', head); rp.insertAdjacentHTML('afterbegin', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3.5l3 3-3 3"/><path d="M4 11V10a3.5 3.5 0 0 1 3.5-3.5H20"/><path d="M7 20.5l-3-3 3-3"/><path d="M20 13v1a3.5 3.5 0 0 1-3.5 3.5H4"/></svg>'); }
+  if (h.sub && h.reason) el('div', 'hol-pop-note', h.reason, head);
+  el('div', 'hol-pop-sec', '옵션');
+  const calRow = el('div', 'hol-pop-row');
+  const lab = el('span', 'hol-pop-label', '캘린더', calRow); lab.insertAdjacentHTML('afterbegin', '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>');
+  const cal = el('div', 'hol-pop-cal', `대한민국 공휴일 · ${holKind(h, iso)}`, calRow); cal.insertAdjacentHTML('afterbegin', '<i class="hol-dot"></i>');
+  anchor.classList.add('is-open');
   document.body.appendChild(pop);
   const a = anchor.getBoundingClientRect(), r = { width: pop.offsetWidth, height: pop.offsetHeight }, gap = 8;   // 튀어나오는 애니메이션(scale) 중에도 실제 크기로
   let left = a.right + gap, top = a.top + a.height / 2 - 28;
