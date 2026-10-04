@@ -1284,7 +1284,7 @@
   /* ===== 상세 창(v86): 애플 캘린더 일정 창처럼 떠 있는 둥근 카드 ===== */
   .peek-overlay { background: rgba(15,15,15,0.08); }
   @media (max-width: 599px) { .peek-overlay { background: rgba(15,15,15,0.22); -webkit-backdrop-filter: blur(10px) saturate(140%); backdrop-filter: blur(10px) saturate(140%); } }
-  .peek-panel.pk-sheet, .peek-panel.pk-sheet.open { left: 8px; right: 8px; width: auto; top: calc(env(safe-area-inset-top) + 72px); bottom: 0; max-height: none; transform-origin: 50% 100%; border-radius: 28px 28px 0 0; border-bottom: 0; }   /* v89: 아래는 각지게 화면 끝까지 붙여 밑으로 이어진다는 느낌 */
+  .peek-panel.pk-sheet, .peek-panel.pk-sheet.open { left: 8px; right: 8px; width: auto; top: calc(env(safe-area-inset-top) + 112px); bottom: 0; max-height: none; transform-origin: 50% 100%; border-radius: 28px 28px 0 0; border-bottom: 0; }   /* v89: 아래는 각지게 화면 끝까지 붙여 밑으로 이어진다는 느낌 */
   .peek-panel.pk-sheet .peek-body { border-radius: 0; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
   .peek-panel.pk-sheet { transform: translateY(40px) scale(0.97); }
   .peek-panel.pk-sheet.open { transform: none; }
@@ -1816,7 +1816,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v89';
+const APP_VERSION = 'v90';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
