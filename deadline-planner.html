@@ -1222,7 +1222,10 @@
   body { background: var(--app-base); }
   body::before {
     content: ''; position: fixed; inset: -10vmax; z-index: -1; pointer-events: none;
+    /* 맨 위(상태 표시줄 자리)는 바탕색 한 가지로 두고 그 아래부터 빛이 번지게: 상태 표시줄은 단색이라 양 끝 빛 번짐과 어긋나 보였다(v74).
+       이 판은 위로 10vmax 더 나가 있으므로 그만큼 내려서 잰다. */
     background:
+      linear-gradient(180deg, var(--app-base) 0, var(--app-base) calc(10vmax + env(safe-area-inset-top) + 6px), color-mix(in srgb, var(--app-base) 0%, transparent) calc(10vmax + env(safe-area-inset-top) + 150px)),
       radial-gradient(42vmax 34vmax at 12% 6%, var(--glow-1), transparent 70%),
       radial-gradient(38vmax 30vmax at 92% 18%, var(--glow-2), transparent 70%),
       radial-gradient(46vmax 36vmax at 60% 104%, var(--glow-3), transparent 70%),
@@ -1883,7 +1886,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v73';
+const APP_VERSION = 'v74';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
