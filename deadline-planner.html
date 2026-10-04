@@ -1283,7 +1283,10 @@
 
   /* ===== 상세 창(v86): 애플 캘린더 일정 창처럼 떠 있는 둥근 카드 ===== */
   .peek-overlay { background: rgba(15,15,15,0.08); }
-  @media (max-width: 599px) { .peek-overlay { background: rgba(15,15,15,0.3); } }
+  @media (max-width: 599px) { .peek-overlay { background: rgba(15,15,15,0.22); -webkit-backdrop-filter: blur(10px) saturate(140%); backdrop-filter: blur(10px) saturate(140%); } }
+  .peek-panel.pk-sheet, .peek-panel.pk-sheet.open { left: 8px; right: 8px; width: auto; top: calc(env(safe-area-inset-top) + 72px); bottom: calc(8px + env(safe-area-inset-bottom)); max-height: none; transform-origin: 50% 100%; }
+  .peek-panel.pk-sheet { transform: translateY(40px) scale(0.97); }
+  .peek-panel.pk-sheet.open { transform: none; }
   .peek-panel, .peek-panel.open { top: 8px; right: auto; left: 8px; height: auto; width: min(430px, calc(100vw - 16px)); max-height: calc(100vh - 16px); border: 1px solid var(--border); border-radius: 28px; background: var(--bg); box-shadow: 0 18px 50px rgba(0,0,0,0.22); }
   .peek-panel { opacity: 0; visibility: hidden; transform: scale(0.94); transition: opacity 0.16s var(--ease-out), transform 0.2s var(--ease-out), visibility 0s 0.2s; }
   .peek-panel.open { opacity: 1; visibility: visible; transform: none; transition: opacity 0.2s var(--ease-out), transform 0.5s var(--spring-bounce), visibility 0s; }
@@ -1812,7 +1815,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v87';
+const APP_VERSION = 'v88';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -5475,9 +5478,10 @@ function peekAnchor(explicit) {
 }
 function placePeek(anchor) {
   const pnl = document.getElementById('peekPanel');
-  pnl.style.maxHeight = ''; pnl.style.transformOrigin = '';
+  pnl.style.maxHeight = ''; pnl.style.transformOrigin = ''; pnl.classList.remove('pk-sheet');
   pnl.querySelectorAll(':scope > .pop-arrow').forEach(x => x.remove());
   if (anchor && innerWidth >= 600) { placePop(pnl, anchor, true); const top = parseFloat(pnl.style.top) || 8; if (!pnl.style.maxHeight) pnl.style.maxHeight = (innerHeight - 8 - top) + 'px'; return; }
+  if (innerWidth < 600) { pnl.classList.add('pk-sheet'); pnl.style.left = pnl.style.top = ''; return; }   // 폰(v88): 위를 비워 흐린 뒤 화면이 보이는 시트, 길면 안에서 스크롤
   const w = pnl.offsetWidth, h = Math.min(pnl.offsetHeight, innerHeight - 16);
   pnl.style.left = Math.max(8, (innerWidth - w) / 2) + 'px'; pnl.style.top = Math.max(8, (innerHeight - h) / 2) + 'px';
   pnl.style.maxHeight = (innerHeight - 16) + 'px';
