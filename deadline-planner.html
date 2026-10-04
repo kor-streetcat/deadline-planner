@@ -1214,7 +1214,7 @@
   .cal-cell .hol-tag::before { content: none; }
   .cal-cell .hol-tag:hover, .cal-cell .hol-tag:focus-visible { filter: none; background-color: color-mix(in srgb, var(--danger) 18%, transparent); }
   .cal-cell .hol-tag.is-open { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%23fff'/%3E%3Cpath fill='%23eb5757' d='M12 4.6l2.2 4.6 5 .6-3.7 3.4 1 5-4.5-2.5-4.5 2.5 1-5-3.7-3.4 5-.6z'/%3E%3C/svg%3E") 0.35em 50% / 1.1em 1.1em no-repeat, var(--danger); color: #fff; }
-  @media (max-width: 900px) { .cal-cell .hol-tag { padding: 1px 4px; background-image: none; } }   /* 좁은 폰 칸은 별 없이 이름만 */
+  @media (max-width: 900px) { .cal-cell .hol-tag, .cal-cell .hol-tag.is-open { padding: 1px 4px; background-image: none; } }   /* 좁은 폰 칸은 별 없이 이름만(누른 칩도: 예전엔 누른 칩에만 별이 다시 들어가 글자와 겹쳤음, v79) */   /* 좁은 폰 칸은 별 없이 이름만 */
 
   /* 화면을 넘길 때 들어오는 움직임도 스프링으로 */
   .view-in-r, .view-in-l { animation-duration: 0.65s; animation-timing-function: var(--spring); }
@@ -1736,7 +1736,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v78';
+const APP_VERSION = 'v79';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
