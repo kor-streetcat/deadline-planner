@@ -1215,9 +1215,39 @@
   /* 화면을 넘길 때 들어오는 움직임도 스프링으로 */
   .view-in-r, .view-in-l { animation-duration: 0.65s; animation-timing-function: var(--spring); }
 
+  /* 화면 알약 이름이 펼쳐지고 접히는 것·옵션 칸이 열리는 것도 스프링으로(애플 앱처럼 끝에서 아주 천천히 멈춤) */
+  .sb-pill .sp-label, .tb-pill .tb-label { transition: grid-template-columns 0.34s var(--spring), opacity 0.18s var(--ease-out), margin 0.34s var(--spring); }   /* 접히는 쪽은 펼쳐지는 쪽(0.6초)보다 짧게 */
+  .sb-pill.active .sp-label, .tb-pill.active .tb-label { transition: grid-template-columns 0.6s var(--spring), opacity 0.36s var(--ease-out) 0.06s, margin 0.6s var(--spring); }
+  .sb-pill.active, .tb-pill.active { transition: background-color 0.35s var(--ease-out), color 0.35s var(--ease-out), padding 0.6s var(--spring), scale 0.55s var(--spring-bounce); }
+  .sb-pill:not(.active), .tb-pill:not(.active) { transition: background-color 0.3s var(--ease-out), color 0.3s var(--ease-out), padding 0.34s var(--spring), scale 0.55s var(--spring-bounce); }
+  .sb-pill:active, .tb-pill:not(.active):active { transform: none; scale: 0.93; transition-duration: 0.3s, 0.3s, 0.34s, 0.14s; }
+  .quick-opts { transition: grid-template-rows 0.6s var(--spring), visibility 0s 0.6s; }
+  .quick-opts.open { transition: grid-template-rows 0.6s var(--spring), visibility 0s; }
+  .quick-opts-inner { transition: opacity 0.4s var(--ease-out), transform 0.6s var(--spring); }
+  /* 체크박스도 누르면 살짝 눌렸다 튀어 돌아옴 */
+  .item .check, .tbl-row .check, .cl-row input[type=checkbox], .cv-row input[type=checkbox], .peek-row input[type=checkbox] { transition: scale 0.5s var(--spring-bounce); }
+  .item .check:active, .tbl-row .check:active, .cl-row input[type=checkbox]:active, .cv-row input[type=checkbox]:active, .peek-row input[type=checkbox]:active { scale: 0.82; transition-duration: 0.12s; }
+  /* 다른 판·메뉴가 열리고 닫힐 때 뒤 배경의 어두워짐도 같은 리듬으로 */
+  .cmd-overlay, .ai-modal-overlay { transition: opacity 0.4s var(--ease-out); }
   @media (prefers-reduced-motion: reduce) {
     .dlg-overlay.open .dlg, .cmd-overlay.open .cmd-box, .ai-modal-overlay.open .ai-modal, .chat-panel.open, .ctx-menu, .hol-pop { animation: none; }
     .sidebar, .peek-panel, .drawer-panel, .toast { transition-duration: 0.01s !important; }
+  }
+
+  /* 터치 기기(아이폰·아이패드): 탭한 곳에 "마우스 올림" 상태가 남아 회색이 계속 덮여 있다가(선택된 파랑을 가림) 다른 곳을 누르면 풀렸다(v77, 사용자 제보).
+     마우스가 없는 기기에서는 마우스 올림 색을 원래 색으로 되돌려, 누르면 바로 선택 색이 보이게 한다. */
+  @media (hover: none) {
+    .cal-cell:not(.empty):hover { background: var(--bg); }
+    .cal-cell.selected:not(.empty):hover { background: var(--accent-soft); }
+    .item:hover, .tbl-row:hover { background: transparent; }
+    .sb-profile:hover, .sb-item:hover, .pf-row:hover { background: transparent; }
+    .sb-new:hover { background: var(--accent); }
+    .btn-ghost:hover, .pending-btn:hover { background: transparent; color: var(--ink-dim); }
+    .dlg-btn:hover { background: var(--hover); }
+    .chat-fab:hover { background: var(--ink); }
+    .item .del:hover, .item .edit-btn:hover { background: transparent; }
+    .cal-cell .hol-tag:hover { background-color: color-mix(in srgb, var(--danger) 11%, transparent); }
+    .cal-cell .hol-tag.is-open:hover { background-color: var(--danger); }
   }
 </style>
 </head>
@@ -1702,7 +1732,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v76';
+const APP_VERSION = 'v77';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -3734,22 +3764,36 @@ function updateBulkBar() {
 }
 
 // ---- Month navigation ----
+// 달을 넘기면 달력이 넘기는 방향에서 스프링으로 밀려 들어온다(그래픽 칩만 쓰는 transform·opacity, v77)
+function calSlide(dir) {
+  const g = document.getElementById('calGrid');
+  if (!g || !dir || typeof g.animate !== 'function' || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const ease = getComputedStyle(document.documentElement).getPropertyValue('--spring').trim() || 'cubic-bezier(0.22, 1, 0.36, 1)';
+  try {
+    g.animate([{ transform: `translateX(${dir * 36}px)`, opacity: 0.35 }, { transform: 'none', opacity: 1 }], { duration: 560, easing: ease });
+    document.getElementById('monthLabel').animate([{ transform: `translateX(${dir * 14}px)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 480, easing: ease });
+  } catch (e) {}
+}
 document.getElementById('prevBtn').addEventListener('click', () => {
   if (viewMode !== 'month') return;
   viewMonth--;
   if (viewMonth < 0) { viewMonth = 11; viewYear--; }
   renderCalendar();
+  calSlide(-1);
 });
 document.getElementById('nextBtn').addEventListener('click', () => {
   if (viewMode !== 'month') return;
   viewMonth++;
   if (viewMonth > 11) { viewMonth = 0; viewYear++; }
   renderCalendar();
+  calSlide(1);
 });
 document.getElementById('todayBtn').addEventListener('click', () => {
   const d = new Date();
+  const dir = Math.sign((d.getFullYear() * 12 + d.getMonth()) - (viewYear * 12 + viewMonth));
   viewYear = d.getFullYear();
   viewMonth = d.getMonth();
+  if (viewMode === 'month') setTimeout(() => calSlide(dir), 0);
   if (viewMode === 'week') renderWeekView();
   else if (viewMode === 'list') renderListView();
   else if (viewMode === 'checklist') renderChecklistView();
