@@ -447,7 +447,8 @@
   .pf-link .pf-sub-inline { margin-left: auto; font-size: 0.74rem; color: var(--ink-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   .pf-link .pf-chev { transform: rotate(180deg); width: 16px; height: 16px; color: var(--ink-faint); }
   /* 프로필 화면에서는 일정 입력·요약이 필요 없으니 숨김 */
-  body.view-profile .page-head, body.view-profile .page-sub, body.view-profile #summaryBanner, body.view-profile .quick-wrap, body.view-profile #status, body.view-profile #pendingLane { display: none; }
+  body.view-profile #summaryBanner { display: none !important; }
+  body.view-profile .page-head, body.view-profile .page-sub,  body.view-profile .quick-wrap, body.view-profile #status, body.view-profile #pendingLane { display: none; }
 
   /* ===== 빠른 입력 + 새 일정 카드 ===== */
   .quick-bar {
@@ -1279,6 +1280,42 @@
 
   /* 터치 기기(아이폰·아이패드): 탭한 곳에 "마우스 올림" 상태가 남아 회색이 계속 덮여 있다가(선택된 파랑을 가림) 다른 곳을 누르면 풀렸다(v77, 사용자 제보).
      마우스가 없는 기기에서는 마우스 올림 색을 원래 색으로 되돌려, 누르면 바로 선택 색이 보이게 한다. */
+
+  /* ===== 상세 창(v86): 애플 캘린더 일정 창처럼 떠 있는 둥근 카드 ===== */
+  .peek-overlay { background: rgba(15,15,15,0.08); }
+  @media (max-width: 599px) { .peek-overlay { background: rgba(15,15,15,0.3); } }
+  .peek-panel, .peek-panel.open { top: 8px; right: auto; left: 8px; height: auto; width: min(430px, calc(100vw - 16px)); max-height: calc(100vh - 16px); border: 1px solid var(--border); border-radius: 28px; background: var(--bg); box-shadow: 0 18px 50px rgba(0,0,0,0.22); }
+  .peek-panel { opacity: 0; visibility: hidden; transform: scale(0.94); transition: opacity 0.16s var(--ease-out), transform 0.2s var(--ease-out), visibility 0s 0.2s; }
+  .peek-panel.open { opacity: 1; visibility: visible; transform: none; transition: opacity 0.2s var(--ease-out), transform 0.5s var(--spring-bounce), visibility 0s; }
+  .peek-panel .peek-head { position: relative; display: flex; align-items: center; justify-content: space-between; padding: 12px 12px 6px; border-bottom: 0; }
+  .peek-panel .peek-head-title { position: absolute; left: 50%; transform: translateX(-50%); font-size: 1rem; font-weight: 700; color: var(--ink); pointer-events: none; }
+  .peek-panel .peek-close, .peek-panel .peek-ok { width: 40px; height: 40px; padding: 0; border-radius: 50%; border: 1px solid var(--border); background: var(--bg); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.06); transition: background-color 0.3s var(--ease-out), scale 0.55s var(--spring-bounce); }
+  .peek-panel .peek-ok { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .peek-panel .peek-close svg, .peek-panel .peek-ok svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .peek-panel .peek-close:active, .peek-panel .peek-ok:active { scale: 0.86; transition-duration: 0.12s, 0.12s; }
+  .peek-panel .peek-close:active { background: var(--hover); }
+  .peek-panel .peek-body { padding: 8px 16px 20px; border-radius: 0 0 28px 28px; overscroll-behavior: contain; }
+  .pk-card { background: var(--sidebar); border-radius: 20px; }
+  .pk-hero { position: relative; display: grid; gap: 10px; padding-left: 16px; margin: 4px 0 14px; }
+  .pk-hero::before { content: ''; position: absolute; left: 0; top: 4px; bottom: 4px; width: 5px; border-radius: 5px; background: var(--accent); }
+  .pk-hero.hot::before { background: var(--danger); }
+  .pk-hero.is-done::before { background: var(--ink-faint); }
+  .pk-hero.is-done .peek-title { text-decoration: line-through; color: var(--ink-dim); }
+  .pk-title-card { padding: 8px; }
+  .pk-title-card .peek-title { margin: 0; padding: 10px 12px; border-radius: 14px; font-size: 1.45rem; background: color-mix(in srgb, var(--ink) 5%, transparent); }
+  .pk-title-card .peek-title:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+  .pk-title-card .peek-title:focus { background: var(--bg); }
+  .pk-when { padding: 6px 16px; }
+  .pk-group { padding: 4px 16px; margin-bottom: 14px; }
+  .pk-when .peek-row + .peek-row, .pk-group .peek-row + .peek-row { border-top: 1px solid var(--border); }
+  .pk-when .peek-row, .pk-group .peek-row { padding: 9px 0; min-height: 44px; }
+  .peek-panel .peek-checklist, .peek-panel .tbl-extras { background: var(--sidebar); border-radius: 20px; padding: 12px 16px; margin-bottom: 14px; }
+  .peek-panel .pop-arrow { position: absolute; width: 14px; height: 14px; background: var(--bg); border: 1px solid var(--border); transform: rotate(45deg); pointer-events: none; }
+  .peek-panel .pop-arrow.right { left: -8px; margin-top: -7px; border-top: 0; border-right: 0; }
+  .peek-panel .pop-arrow.left { right: -8px; margin-top: -7px; border-bottom: 0; border-left: 0; }
+  .peek-panel .pop-arrow.below { top: -8px; margin-left: -7px; border-right: 0; border-bottom: 0; }
+  .peek-panel .pop-arrow.above { bottom: -8px; margin-left: -7px; border-top: 0; border-left: 0; }
+  @media (prefers-reduced-motion: reduce) { .peek-panel, .peek-panel.open { transition-duration: 0.01s !important; transform: none; } }
   @media (hover: none) {
     .cal-cell:not(.empty):hover { background: var(--bg); }
     .cal-cell.selected:not(.empty):hover { background: var(--accent-soft); }
@@ -1530,6 +1567,31 @@
 
     </div>
 
+    <div id="libraryView" style="display:none;">
+      <div class="pf-head"><button class="pf-back" id="lbBackBtn" aria-label="돌아가기"><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg></button><h2 class="pf-title">자료 · 휴지통</h2></div>
+    <div class="drawer-section">
+      <div class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg>주제 추천 참고 자료</div>
+      <p class="drawer-desc">주제 추천에 참고됩니다</p>
+      <div class="ref-pick-row">
+        <input type="file" id="referenceFileInput" accept="image/*,.pdf,.txt,.md,text/plain,text/markdown,application/pdf">
+        <button class="btn-ghost ref-clear" id="refClearBtn" type="button" hidden>선택 취소</button>
+      </div>
+      <button class="btn-ghost" id="addReferenceBtn" style="margin-top:8px; width:100%;">자료 등록</button>
+      <div class="status" id="referenceStatus"></div>
+      <div id="referenceList" class="reference-list"></div>
+    </div>
+
+    <div class="drawer-section">
+      <div class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>휴지통</div>
+      <p class="drawer-desc">마감일 2일 뒤 자동 삭제됩니다. 바로 지우려면 "영구 삭제"를 누르면 됩니다.</p>
+      <div id="trashList" class="reference-list"></div>
+    </div>
+
+
+
+
+  
+    </div>
     <div id="settingsView" style="display:none;">
       <div class="pf-head"><button class="pf-back" id="stBackBtn" aria-label="돌아가기"><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg></button><h2 class="pf-title">설정</h2></div>
       <div class="drawer-group-label">AI</div>
@@ -1647,7 +1709,7 @@
 
 <div id="peekOverlay" class="peek-overlay"></div>
 <aside id="peekPanel" class="peek-panel">
-  <div class="peek-head"><span>상세</span><button class="peek-close" id="peekCloseBtn" aria-label="닫기">×</button></div>
+  <div class="peek-head"><button class="peek-close" id="peekCloseBtn" aria-label="닫기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button><span class="peek-head-title">일정</span><button class="peek-ok" id="peekOkBtn" aria-label="완료"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></div>
   <div class="peek-body" id="peekBody"></div>
 </aside>
 
@@ -1655,37 +1717,6 @@
   <div class="cmd-box">
     <input type="text" id="cmdInput" placeholder="검색어 또는 명령 입력…" autocomplete="off">
     <div class="cmd-list" id="cmdList"></div>
-  </div>
-</div>
-
-<div id="drawerOverlay" class="drawer-overlay"></div>
-<div id="drawerPanel" class="drawer-panel">
-  <div class="drawer-header">
-    <span>자료 · 휴지통</span>
-    <button id="closeDrawerBtn" class="drawer-close" aria-label="닫기">×</button>
-  </div>
-  <div class="drawer-body">
-    <div class="drawer-section">
-      <div class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg>주제 추천 참고 자료</div>
-      <p class="drawer-desc">주제 추천에 참고됩니다</p>
-      <div class="ref-pick-row">
-        <input type="file" id="referenceFileInput" accept="image/*,.pdf,.txt,.md,text/plain,text/markdown,application/pdf">
-        <button class="btn-ghost ref-clear" id="refClearBtn" type="button" hidden>선택 취소</button>
-      </div>
-      <button class="btn-ghost" id="addReferenceBtn" style="margin-top:8px; width:100%;">자료 등록</button>
-      <div class="status" id="referenceStatus"></div>
-      <div id="referenceList" class="reference-list"></div>
-    </div>
-
-    <div class="drawer-section">
-      <div class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>휴지통</div>
-      <p class="drawer-desc">마감일 2일 뒤 자동 삭제됩니다. 바로 지우려면 "영구 삭제"를 누르면 됩니다.</p>
-      <div id="trashList" class="reference-list"></div>
-    </div>
-
-
-
-
   </div>
 </div>
 
@@ -1781,7 +1812,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v85';
+const APP_VERSION = 'v86';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -3174,10 +3205,7 @@ function renderItemRow(it, opts) {
     await saveItems();
     refreshAll();
   });
-  row.querySelector('.edit-btn').addEventListener('click', () => {
-    editingId = it.id;
-    refreshAll();
-  });
+  row.querySelector('.edit-btn').addEventListener('click', () => openPeek(it.id, row));   // v86: 수정도 상세 창에서
   row.querySelector('.del').addEventListener('click', async () => {
     const moved = await deleteItemWithGroupCheck(it);
     renderTrashList();
@@ -3655,7 +3683,7 @@ function refreshAll() {
   else if (viewMode === 'week') renderWeekView();
   else if (viewMode === 'list') renderListView();
   else if (viewMode === 'checklist') renderChecklistView();
-  else if (viewMode !== 'profile' && viewMode !== 'settings') renderDetail();
+  else if (viewMode !== 'profile' && viewMode !== 'settings' && viewMode !== 'library') renderDetail();
 }
 
 function renderDetail() {
@@ -3748,10 +3776,12 @@ function setViewMode(mode, animate) {
     if (b.classList.contains('tb-pill') || b.classList.contains('sb-pill')) b.setAttribute('aria-current', on ? 'page' : 'false');
   });
   closeSidebar();
-  const isProfile = mode === 'profile' || mode === 'settings';      // 프로필·설정: 일정 입력·요약을 숨기는 별도 화면(마지막 화면으로 기억하지 않음)
+  const isProfile = mode === 'profile' || mode === 'settings' || mode === 'library';      // 프로필·설정: 일정 입력·요약을 숨기는 별도 화면(마지막 화면으로 기억하지 않음)
   document.body.classList.toggle('view-profile', isProfile);
   document.getElementById('profileView').style.display = mode === 'profile' ? 'block' : 'none';
   document.getElementById('settingsView').style.display = mode === 'settings' ? 'block' : 'none';
+  document.getElementById('libraryView').style.display = mode === 'library' ? 'block' : 'none';
+  document.getElementById('openDrawerBtn').classList.toggle('active', mode === 'library');
   ['sbProfileBtn', 'tbProfileBtn'].forEach(id => document.getElementById(id).classList.toggle('active', mode === 'profile'));
   document.getElementById('sbSettingsBtn').classList.toggle('active', mode === 'settings');
   if (!isProfile) profilePrevView = mode;
@@ -3991,17 +4021,12 @@ document.getElementById('fileInput').addEventListener('change', (e) => {
 });
 
 // ---- Drawer ----
-function openDrawer() {
-  document.getElementById('drawerOverlay').classList.add('open');
-  document.getElementById('drawerPanel').classList.add('open');
-}
-function closeDrawer() {
-  document.getElementById('drawerOverlay').classList.remove('open');
-  document.getElementById('drawerPanel').classList.remove('open');
-}
+// 자료 · 휴지통(v86): 서랍 대신 설정처럼 별도 화면. 돌아가기는 보던 화면으로
+let libraryFrom = null;
+function openDrawer() { if (viewMode !== 'library') { libraryFrom = viewMode === 'profile' || viewMode === 'settings' ? viewMode : null; setViewMode('library', true); } renderReferenceList(); renderTrashList(); }
+function closeDrawer() { if (viewMode === 'library') setViewMode(libraryFrom || profilePrevView || 'today', true); }
 document.getElementById('openDrawerBtn').addEventListener('click', openDrawer);
-document.getElementById('closeDrawerBtn').addEventListener('click', closeDrawer);
-document.getElementById('drawerOverlay').addEventListener('click', closeDrawer);
+document.getElementById('lbBackBtn').addEventListener('click', closeDrawer);
 
 // ---- AI 설정 ----
 document.getElementById('saveAiSettingsBtn').addEventListener('click', async () => {
@@ -5118,7 +5143,7 @@ function closeSidebar() {
   const overlay = document.getElementById('sbOverlay');
   const mq = window.matchMedia('(max-width: 900px)');
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
-  const otherLayerOpen = () => ['peekPanel', 'drawerPanel'].some(id => document.getElementById(id).classList.contains('open'))
+  const otherLayerOpen = () => document.getElementById('peekPanel').classList.contains('open')
     || ['cmdOverlay', 'aiModalOverlay', 'planOverlay', 'dlgOverlay'].some(id => document.getElementById(id).classList.contains('open'));
   const inHScroll = (el) => {                  // 가로로 스크롤되는 영역 안에서 시작한 터치는 그 스크롤이 우선
     for (let n = el; n && n !== document.body; n = n.parentElement) {
@@ -5158,7 +5183,7 @@ function closeSidebar() {
       g = { x0: t.clientX, y0: t.clientY, t0: Date.now(), locked: false, progress: 1, last: t.clientX, w: sidebar.getBoundingClientRect().width || 280 };
       return;
     }
-    if (viewMode === 'profile' || viewMode === 'settings') return;
+    if (viewMode === 'profile' || viewMode === 'settings' || viewMode === 'library') return;
     const el = e.target;
     if (el.closest && el.closest('input:not([type=checkbox]):not([type=radio]), textarea, select, [contenteditable="true"], .chat-panel')) return;
     if (inHScroll(el)) return;
@@ -5217,7 +5242,7 @@ function closeSidebar() {
 // 손가락을 대고 계속 미는 동안은 속도가 흔들려도 줄어들다 멈추는 모양이 안 나오므로 한 번만 넘어간다.
 (function setupTrackpadSwipe() {
   if (!document.documentElement.classList.contains('in-mac-app')) return;
-  const otherLayerOpen = () => ['peekPanel', 'drawerPanel'].some(id => document.getElementById(id).classList.contains('open'))
+  const otherLayerOpen = () => document.getElementById('peekPanel').classList.contains('open')
     || ['cmdOverlay', 'aiModalOverlay', 'planOverlay', 'dlgOverlay'].some(id => document.getElementById(id).classList.contains('open'));
   const inHScroll = (el) => {
     for (let n = el; n && n !== document.body; n = n.parentElement) {
@@ -5238,7 +5263,7 @@ function closeSidebar() {
     return r;
   };
   const start = (e) => {
-    const skip = viewMode === 'profile' || viewMode === 'settings' || otherLayerOpen() || document.getElementById('sidebar').classList.contains('open')
+    const skip = viewMode === 'profile' || viewMode === 'settings' || viewMode === 'library' || otherLayerOpen() || document.getElementById('sidebar').classList.contains('open')
       || (e.target.closest && e.target.closest('input:not([type=checkbox]):not([type=radio]), textarea, select, [contenteditable="true"], .chat-panel')) || inHScroll(e.target);
     return { x: 0, y: 0, done: false, skip: !!skip, prev: 0, run: 0, settled: false };
   };
@@ -5437,14 +5462,47 @@ function renderChecklistView() {
 }
 
 // ---- 상세 패널 (오른쪽 peek) ----
-function openPeek(id) {
+// 상세 창(v86, 애플 캘린더의 일정 창처럼): 누른 일정 옆에 꼬리가 달린 둥근 카드로 뜨고, 누른 곳을 모르거나 폰이면 가운데
+let lastPress = null;
+if (typeof document.addEventListener === 'function') document.addEventListener('pointerdown', (e) => { lastPress = { el: e.target, t: Date.now() }; }, true);
+function peekAnchor(explicit) {
+  const recent = lastPress && Date.now() - lastPress.t <= 1500 && lastPress.el && lastPress.el.closest ? lastPress.el : null;
+  const el = explicit && explicit.isConnected ? explicit : recent;
+  if (!el || !el.closest) return null;
+  if (el.closest('.day-pop')) return document.querySelector('.cal-cell.is-open');          // 날짜 창에서 고른 일정은 그 날짜 칸을 가리킴
+  if (el.closest('.peek-panel, .hol-pop, .search-pop, .cmd-overlay, .sidebar, .topbar, .toast, .ctx-menu')) return null;
+  return el.closest('.cal-cell, .item, .tbl-row, .cv-group, .week-day .item, .step-row') || null;
+}
+function placePeek(anchor) {
+  const pnl = document.getElementById('peekPanel');
+  pnl.style.maxHeight = ''; pnl.style.transformOrigin = '';
+  pnl.querySelectorAll(':scope > .pop-arrow').forEach(x => x.remove());
+  if (anchor && innerWidth >= 600) { placePop(pnl, anchor, true); const top = parseFloat(pnl.style.top) || 8; if (!pnl.style.maxHeight) pnl.style.maxHeight = (innerHeight - 8 - top) + 'px'; return; }
+  const w = pnl.offsetWidth, h = Math.min(pnl.offsetHeight, innerHeight - 16);
+  pnl.style.left = Math.max(8, (innerWidth - w) / 2) + 'px'; pnl.style.top = Math.max(8, (innerHeight - h) / 2) + 'px';
+  pnl.style.maxHeight = (innerHeight - 16) + 'px';
+}
+function openPeek(id, anchorEl) {
+  const anchor = peekAnchor(anchorEl);
+  const rect = anchor ? anchor.getBoundingClientRect() : null;
   closeHolPop();
+  const wasOpen = document.getElementById('peekPanel').classList.contains('open');
   peekId = id;
   renderPeek();
+  if (!wasOpen) {
+    // 날짜 창이 닫히며 칸 표시가 지워져도 위치는 기억해 둔 자리로
+    let a = anchor;
+    if (a && !a.isConnected && rect) a = null;
+    const ghost = !a && rect ? Object.assign(document.createElement('i'), {}) : null;
+    if (ghost) { ghost.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;pointer-events:none;visibility:hidden`; document.body.appendChild(ghost); }
+    placePeek(ghost || a);
+    if (ghost) ghost.remove();
+  }
   document.getElementById('peekOverlay').classList.add('open');
   document.getElementById('peekPanel').classList.add('open');
 }
 function closePeek() {
+  if (!peekId && !document.getElementById('peekPanel').classList.contains('open')) return;
   peekId = null;
   document.getElementById('peekOverlay').classList.remove('open');
   document.getElementById('peekPanel').classList.remove('open');
@@ -5504,9 +5562,14 @@ function renderPeek() {
   const type = it.type || '기타';
   body.innerHTML = `
     ${enrichingIds.has(it.id) ? '<div class="peek-ai-busy" role="status"><span class="pending-dot"></span><span>AI가 정리하는 중입니다. 끝나면 유형·우선순위·메모·예상시간이 채워집니다.</span></div>' : ''}
-    <input type="text" class="peek-title" value="${escapeHtml(it.title)}" aria-label="제목">
-    <div class="peek-row"><span class="peek-key">마감일</span><input type="date" class="peek-date" value="${it.dueDate}"></div>
-    <div class="peek-row"><span class="peek-key">마감 시각</span><span class="peek-time-wrap"><input type="time" class="peek-time" value="${normTime(it.dueTime)}" aria-label="마감 시각(선택)">${it.dueTime ? '<button type="button" class="peek-time-clear" aria-label="시각 지우기">지우기</button>' : ''}</span></div>
+    <div class="pk-hero${it.priority === 'high' || (!it.done && it.dueDate < todayISO()) ? ' hot' : ''}${it.done ? ' is-done' : ''}">
+      <div class="pk-card pk-title-card"><input type="text" class="peek-title" value="${escapeHtml(it.title)}" aria-label="제목"></div>
+      <div class="pk-card pk-when">
+        <div class="peek-row"><span class="peek-key">마감일</span><input type="date" class="peek-date" value="${it.dueDate}"></div>
+        <div class="peek-row"><span class="peek-key">마감 시각</span><span class="peek-time-wrap"><input type="time" class="peek-time" value="${normTime(it.dueTime)}" aria-label="마감 시각(선택)">${it.dueTime ? '<button type="button" class="peek-time-clear" aria-label="시각 지우기">지우기</button>' : ''}</span></div>
+      </div>
+    </div>
+    <div class="pk-card pk-group">
     <div class="peek-row"><span class="peek-key">예상 소요</span><span class="peek-time-wrap"><select class="peek-dur" aria-label="예상 소요시간(선택)">${durationOptionsHtml(it.durationMin)}</select><button type="button" class="peek-mini peek-dur-ai">${it.durationMin ? 'AI로 다시 추정' : 'AI로 추정'}</button></span></div>
     <div class="peek-row"><span class="peek-key">실제 소요</span><span class="peek-time-wrap"><select class="peek-actual" aria-label="실제로 걸린 시간(선택)">${actualOptionsHtml(it.actualMin)}</select>${timer && timer.id === it.id
       ? `<span class="peek-timer"><span class="peek-timer-clock">${fmtClock(timerElapsedMs())}</span><button type="button" class="peek-mini peek-timer-pause">${timer.startedAt ? '일시정지' : '계속'}</button><button type="button" class="peek-mini peek-timer-end">끝내기</button></span>`
@@ -5521,6 +5584,7 @@ function renderPeek() {
       </select></div>
     <div class="peek-row"><span class="peek-key">상태</span><label><input type="checkbox" class="peek-done" ${it.done ? 'checked' : ''}> 완료${it.recurringId ? ` <span class="recurring-tag">${ic('repeat')}반복</span>` : ''}</label></div>
     ${it.done ? '' : peekPostponeHtml(it)}
+    </div>
   `;
   body.appendChild(buildChecklistBox(it));
   body.appendChild(buildItemExtras(it));
@@ -5606,6 +5670,7 @@ function renderPeek() {
 }
 document.getElementById('peekCloseBtn').addEventListener('click', closePeek);
 document.getElementById('peekOverlay').addEventListener('click', closePeek);
+document.getElementById('peekOkBtn').addEventListener('click', closePeek);   // 고친 값은 그때그때 저장되므로 ✓는 닫기
 
 // ---- 테마 (자동 / 라이트 / 다크) ----
 const THEME_ORDER = ['', 'light', 'dark'];
@@ -5742,7 +5807,6 @@ document.addEventListener('keydown', (e) => {
   if (document.getElementById('planOverlay').classList.contains('open')) closePlanModal();
   else if (document.getElementById('cmdOverlay').classList.contains('open')) closePalette();
   else if (peekId) closePeek();
-  else if (document.getElementById('drawerPanel').classList.contains('open')) closeDrawer();
   else if (document.getElementById('chatPanel').classList.contains('open')) toggleChat(false);
   else closeSidebar();
 });
@@ -5884,7 +5948,7 @@ function plannerMenuAction(a) {
   const closeLayers = () => { closePalette && document.getElementById('cmdOverlay').classList.contains('open') && closePalette(); };
   if (a && a.startsWith('view:')) { const m = a.slice(5); if (VIEW_ORDER.includes(m)) setViewMode(m, true); return true; }
   switch (a) {
-    case 'new': closeLayers(); if (viewMode === 'profile' || viewMode === 'settings') setViewMode(profilePrevView || 'today', true); window.scrollTo({ top: 0, behavior: 'smooth' }); document.getElementById('quickInput').focus(); return true;
+    case 'new': closeLayers(); if (viewMode === 'profile' || viewMode === 'settings' || viewMode === 'library') setViewMode(profilePrevView || 'today', true); window.scrollTo({ top: 0, behavior: 'smooth' }); document.getElementById('quickInput').focus(); return true;
     case 'settings': openSettings(null); return true;
     case 'profile': setViewMode('profile', true); return true;
     case 'search': if (document.getElementById('cmdOverlay').classList.contains('open')) closePalette(); else openPalette(); return true;
