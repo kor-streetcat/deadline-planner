@@ -590,6 +590,25 @@
   .hol-pop .hol-pop-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-radius: 999px; background: var(--sidebar); box-shadow: inset 0 0 0 1px var(--border); }
   .hol-pop .hol-pop-label { display: inline-flex; align-items: center; gap: 8px; font-size: 0.86rem; color: var(--ink); flex-shrink: 0; }
   .hol-pop .hol-pop-cal { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--ink-dim); min-width: 0; text-align: right; }
+  .hol-pop.day-pop { width: min(380px, calc(100vw - 16px)); max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); overflow-y: auto; overscroll-behavior: contain; }
+  .day-pop .hol-pop-head::before { background: var(--accent); }
+  .day-pop .hol-pop-head.is-hol::before { background: var(--danger); }
+  .day-pop .day-pop-hol { margin-top: 4px; }
+  .day-pop .day-pop-hol .hol-badge { margin-left: 0; }
+  .day-pop .day-pop-list { display: grid; gap: 6px; margin-top: 8px; }
+  .day-pop .day-pop-list .item { margin: 0; }
+  .day-pop .empty-state { padding: 14px 8px; }
+  .cal-cell.is-open { box-shadow: inset 0 0 0 2px var(--accent); }
+  .item-pop .hol-pop-head.is-hot::before { background: var(--danger); }
+  .item-pop .hol-pop-head::before { background: var(--accent); }
+  .item-pop .hol-pop-head.is-done::before { background: var(--ink-faint); }
+  .item-pop .is-done .hol-pop-title { text-decoration: line-through; color: var(--ink-dim); }
+  .item-pop .hol-pop-status { font-size: 0.84rem; color: var(--ink-dim); }
+  .item-pop .hol-pop-status.over { color: var(--danger); }
+  .item-pop .hol-pop-row { padding: 8px 14px; }
+  .item-pop .item-pop-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .item-pop .item-pop-acts button { border-radius: 999px; padding: 9px 10px; font-size: 0.86rem; }
+  .cal-cell .item-label.pill.is-open { box-shadow: 0 0 0 2px var(--accent); }
   .hol-pop .hol-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--danger); flex-shrink: 0; }
   /* 토요일 파랑, 일요일 빨강(공휴일도 빨강, 오늘 동그라미는 그대로) */
   .cal-dow.sun, .week-day .wd-label.sun { color: var(--danger); }
@@ -1736,7 +1755,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v80';
+const APP_VERSION = 'v81';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2452,7 +2471,7 @@ function holKind(h, iso) {
 }
 // 공휴일 알약·배지를 누르면 뜨는 작은 정보 창(애플 캘린더처럼): 이름 · 날짜 · 대한민국 공휴일 · (대체공휴일이면) 이유
 let holPopEl = null;
-function closeHolPop() { if (holPopEl) { holPopEl.remove(); holPopEl = null; } document.querySelectorAll('[data-hol].is-open').forEach(x => x.classList.remove('is-open')); }
+function closeHolPop() { if (holPopEl) { holPopEl.remove(); holPopEl = null; } document.querySelectorAll('[data-hol].is-open, .item-label.is-open, .cal-cell.is-open').forEach(x => x.classList.remove('is-open')); }
 function openHolPop(iso, anchor) {
   closeHolPop();
   const h = krHoliday(iso); if (!h) return;
@@ -2483,12 +2502,111 @@ function openHolPop(iso, anchor) {
   pop.style.left = left + 'px'; pop.style.top = Math.max(8, top) + 'px';
   holPopEl = pop;
 }
+
+// 달력 일정 알약을 누르면 공휴일 창과 같은 모양의 일정 정보 창(완료한 일정 포함)
+// 달력 날짜를 누르면 그날 일정 목록 창(v81: 예전 달력 아래 목록을 옮김)
+function fillDayPop(pop, iso) {
+  const body = pop.querySelector('.day-pop-body'); if (!body) return;
+  const d = new Date(iso + 'T12:00:00'), WDN = ['일', '월', '화', '수', '목', '금', '토'];
+  const dayItems = items.filter(it => it.dueDate === iso).sort(cmpDay), daySteps = stepsOnDate(iso), total = dayItems.length + daySteps.length;
+  const h = krHoliday(iso);
+  body.innerHTML = `<div class="hol-pop-head${h ? ' is-hol' : ''}"><div class="hol-pop-title">${d.getMonth() + 1}월 ${d.getDate()}일 ${WDN[d.getDay()]}요일</div>` +
+    `<div class="hol-pop-date">${d.getFullYear()}년${total ? ` · 일정 ${total}건` : ''}</div>` +
+    (h ? `<div class="day-pop-hol"><span class="hol-badge" data-hol="${iso}" role="button" tabindex="0">${escapeHtml(holLabel(h))}</span></div>` : '') + `</div>`;
+  const list = document.createElement('div'); list.className = 'day-pop-list'; body.appendChild(list);
+  if (!total) { list.innerHTML = '<div class="empty-state">이 날짜에는 등록된 일정이 없습니다</div>'; return; }
+  dayItems.forEach(it => list.appendChild(renderItemRow(it)));
+  daySteps.forEach(({ it, i, e }) => list.appendChild(renderStepRow(it, i, e)));
+}
+function openDayPop(iso, anchor) {
+  closeHolPop();
+  const pop = document.createElement('div'); pop.className = 'hol-pop day-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', iso + ' 일정');
+  const close = document.createElement('button'); close.className = 'hol-pop-close'; close.type = 'button'; close.setAttribute('aria-label', '닫기');
+  close.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>';
+  close.addEventListener('click', (e) => { e.stopPropagation(); closeHolPop(); });
+  pop.appendChild(close);
+  const body = document.createElement('div'); body.className = 'day-pop-body'; pop.appendChild(body);
+  pop.dataset.for = 'day:' + iso;
+  holPopEl = pop;
+  fillDayPop(pop, iso);
+  anchor.classList.add('is-open');
+  document.body.appendChild(pop);
+  const a = anchor.getBoundingClientRect(), r = { width: pop.offsetWidth, height: pop.offsetHeight }, gap = 8;
+  let left = a.right + gap, top = a.top;
+  if (left + r.width > innerWidth - 8) left = a.left - r.width - gap;
+  if (left < 8) {   // 폰: 가운데 정렬, 칸 아래(자리가 넉넉하면 높이를 줄여 안에서 스크롤) 아니면 칸 위
+    left = Math.max(8, (innerWidth - r.width) / 2);
+    const below = innerHeight - 8 - (a.bottom + gap), above = a.top - gap - 8;
+    if (r.height <= below || below >= Math.min(r.height, 300)) { top = a.bottom + gap; if (r.height > below) pop.style.maxHeight = below + 'px'; }
+    else if (r.height <= above || above >= Math.min(r.height, 300)) { top = Math.max(8, a.top - gap - r.height); if (r.height > above) pop.style.maxHeight = above + 'px'; }
+    else top = innerHeight - 8 - r.height;
+  }
+  else if (top + r.height > innerHeight - 8) top = innerHeight - 8 - r.height;
+  pop.style.left = left + 'px'; pop.style.top = Math.max(8, top) + 'px';
+}
+function openItemPop(id, anchor) {
+  closeHolPop();
+  const it = items.find(x => x.id === id); if (!it) return;
+  const d = new Date(it.dueDate + 'T12:00:00'), WDN = ['일', '월', '화', '수', '목', '금', '토'];
+  const pop = document.createElement('div'); pop.className = 'hol-pop item-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', it.title || '일정');
+  const el = (tag, cls, txt, parent) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; (parent || pop).appendChild(e); return e; };
+  const close = el('button', 'hol-pop-close'); close.type = 'button'; close.setAttribute('aria-label', '닫기');
+  close.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>';
+  close.addEventListener('click', (e) => { e.stopPropagation(); closeHolPop(); });
+  const overdue = !it.done && it.dueDate < todayISO();
+  const head = el('div', 'hol-pop-head' + (it.done ? ' is-done' : overdue || it.priority === 'high' ? ' is-hot' : ''));
+  el('div', 'hol-pop-title', it.title || '(제목 없음)', head);
+  el('div', 'hol-pop-date', `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 ${WDN[d.getDay()]}요일`, head);
+  const tm = normTime(it.dueTime), dur = normDuration(it.durationMin);
+  el('div', 'hol-pop-allday', (tm ? fmtTime(tm) + ' 마감' : '하루 종일') + (dur ? ' · 예상 ' + fmtDuration(dur) : ''), head);
+  let status;
+  if (it.done) {
+    const t = it.doneAt ? new Date(it.doneAt) : null;
+    status = t && !isNaN(t) ? `완료함 · ${t.getMonth() + 1}월 ${t.getDate()}일 ${fmtTime(String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0'))}` : '완료함';
+  } else {
+    const n = daysUntil(it.dueDate);
+    status = n === 0 ? '오늘 마감' : n > 0 ? `D-${n} · ${n}일 남음` : `D+${-n} · 마감이 ${-n}일 지남`;
+  }
+  el('div', 'hol-pop-status' + (overdue ? ' over' : ''), status, head);
+  const cl = Array.isArray(it.checklist) ? it.checklist.filter(Boolean) : [];
+  if (cl.length) el('div', 'hol-pop-repeat', `체크리스트 ${cl.filter(stepDone).length}/${cl.length}`, head);
+  el('div', 'hol-pop-sec', '옵션');
+  const row = el('div', 'hol-pop-row');
+  el('span', 'hol-pop-label', '유형', row);
+  const tg = el('span', 'type-tag t-' + (it.type || '기타'), it.type || '기타', row);
+  const row2 = el('div', 'hol-pop-row');
+  el('span', 'hol-pop-label', '우선순위', row2);
+  el('span', 'hol-pop-cal', priorityLabel(it.priority), row2);
+  const acts = el('div', 'item-pop-acts');
+  const doneBtn = el('button', 'btn-ghost', it.done ? '완료 취소' : '완료로 표시', acts); doneBtn.type = 'button';
+  doneBtn.addEventListener('click', async (e) => {
+    e.stopPropagation(); closeHolPop();
+    const was = it.done; markDone(it, !was); await saveItems(); refreshAll(); if (peekId === it.id) renderPeek();
+    showToast(was ? '완료를 취소했습니다' : '완료로 표시했습니다', '되돌리기', async () => { markDone(it, was); await saveItems(); refreshAll(); if (peekId === it.id) renderPeek(); });
+  });
+  const openBtn = el('button', 'btn-main', '자세히 보기', acts); openBtn.type = 'button';
+  openBtn.addEventListener('click', (e) => { e.stopPropagation(); closeHolPop(); openPeek(it.id); });
+  anchor.classList.add('is-open');
+  document.body.appendChild(pop);
+  const a = anchor.getBoundingClientRect(), r = { width: pop.offsetWidth, height: pop.offsetHeight }, gap = 8;
+  let left = a.right + gap, top = a.top + a.height / 2 - 28;
+  if (left + r.width > innerWidth - 8) left = a.left - r.width - gap;
+  if (left < 8) { left = Math.max(8, Math.min(innerWidth - r.width - 8, a.left + a.width / 2 - r.width / 2)); top = a.bottom + gap; }
+  if (top + r.height > innerHeight - 8) top = Math.max(8, a.top - r.height - gap);
+  pop.style.left = left + 'px'; pop.style.top = Math.max(8, top) + 'px';
+  pop.dataset.for = 'item:' + it.id;
+  holPopEl = pop;
+}
 (function setupHolPop() {
   if (typeof document.addEventListener !== 'function') return;   // 화면이 없는 검사 환경에서는 건너뜀
   // 칸을 누르면 날짜가 선택되는 동작보다 먼저 받아서(capture) 정보 창만 연다
   document.addEventListener('click', (e) => {
     const t = e.target.closest && e.target.closest('[data-hol]');
     if (t) { e.stopPropagation(); e.preventDefault(); if (holPopEl && holPopEl.dataset.for === t.dataset.hol) closeHolPop(); else { openHolPop(t.dataset.hol, t); if (holPopEl) holPopEl.dataset.for = t.dataset.hol; } return; }
+    const c = e.target.closest && e.target.closest('.cal-cell[data-date]');
+    if (c && !e.target.closest('[data-hol], .item-label.pill') && holPopEl && holPopEl.dataset.for === 'day:' + c.dataset.date) { e.stopPropagation(); e.preventDefault(); closeHolPop(); return; }
+    const p = e.target.closest && e.target.closest('.cal-cell .item-label.pill[data-item-id]');
+    if (p) { e.stopPropagation(); e.preventDefault(); if (holPopEl && holPopEl.dataset.for === 'item:' + p.dataset.itemId) closeHolPop(); else openItemPop(p.dataset.itemId, p); return; }
     if (holPopEl && !holPopEl.contains(e.target)) closeHolPop();
   }, true);
   document.addEventListener('keydown', (e) => {
@@ -2496,7 +2614,7 @@ function openHolPop(iso, anchor) {
     const t = (e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('[data-hol]');
     if (t) { e.preventDefault(); openHolPop(t.dataset.hol, t); if (holPopEl) holPopEl.dataset.for = t.dataset.hol; }
   }, true);
-  window.addEventListener('scroll', closeHolPop, { passive: true, capture: true });
+  window.addEventListener('scroll', (e) => { if (holPopEl && e.target instanceof Node && holPopEl.contains(e.target)) return; closeHolPop(); }, { passive: true, capture: true });
   window.addEventListener('resize', closeHolPop);
 })();
 
@@ -3339,6 +3457,8 @@ function renderCalendar() {
     const iso = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     const cell = document.createElement('div');
     cell.className = 'cal-cell';
+    cell.dataset.date = iso;
+    if (holPopEl && holPopEl.dataset.for === 'day:' + iso) cell.classList.add('is-open');
     if (iso === today) cell.classList.add('today');
     if (iso === selectedDate) cell.classList.add('selected');
     const wd = (firstDay + day - 1) % 7;
@@ -3396,6 +3516,8 @@ function renderCalendar() {
       selectedDate = iso;
       renderCalendar();
       renderDetail();
+      const c = document.querySelector(`.cal-cell[data-date="${iso}"]`);
+      if (c) openDayPop(iso, c);   // 아래 목록 대신 그날 일정을 창으로(v81)
     });
     grid.appendChild(cell);
   }
@@ -3499,6 +3621,7 @@ function refreshAll() {
 }
 
 function renderDetail() {
+  if (holPopEl && holPopEl.dataset.for && holPopEl.dataset.for.startsWith('day:')) fillDayPop(holPopEl, holPopEl.dataset.for.slice(4));
   const titleEl = document.getElementById('detailTitle');
   const listEl = document.getElementById('detailList');
 
@@ -3600,7 +3723,7 @@ function setViewMode(mode, animate) {
   document.getElementById('checklistView').style.display = mode === 'checklist' ? 'block' : 'none';
   document.getElementById('todayView').style.display = mode === 'today' ? 'block' : 'none';
   document.getElementById('calHead').style.display = mode === 'today' || isProfile ? 'none' : '';
-  document.getElementById('detailPanel').style.display = mode === 'month' ? 'block' : 'none';
+  document.getElementById('detailPanel').style.display = 'none';   // v81: 날짜를 누르면 뜨는 창으로 옮김
   document.getElementById('prevBtn').style.display = mode === 'month' ? '' : 'none';
   document.getElementById('nextBtn').style.display = mode === 'month' ? '' : 'none';
 
@@ -5275,6 +5398,7 @@ function renderChecklistView() {
 
 // ---- 상세 패널 (오른쪽 peek) ----
 function openPeek(id) {
+  closeHolPop();
   peekId = id;
   renderPeek();
   document.getElementById('peekOverlay').classList.add('open');
