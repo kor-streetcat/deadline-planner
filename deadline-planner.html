@@ -1171,8 +1171,12 @@
   @media (min-width: 901px) {
     html.sb-collapsed .sidebar { transition: transform 0.6s var(--spring), visibility 0s 0.6s; }
   }
-  .peek-panel, .drawer-panel { transition: transform 0.7s var(--spring); }
-  .peek-overlay, .drawer-overlay, .sb-overlay { transition: opacity 0.5s var(--ease-out), visibility 0.5s var(--ease-out); }
+  /* 옆에서 나오는 창(자료·휴지통, 일정 상세): iOS 시트 곡선(처음에 빠르게 튀어나가 끝에서 부드럽게 멈춤). 열기 0.44초, 닫기 0.32초(v78) */
+  :root { --sheet: cubic-bezier(0.32, 0.72, 0, 1); }
+  .peek-panel, .drawer-panel { transition: transform 0.32s var(--sheet); }
+  .peek-panel.open, .drawer-panel.open { transition: transform 0.44s var(--sheet); }
+  .peek-overlay, .drawer-overlay { transition: opacity 0.3s var(--ease-out), visibility 0.3s var(--ease-out); }
+  .sb-overlay { transition: opacity 0.5s var(--ease-out), visibility 0.5s var(--ease-out); }
   .sidebar, .peek-panel, .drawer-panel, .toast { will-change: transform; }
 
   /* 창·메뉴가 톡 튀어나오는 움직임(살짝 넘쳤다 자리 잡음) */
@@ -1732,7 +1736,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v77';
+const APP_VERSION = 'v78';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
