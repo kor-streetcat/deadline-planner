@@ -1336,6 +1336,22 @@
     .cal-cell .hol-tag:hover { background-color: color-mix(in srgb, var(--danger) 11%, transparent); }
     .cal-cell .hol-tag.is-open:hover { background-color: var(--danger); }
   }
+
+  /* ===== 화면이 느리게 그려질 때(v93): 아이폰 절전 모드 등에서 초당 30프레임 근처로 떨어지면 html.low-fps.
+     긴 스프링은 30프레임에서 뚝뚝 끊겨 보이므로 짧고 단순한 움직임으로 바꾸고, 비싼 흐림을 끈다 ===== */
+  @keyframes lowFade { from { opacity: 0; } to { opacity: 1; } }
+  html.low-fps .view-in-r, html.low-fps .view-in-l { animation: lowFade 0.16s linear; }
+  html.low-fps .hol-pop, html.low-fps .ctx-menu, html.low-fps .search-pop,
+  html.low-fps .dlg-overlay.open .dlg, html.low-fps .cmd-overlay.open .cmd-box, html.low-fps .ai-modal-overlay.open .ai-modal, html.low-fps .chat-panel.open { animation: lowFade 0.14s linear; }
+  html.low-fps .peek-panel, html.low-fps .peek-panel.open, html.low-fps .peek-panel.pk-sheet { transform: none; transition: opacity 0.14s linear, visibility 0s 0.14s; }
+  html.low-fps .peek-panel.open { transition: opacity 0.14s linear, visibility 0s; }
+  html.low-fps .sidebar { transition: transform 0.24s var(--ease-out); }
+  html.low-fps .sb-pill .sp-label, html.low-fps .tb-pill .tb-label, html.low-fps .sb-pill.active .sp-label, html.low-fps .tb-pill.active .tb-label { transition: none; }
+  html.low-fps .toast { transition: opacity 0.16s linear, transform 0.22s var(--ease-out), visibility 0.16s linear; }
+  html.low-fps .quick-opts, html.low-fps .quick-opts-inner { transition-duration: 0.18s !important; }
+  html.low-fps .topbar, html.low-fps .peek-overlay, html.low-fps .dlg-overlay { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  html.low-fps .topbar { background: var(--bg); }
+  html.low-fps .peek-overlay { background: rgba(15,15,15,0.3); }
 </style>
 </head>
 <body>
@@ -1818,7 +1834,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v92';
+const APP_VERSION = 'v93';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2650,6 +2666,40 @@ function openDayPop(iso, anchor) {
   }, true);
   window.addEventListener('scroll', (e) => { if (holPopEl && e.target instanceof Node && holPopEl.contains(e.target)) return; closeHolPop(); }, { passive: true, capture: true });
   window.addEventListener('resize', closeHolPop);
+})();
+
+// ---- 화면 그리기 속도 감지(v93) ----
+// 절전 모드 등으로 초당 30프레임 근처까지 떨어지면 html.low-fps를 붙여 움직임을 가볍게 한다.
+// 앱을 켤 때, 다시 화면에 돌아올 때, 그리고 20초마다 0.5초 정도(약 24프레임)만 재므로 부담이 거의 없다.
+const fpsWatch = { low: false };
+function setLowFps(v) { fpsWatch.low = !!v; document.documentElement.classList.toggle('low-fps', !!v); }
+function probeFps() {
+  return new Promise((resolve) => {
+    if (typeof requestAnimationFrame !== 'function' || document.hidden) return resolve(null);
+    const ts = []; let n = 0;
+    const step = (t) => { ts.push(t); if (++n < 24) requestAnimationFrame(step); else {
+      const d = ts.slice(1).map((x, i) => x - ts[i]).sort((a, b) => a - b), med = d[Math.floor(d.length / 2)];
+      resolve(med);
+    } };
+    requestAnimationFrame(step);
+  });
+}
+async function checkFps() {
+  const med = await probeFps();
+  if (med == null) return;
+  if (!fpsWatch.low && med > 26) {                         // 약 38fps 아래: 잠깐 버벅인 것일 수 있으니 0.8초 뒤 한 번 더 재서 둘 다 느리면
+    await new Promise(r => setTimeout(r, 800));
+    const again = await probeFps();
+    if (again != null && again > 26) setLowFps(true);
+  }
+  else if (fpsWatch.low && med < 20) setLowFps(false);     // 50fps 넘게 회복하면 원래대로(오락가락 방지)
+}
+(function setupFpsWatch() {
+  if (typeof document.addEventListener !== 'function' || typeof requestAnimationFrame !== 'function') return;
+  if (/HeadlessChrome/.test(navigator.userAgent)) return;   // 자동 검사 브라우저는 원래 느리게(약 15fps) 그려서 감시를 끈다(검사는 checkFps를 직접 부름)
+  setTimeout(checkFps, 1500);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(checkFps, 600); });
+  setInterval(() => { if (!document.hidden && !document.body.classList.contains('view-sliding')) checkFps(); }, 20000);
 })();
 
 // ---- 오른쪽 위 검색(v83) ----
@@ -3978,8 +4028,9 @@ function calSlide(dir) {
   if (!g || !dir || typeof g.animate !== 'function' || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const ease = getComputedStyle(document.documentElement).getPropertyValue('--spring').trim() || 'cubic-bezier(0.22, 1, 0.36, 1)';
   try {
-    g.animate([{ transform: `translateX(${dir * 36}px)`, opacity: 0.35 }, { transform: 'none', opacity: 1 }], { duration: 560, easing: ease });
-    document.getElementById('monthLabel').animate([{ transform: `translateX(${dir * 14}px)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 480, easing: ease });
+    const low = document.documentElement.classList.contains('low-fps');   // 느릴 때는 짧게(v93)
+    g.animate([{ transform: `translateX(${dir * (low ? 14 : 36)}px)`, opacity: 0.35 }, { transform: 'none', opacity: 1 }], { duration: low ? 200 : 560, easing: low ? 'ease-out' : ease });
+    document.getElementById('monthLabel').animate([{ transform: `translateX(${dir * 14}px)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: low ? 180 : 480, easing: low ? 'ease-out' : ease });
   } catch (e) {}
 }
 document.getElementById('prevBtn').addEventListener('click', () => {
@@ -5124,7 +5175,7 @@ function setSidebarCollapsed(c) {
     const dx = before - main.getBoundingClientRect().left;   // 폭은 이미 새 값, 보이는 위치만 옛 자리에서 출발
     if (Math.abs(dx) > 1) {
       const ease = getComputedStyle(document.documentElement).getPropertyValue('--spring').trim() || 'cubic-bezier(0.22, 1, 0.36, 1)';
-      try { main.animate([{ transform: `translateX(${dx}px)` }, { transform: 'none' }], { duration: 700, easing: ease }); } catch (e) {}
+      try { const low = document.documentElement.classList.contains('low-fps'); main.animate([{ transform: `translateX(${dx}px)` }, { transform: 'none' }], { duration: low ? 260 : 700, easing: low ? 'ease-out' : ease }); } catch (e) {}
     }
   }
   try { localStorage.setItem(APP_PREFIX + 'sidebar', c ? '1' : '0'); } catch (e) {}
