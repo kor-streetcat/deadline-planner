@@ -1834,7 +1834,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v93';
+const APP_VERSION = 'v94';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2666,6 +2666,25 @@ function openDayPop(iso, anchor) {
   }, true);
   window.addEventListener('scroll', (e) => { if (holPopEl && e.target instanceof Node && holPopEl.contains(e.target)) return; closeHolPop(); }, { passive: true, capture: true });
   window.addEventListener('resize', closeHolPop);
+})();
+
+// ---- 날짜가 바뀌면 화면을 다시 그림(v94) ----
+// 앱을 켜 둔 채 자정을 넘기거나 다음 날 다시 열면 D-day·오늘 묶음이 어제 기준으로 남아 있던 것.
+let shownDay = null;
+function checkDayChange() {
+  const t = todayISO();
+  if (shownDay === null) { shownDay = t; return false; }
+  if (t === shownDay) return false;
+  shownDay = t;
+  try { refreshAll(); } catch (e) {}
+  return true;
+}
+(function setupDayWatch() {
+  if (typeof document.addEventListener !== 'function') return;
+  checkDayChange();
+  setInterval(checkDayChange, 30000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkDayChange(); });
+  window.addEventListener('focus', checkDayChange);
 })();
 
 // ---- 화면 그리기 속도 감지(v93) ----
@@ -6532,7 +6551,16 @@ function traySummary() {
   const soon = active.filter(x => { const n = daysUntil(x.dueDate); return n >= 2 && n <= 7; }).sort(byDate);
   const list = [...overdue, ...today, ...tomorrow, ...soon].slice(0, 8).map(x => ({ id: x.id, title: String(x.title || '').slice(0, 40), dueDate: x.dueDate, dday: daysUntil(x.dueDate), high: x.priority === 'high', time: normTime(x.dueTime) }));
   const timed = today.filter(x => normTime(x.dueTime)).slice(0, 20).map(x => ({ id: x.id, title: String(x.title || '').slice(0, 40), time: normTime(x.dueTime) }));   // Mac 마감 알림용: 오늘 마감 시각이 있는 미완료 일정
-  return { overdue: overdue.length, today: today.length, tomorrow: tomorrow.length, urgent: overdue.length + today.length, list, timed };
+  return { overdue: overdue.length, today: today.length, tomorrow: tomorrow.length, urgent: overdue.length + today.length, list, timed, sig: itemsSig() };
+}
+// 일정이 바뀌었는지 Mac 앱이 알아채게 하는 짧은 표시값(v94): 오늘 날짜 + 일정의 날짜·시각·완료·우선순위·제목을 섞은 값.
+// 이 값이 바뀌면 Mac 앱이 데스크톱 위젯에 바로 새로고침을 요청한다(내용은 보내지 않음).
+function itemsSig() {
+  let h = 0x811c9dc5;
+  const add = (str) => { for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } };
+  add(todayISO());
+  items.map(x => [x.id, x.dueDate, x.dueTime || '', x.done ? 1 : 0, x.priority || '', x.title || ''].join('|')).sort().forEach(add);
+  return todayISO() + '-' + h.toString(16);
 }
 
 // ---- AI로 큰 마감 쪼개기 · 이번 주 계획 ----
