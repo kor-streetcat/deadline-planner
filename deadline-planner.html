@@ -1834,7 +1834,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v95';
+const APP_VERSION = 'v96';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -5656,7 +5656,8 @@ function buildChecklistBox(it) {
   box.querySelectorAll('.cl-due').forEach(inp => inp.addEventListener('change', async () => {
     const list = normChecklist(it.checklist), i = +inp.dataset.i;
     if (isValidISO(inp.value)) list[i].due = inp.value; else delete list[i].due;
-    await save(list, true);
+    await save(list, false);
+    renderPeekWhenIdle(inp, it.id);
   }));
   box.querySelectorAll('.cl-del').forEach(b => b.addEventListener('click', async () => {
     const list = normChecklist(it.checklist); list.splice(+b.dataset.i, 1);
@@ -5675,6 +5676,13 @@ function buildChecklistBox(it) {
   return box;
 }
 
+// 날짜·시각 칸에서 값이 바뀌어도 그 칸을 쓰는 중(포커스·아이폰 휠이 열려 있음)이면 상세 창을 다시 그리지 않고,
+// 손을 뗀 뒤에 다시 그린다(v96, 사용자 제보: 시간만 바꿨는데 분을 고르기 전에 창이 꺼짐). 값 저장은 바뀔 때마다 바로 한다.
+function renderPeekWhenIdle(el, id) {
+  const go = () => { if (peekId === id) renderPeek(); };
+  if (el && document.activeElement === el) el.addEventListener('blur', () => setTimeout(go, 0), { once: true });
+  else go();
+}
 function renderPeek() {
   const it = items.find(x => x.id === peekId);
   const body = document.getElementById('peekBody');
@@ -5731,7 +5739,7 @@ function renderPeek() {
     setItemTime(it, e.target.value);
     await saveItems();
     refreshAll();
-    if (peekId === it.id) renderPeek();          // 지우기 버튼이 나타나거나 사라짐
+    renderPeekWhenIdle(e.target, it.id);          // 지우기 버튼이 나타나거나 사라짐. 시간·분을 고르는 중에는 다시 그리지 않는다(v96)
   });
   const timeClear = q('.peek-time-clear');
   if (timeClear) timeClear.addEventListener('click', async () => {
