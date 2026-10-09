@@ -1834,7 +1834,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v94';
+const APP_VERSION = 'v95';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -4541,20 +4541,51 @@ function readLocalWhen(line, todayIso) {
   else if ((m = cut(/([월화수목금토일])요일/))) {
     date = plus((('일월화수목금토'.indexOf(m[1])) - dow + 7) % 7); sure = false;
   }
-  if (!date) return null;
-  let ap = '', h = -1, mi = 0;
-  if ((m = cut(/(오전|오후|아침|저녁|밤)?\s*(\d{1,2})\s*:\s*(\d{2})/))) { ap = m[1] || ''; h = +m[2]; mi = +m[3]; timeSure = !!ap || h >= 13 || h === 0; }
-  else if ((m = cut(/(오전|오후|아침|저녁|밤)?\s*(\d{1,2})\s*시(?!간)\s*(?:(\d{1,2})\s*분|(반))?/))) { ap = m[1] || ''; h = +m[2]; mi = m[4] ? 30 : (m[3] ? +m[3] : 0); timeSure = !!ap || h >= 13; }
-  if (h >= 0) {
-    if (/오후|저녁|밤/.test(ap)) { if (h < 12) h += 12; }
-    else if (/오전|아침/.test(ap)) { if (h === 12) h = 0; }
-    else if (h >= 1 && h <= 6) h += 12;                    // "3시"는 보통 오후 3시(애매하니 AI가 고칠 수 있게 timeSure=false)
-    time = normTime(`${h}:${String(mi).padStart(2, '0')}`);
+  // 시각(v95): 오전·오후·아침·저녁·밤·새벽·낮, 정오·자정, 3pm·3:30pm, "2시~4시"·"14:00-16:00" 범위(길이는 예상 소요로)
+  let h = -1, mi = 0, dur = 0;
+  const hour24 = (ap, x) => {
+    if (/오후|저녁|밤/.test(ap)) { if (x < 12) x += 12; else if (x === 12 && /밤/.test(ap)) x = 24; }   // 밤 12시 = 그날 끝
+    else if (/낮/.test(ap)) { if (x >= 1 && x <= 6) x += 12; }
+    else if (/오전|아침|새벽/.test(ap)) { if (x === 12) x = 0; }
+    else if (x >= 1 && x <= 6) x += 12;                      // "3시"는 보통 오후 3시(애매하니 AI가 고칠 수 있게 timeSure=false)
+    return x;
+  };
+  const AP = '(오전|오후|아침|저녁|밤|새벽|낮)?';   // "점심"은 일정 이름일 때가 많아서 넣지 않음
+  const END = `(?:\\s*(?:~|〜|-|–|부터)\\s*${AP}\\s*(\\d{1,2})\\s*(?::\\s*(\\d{2})|시(?!간)\\s*(?:(\\d{1,2})\\s*분|(반))?))?`;
+  const setRange = (ap, sh, smi, eap, eh, emi) => {
+    if (eh == null || eh === '' || eh === undefined) return;
+    let e = eap ? hour24(eap, +eh) : (ap ? hour24(ap, +eh) : +eh);
+    let endM = e * 60 + (+emi || 0); const startM = sh * 60 + smi;
+    if (!eap && endM <= startM && e < 12) endM += 12 * 60;
+    const d = endM - startM;
+    if (d >= 5 && d <= 1440) dur = d;
+  };
+  if ((m = cut(/정오/))) { h = 12; timeSure = true; }
+  else if ((m = cut(/자정/))) { h = 23; mi = 59; timeSure = true; }
+  else if ((m = cut(/(\d{1,2})(?:\s*:\s*(\d{2}))?\s*([ap])\.?\s*m\.?(?![a-z])/i))) {
+    h = +m[1] % 12 + (/p/i.test(m[3]) ? 12 : 0); mi = +(m[2] || 0); timeSure = true;
+  }
+  else if ((m = cut(new RegExp(AP + '\\s*(\\d{1,2})\\s*:\\s*(\\d{2})' + END)))) {
+    const ap = m[1] || ''; h = hour24(ap, +m[2]); mi = +m[3]; timeSure = !!ap || +m[2] >= 13 || +m[2] === 0;
+    if (!ap && (+m[2] >= 13 || +m[2] === 0)) h = +m[2];
+    setRange(ap, h, mi, m[4] || '', m[5], m[6] || m[7] || (m[8] ? 30 : 0));
+  }
+  else if ((m = cut(new RegExp(AP + '\\s*(\\d{1,2})\\s*시(?!간)\\s*(?:(\\d{1,2})\\s*분|(반))?' + END)))) {
+    const ap = m[1] || ''; h = hour24(ap, +m[2]); mi = m[4] ? 30 : (m[3] ? +m[3] : 0); timeSure = !!ap || +m[2] >= 13;
+    if (!ap && +m[2] >= 13) h = +m[2];
+    setRange(ap, h, mi, m[5] || '', m[6], m[7] || m[8] || (m[9] ? 30 : 0));
+  }
+  if (h >= 24) { h = 23; mi = 59; }                           // "밤 12시" → 그날 끝
+  if (h >= 0) time = normTime(`${h}:${String(mi).padStart(2, '0')}`);
+  if (!date && !time) return null;
+  if (!date) {                                                // 시각만 있으면: 아직 안 지났으면 오늘, 지났으면 내일(애매하니 AI가 고칠 수 있게)
+    const now = new Date(), nowHM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    date = time > nowHM || todayIso !== isoOfDate(now) ? todayIso : plus(1); sure = false;
   }
   const tidy = (x) => cleanText(x.replace(/[\s,·:;\-–]+$/, '').replace(/^[\s,·:;\-–]+/, ''), 300);
   const noParticle = s.replace(/(^|\s)(까지|부터|에서|에|쯤|경)(?=\s|$)/g, ' ');
   const title = tidy(noParticle.replace(/(^|\s)(마감|기한)(?=\s|$)/g, ' ')) || tidy(noParticle);      // "마감"만 남으면 그것이 제목
-  return { date, sure, time, timeSure, title };
+  return { date, sure, time, timeSure, title, dur };
 }
 function readLocalPlan(text) {
   const t = String(text || '').trim();
@@ -4592,7 +4623,7 @@ function announceRegistered(ids, extra) {
   }, 6000);
 }
 async function registerInstantly(plan, kw) {
-  const created = plan.map(p => ({ id: uid(), title: p.title, shortLabel: '', type: '기타', dueDate: p.date, priority: 'medium', notes: '', aiComment: '', topicSuggestion: '', topicKeyword: '', done: false, ...(p.time ? { dueTime: p.time } : {}) }));
+  const created = plan.map(p => ({ id: uid(), title: p.title, shortLabel: '', type: '기타', dueDate: p.date, priority: 'medium', notes: '', aiComment: '', topicSuggestion: '', topicKeyword: '', done: false, ...(p.time ? { dueTime: p.time } : {}), ...(p.dur ? { durationMin: p.dur } : {}) }));
   items = items.concat(created);
   await saveItems();
   selectedDate = created[0].dueDate;
@@ -4891,6 +4922,7 @@ async function registerWithoutAI(text) {
     const title = ((r && r.title) || raw).slice(0, 300);
     const it = { id: uid(), title, shortLabel: '', type: '기타', dueDate: (r && r.date) || fb, priority: 'medium', notes: '', aiComment: '', topicSuggestion: '', topicKeyword: '', done: false };
     if (r && r.date && r.time) it.dueTime = r.time;
+    if (r && r.dur) it.durationMin = r.dur;   // "2시~4시"처럼 범위로 적으면 그 길이를 예상 소요로
     return it;
   });
   if (!created.length) return;
