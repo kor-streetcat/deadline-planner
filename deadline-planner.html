@@ -1284,6 +1284,57 @@
   /* 터치 기기(아이폰·아이패드): 탭한 곳에 "마우스 올림" 상태가 남아 회색이 계속 덮여 있다가(선택된 파랑을 가림) 다른 곳을 누르면 풀렸다(v77, 사용자 제보).
      마우스가 없는 기기에서는 마우스 올림 색을 원래 색으로 되돌려, 누르면 바로 선택 색이 보이게 한다. */
 
+
+  /* ===== 이번 주 시간표(v97) ===== */
+  .wk { --wk-gut: 38px; user-select: none; -webkit-user-select: none; }
+  .wk-grid { display: grid; grid-template-columns: var(--wk-gut) repeat(7, minmax(0, 1fr)); }
+  .wk-headrow { position: sticky; top: 0; z-index: 3; background: var(--bg); border-bottom: 1px solid var(--border); }
+  .wk-dh { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0 8px; border: 0; background: none; color: var(--ink); font: inherit; cursor: pointer; border-radius: 12px; }
+  .wk-dow { font-size: 0.7rem; color: var(--ink-dim); font-weight: 500; }
+  .wk-dn { width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 1.02rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .wk-dh.sun .wk-dow, .wk-dh.sun .wk-dn { color: var(--danger); }
+  .wk-dh.sat .wk-dow, .wk-dh.sat .wk-dn { color: var(--sat); }
+  .wk-dh.today .wk-dn { background: var(--danger); color: #fff; }
+  .wk-dh.is-open .wk-dn { box-shadow: 0 0 0 2px var(--accent); }
+  @media (hover: hover) { .wk-dh:hover { background: var(--hover); } }
+  .wk-allday { border-bottom: 1px solid var(--border); }
+  .wk-gut-ad { font-size: 0.62rem; color: var(--ink-faint); padding: 6px 4px 0 0; text-align: right; }
+  .wk-adc { display: flex; flex-direction: column; gap: 2px; padding: 4px 2px; min-width: 0; border-left: 1px solid var(--border); }
+  .wk-adc.today, .wk-col.today { background: color-mix(in srgb, var(--accent) 4%, transparent); }
+  .wk-ad, .wk-more, .wk-adc .wk-hol { display: block; width: 100%; min-width: 0; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font: inherit; font-size: 0.66rem; line-height: 1.45; padding: 1px 5px; border: 0; border-radius: 6px; cursor: pointer; background: var(--tbg, var(--tbg-gray)); color: var(--tfg, var(--tfg-gray)); }
+  .wk-ad.step { background: var(--sidebar); color: var(--ink-dim); box-shadow: inset 0 0 0 1px var(--border); }
+  .wk-ad.done, .wk-ev.done { opacity: 0.5; text-decoration: line-through; }
+  .wk-ad.overdue { box-shadow: inset 3px 0 0 var(--danger); }
+  .wk-more { background: none; color: var(--ink-dim); padding-left: 3px; }
+  .wk-adc .wk-hol { background: color-mix(in srgb, var(--danger) 11%, transparent); color: color-mix(in srgb, var(--danger) 85%, var(--ink)); cursor: pointer; }
+  .wk-body { position: relative; }
+  .wk-hours { position: relative; }
+  .wk-hl { position: absolute; right: 6px; transform: translateY(-50%); font-size: 0.62rem; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .wk-hl:first-child { transform: none; }
+  .wk-col { position: relative; border-left: 1px solid var(--border); background-image: repeating-linear-gradient(to bottom, var(--border) 0 1px, transparent 1px var(--wk-row)); }
+  .wk-ev { position: absolute; padding: 0 1px; border: 0; background: none; cursor: pointer; font: inherit; text-align: left; overflow: hidden; z-index: 1; }
+  .wk-ev-in { display: flex; flex-direction: column; height: 100%; padding: 2px 4px 2px 5px; border-radius: 6px; overflow: hidden; background: var(--tbg, var(--tbg-gray)); color: var(--tfg, var(--tfg-gray)); box-shadow: inset 3px 0 0 color-mix(in srgb, var(--tfg, var(--tfg-gray)) 55%, transparent); }
+  .wk-ev.high .wk-ev-in { box-shadow: inset 3px 0 0 var(--danger); }
+  .wk-ev.overdue .wk-ev-in { box-shadow: inset 3px 0 0 var(--danger); }
+  .wk-ev.short .wk-ev-in { flex-direction: row; align-items: center; gap: 4px; white-space: nowrap; padding-top: 0; padding-bottom: 0; }
+  .wk-ev.short .wk-ev-n { overflow: hidden; text-overflow: ellipsis; word-break: normal; }
+  .wk-ev.multi .wk-ev-in { background: var(--hover); color: var(--ink); box-shadow: inset 3px 0 0 var(--accent); }
+  .wk-ev-sub { font-size: 0.6rem; color: var(--ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wk-ev.narrow .wk-ev-n { white-space: nowrap; overflow: hidden; text-overflow: clip; word-break: normal; }
+  .wk-ev-t { font-size: 0.6rem; opacity: 0.75; font-variant-numeric: tabular-nums; line-height: 1.3; }
+  .wk-ev-n { font-size: 0.7rem; font-weight: 500; line-height: 1.3; word-break: break-all; }
+  .wk-now { position: absolute; left: -1px; right: 0; height: 2px; background: var(--danger); z-index: 2; pointer-events: none; }
+  .wk-now::before { content: ''; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--danger); }
+  @media (max-width: 900px) {
+    .wk { --wk-gut: 28px; }
+    .wk-dn { width: 26px; height: 26px; font-size: 0.92rem; }
+    .wk-ad, .wk-more, .wk-adc .wk-hol { font-size: 0.64rem; font-weight: 600; padding: 2px 3px; border-radius: 5px; }
+    .wk-ev-in { padding: 2px 2px 2px 6px; border-radius: 5px; box-shadow: inset 3px 0 0 var(--tfg, var(--tfg-gray)); }
+    .wk-ev-t { display: none; }
+    .wk-ev-n { font-size: 0.7rem; font-weight: 600; line-height: 1.22; }
+    .wk.phone .wk-ev-n { overflow: hidden; }
+    .wk-hl { right: 3px; font-size: 0.56rem; }
+  }
   /* ===== 상세 창(v86): 애플 캘린더 일정 창처럼 떠 있는 둥근 카드 ===== */
   .peek-overlay { background: rgba(15,15,15,0.08); }
   @media (max-width: 599px) { .peek-overlay { background: rgba(15,15,15,0.22); -webkit-backdrop-filter: blur(10px) saturate(140%); backdrop-filter: blur(10px) saturate(140%); } }
@@ -1834,7 +1885,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v96';
+const APP_VERSION = 'v98';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2559,7 +2610,7 @@ function closeHolPop() {
       try { el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(0.94)' }], { duration: 160, easing: 'cubic-bezier(0.4, 0, 1, 1)', fill: 'forwards' }).onfinish = done; setTimeout(done, 400); }
       catch (e) { done(); }
     } else done();
-  } document.querySelectorAll('[data-hol].is-open, .cal-cell.is-open').forEach(x => x.classList.remove('is-open')); }
+  } document.querySelectorAll('[data-hol].is-open, .cal-cell.is-open, .wk-dh.is-open').forEach(x => x.classList.remove('is-open')); }
 // 떠 있는 창을 누른 것 옆에 두고, 그쪽을 가리키는 꼬리를 붙인다(애플 캘린더처럼). fit이면 높이가 모자랄 때 줄여서 안에서 스크롤
 function placePop(pop, anchor, fit) {
   const a = anchor.getBoundingClientRect(), w = pop.offsetWidth, M = 8, gap = 12;   // offsetWidth: 튀어나오는 애니메이션(scale) 중에도 실제 크기
@@ -3794,42 +3845,113 @@ function renderDetail() {
 // ---- Week view ----
 const WD_LABELS = ['일','월','화','수','목','금','토'];
 
+// ---- 이번 주: 세로 시간표(v97) ----
+// 7일(일~토)을 가로로 나란히, 위에 "종일" 줄(시각 없는 일정·공휴일·체크리스트 단계), 아래 시간 칸에 시각 있는 일정을 블록으로 놓는다.
+// 블록 길이는 예상 소요(없으면 30분). 겹치면 칸을 나눠 쓴다. 폰에서도 7일이 한 화면에 들어간다.
+let weekOffset = 0;
+function weekViewDates() { const base = getThisWeekDates(); return weekOffset ? base.map(d => isoAddDays(d, 7 * weekOffset)) : base; }
+function weekRangeLabel(ds) {
+  if (!weekOffset) return '이번 주';
+  const a = new Date(ds[0] + 'T12:00:00'), b = new Date(ds[6] + 'T12:00:00');
+  return `${a.getMonth() + 1}월 ${a.getDate()}일 – ${a.getMonth() === b.getMonth() ? '' : (b.getMonth() + 1) + '월 '}${b.getDate()}일`;
+}
+function weekLanes(list) {                      // 겹치는 블록을 나란히 놓을 칸 번호(lane)와 칸 수(n)
+  list.sort((a, b) => a.s - b.s || b.e - a.e);
+  let cluster = [], end = -1, cl = 0;
+  const flush = () => { const n = Math.max(...cluster.map(c => c.lane)) + 1; cluster.forEach(c => { c.n = n; c.cl = cl; }); cl++; cluster = []; };
+  list.forEach(t => {
+    if (cluster.length && t.s >= end) { flush(); end = -1; }
+    const used = new Set(cluster.filter(c => c.e > t.s).map(c => c.lane));
+    let l = 0; while (used.has(l)) l++;
+    t.lane = l; cluster.push(t); end = Math.max(end, t.e);
+  });
+  if (cluster.length) flush();
+}
+const WK_ALLDAY_MAX = 3;
 function renderWeekView() {
   const container = document.getElementById('weekView');
-  container.innerHTML = '';
-  const weekDates = getThisWeekDates();
-  const today = todayISO();
-
-  weekDates.forEach(iso => {
-    const [y,m,d] = iso.split('-');
-    const dow = WD_LABELS[new Date(iso + 'T00:00:00').getDay()];
-    const dayItems = items.filter(it => it.dueDate === iso)
-      .sort(cmpDay);
-    const daySteps = stepsOnDate(iso);
-    const dayTotal = dayItems.length + daySteps.length;
-
-    const dayBox = document.createElement('div');
-    dayBox.className = 'week-day' + (iso === today ? ' today' : '');
-    const label = document.createElement('div');
-    label.className = 'wd-label';
-    const wHol = krHoliday(iso);
-    const wdN = new Date(iso + 'T00:00:00').getDay();
-    if (wHol || wdN === 0) label.classList.add('sun'); else if (wdN === 6) label.classList.add('sat');
-    label.innerHTML = `${parseInt(m)}/${parseInt(d)} (${dow})` + (iso === today ? ' · 오늘' : '') + (wHol ? `<span class="hol-inline" data-hol="${iso}" role="button" tabindex="0">${escapeHtml(holLabel(wHol))}</span>` : '') +
-      (dayTotal > 1 ? `<span class="conflict-badge">${dayTotal}건 겹침</span>` : '');
-    dayBox.appendChild(label);
-
-    if (!dayTotal) {
-      const empty = document.createElement('div');
-      empty.className = 'wd-empty';
-      empty.textContent = '일정 없음';
-      dayBox.appendChild(empty);
-    } else {
-      dayItems.forEach(it => dayBox.appendChild(renderItemRow(it)));
-      daySteps.forEach(({ it, i, e }) => dayBox.appendChild(renderStepRow(it, i, e)));
-    }
-    container.appendChild(dayBox);
+  const dates = weekViewDates(), today = todayISO();
+  if (viewMode === 'week') document.getElementById('monthLabel').textContent = weekRangeLabel(dates);
+  const phone = matchMedia('(max-width: 900px)').matches, ROW = phone ? 44 : 48;   // v98: 폰도 줄을 키워 잘 보이게
+  const days = dates.map(iso => {
+    const all = items.filter(it => it.dueDate === iso).sort(cmpDay);
+    const timed = all.filter(it => normTime(it.dueTime)).map(it => {
+      const [hh, mm] = normTime(it.dueTime).split(':').map(Number), st = hh * 60 + mm, dur = normDuration(it.durationMin) || 0;
+      return { it, s: st, e: Math.min(1440, st + Math.max(dur, 30)) };
+    });
+    weekLanes(timed);
+    return { iso, timed, untimed: all.filter(it => !normTime(it.dueTime)), steps: stepsOnDate(iso), hol: krHoliday(iso), dow: new Date(iso + 'T12:00:00').getDay() };
   });
+  let h0 = 7, h1 = 23;
+  days.forEach(d => d.timed.forEach(t => { h0 = Math.min(h0, Math.floor(t.s / 60)); h1 = Math.max(h1, Math.ceil(t.e / 60)); }));
+  h1 = Math.min(24, h1);
+  const esc = escapeHtml, typeOf = (it) => esc(it.type || '기타');
+  const hasAllday = days.some(d => d.hol || d.untimed.length || d.steps.length);
+  const head = days.map(d => `<button type="button" class="wk-dh${d.iso === today ? ' today' : ''}${d.hol || d.dow === 0 ? ' sun' : d.dow === 6 ? ' sat' : ''}" data-date="${d.iso}" aria-label="${esc(formatShortDate(d.iso))} 일정 보기"><span class="wk-dow">${WD_LABELS[d.dow]}</span><span class="wk-dn">${+d.iso.slice(8)}</span></button>`).join('');
+  const allday = days.map(d => {
+    const chips = [];
+    if (d.hol) chips.push(`<span class="hol-tag wk-hol" data-hol="${d.iso}" role="button" tabindex="0" title="${esc(holLabel(d.hol))}">${esc(holLabel(d.hol))}</span>`);
+    d.untimed.forEach(it => chips.push(`<button type="button" class="wk-ad t-${typeOf(it)}${it.done ? ' done' : ''}${it.priority === 'high' ? ' high' : ''}${!it.done && it.dueDate < today ? ' overdue' : ''}" data-item-id="${esc(it.id)}" title="${esc(it.title)}">${esc(getShortLabel(it))}</button>`));
+    d.steps.forEach(({ it, e }) => chips.push(`<button type="button" class="wk-ad step${stepDone(e) ? ' done' : ''}" data-parent="${esc(it.id)}" title="「${esc(it.title)}」의 단계: ${esc(e.t)}">${esc(cleanText(e.t, 24))}</button>`));
+    const shown = chips.slice(0, WK_ALLDAY_MAX), more = chips.length - shown.length;
+    return `<div class="wk-adc${d.iso === today ? ' today' : ''}">${shown.join('')}${more > 0 ? `<button type="button" class="wk-more" data-date="${d.iso}">+${more}</button>` : ''}</div>`;
+  }).join('');
+  const hours = [];
+  for (let h = h0; h < h1; h++) hours.push(`<span class="wk-hl" style="top:${(h - h0) * ROW}px">${h}시</span>`);
+  const nowD = new Date(), nowM = nowD.getHours() * 60 + nowD.getMinutes();
+  const cols = days.map(d => {
+    const merged = new Set();   // 폰에서 3개 이상 겹친 묶음은 한 블록 "N건"으로(칸이 좁아 나누면 글자가 안 보임), 누르면 그날 일정 창
+    const ev = d.timed.map((t, order) => {   // d.timed는 weekLanes가 시작 시각 순으로 정렬해 둠: 나중에 시작하는 것이 위
+      if (phone && t.n >= 3) {
+        if (merged.has(t.cl)) return '';
+        merged.add(t.cl);
+        const grp = d.timed.filter(x => x.cl === t.cl), gs = Math.min(...grp.map(x => x.s)), ge = Math.max(...grp.map(x => x.e));
+        const gt = (gs - h0 * 60) / 60 * ROW, gh = Math.max(18, (ge - gs) / 60 * ROW - 2);
+        return `<button type="button" class="wk-ev multi" data-date="${d.iso}" title="${esc(grp.map(x => x.it.title).join(', '))}" style="top:${gt}px;height:${gh}px;left:0;width:100%;z-index:${1 + order}"><span class="wk-ev-in"><span class="wk-ev-n">${grp.length}건</span><span class="wk-ev-sub">${esc(getShortLabel(grp[0].it))}</span></span></button>`;
+      }
+      const it = t.it, top = (t.s - h0 * 60) / 60 * ROW, ht = Math.max(18, (t.e - t.s) / 60 * ROW - 2);
+      // 겹치면 애플 캘린더처럼 칸을 나눠 나란히(v98: 폰도 같은 방식, 좁게 나뉜 블록은 글자를 한 줄로 두고 넘치면 자름)
+      const pos = `left:calc(${t.lane} / ${t.n} * 100%);width:calc(100% / ${t.n})`;
+      return `<button type="button" class="wk-ev t-${typeOf(it)}${it.done ? ' done' : ''}${it.priority === 'high' ? ' high' : ''}${!it.done && it.dueDate < today ? ' overdue' : ''}${ht < 34 ? ' short' : ''}${phone && t.n > 1 ? ' narrow' : ''}" data-item-id="${esc(it.id)}" title="${esc(it.title)} · ${fmtTime(normTime(it.dueTime))}" style="top:${top}px;height:${ht}px;${pos};z-index:${1 + order}"><span class="wk-ev-in"><span class="wk-ev-t">${normTime(it.dueTime)}</span><span class="wk-ev-n">${esc(getShortLabel(it))}</span></span></button>`;
+    }).join('');
+    const now = d.iso === today && nowM >= h0 * 60 && nowM <= h1 * 60 ? `<div class="wk-now" style="top:${(nowM - h0 * 60) / 60 * ROW}px"></div>` : '';
+    return `<div class="wk-col${d.iso === today ? ' today' : ''}" data-date="${d.iso}">${ev}${now}</div>`;
+  }).join('');
+  container.innerHTML = `<div class="wk${phone ? ' phone' : ''}" style="--wk-row:${ROW}px">
+    <div class="wk-grid wk-headrow"><div class="wk-gut"></div>${head}</div>
+    ${hasAllday ? `<div class="wk-grid wk-allday"><div class="wk-gut wk-gut-ad">종일</div>${allday}</div>` : ''}
+    <div class="wk-grid wk-body" style="height:${(h1 - h0) * ROW}px" data-h0="${h0}" data-h1="${h1}"><div class="wk-gut wk-hours">${hours.join('')}</div>${cols}</div>
+  </div>`;
+  const tb = document.getElementById('topbar'), hr = container.querySelector('.wk-headrow');   // 요일 줄은 스크롤해도 위에 붙어 있게(폰은 상단 바 바로 아래)
+  if (hr) hr.style.top = (tb && getComputedStyle(tb).display !== 'none' ? tb.getBoundingClientRect().height : 0) + 'px';
+}
+function updateWeekNowLine() {                  // 1분마다 지금 시각 선만 옮긴다(날짜가 바뀌면 checkDayChange가 다시 그림)
+  const body = document.querySelector('#weekView .wk-body'), line = body && body.querySelector('.wk-now');
+  if (!line) return;
+  const h0 = +body.dataset.h0, ROW = parseFloat(getComputedStyle(body.closest('.wk')).getPropertyValue('--wk-row')) || 36, n = new Date();
+  line.style.top = ((n.getHours() * 60 + n.getMinutes() - h0 * 60) / 60 * ROW) + 'px';
+}
+(function setupWeekView() {
+  if (typeof document.addEventListener !== 'function') return;
+  const box = document.getElementById('weekView');
+  if (!box) return;
+  box.addEventListener('click', (e) => {
+    const t = e.target.closest && e.target.closest('.wk-ev[data-item-id], .wk-ad[data-item-id], .wk-ad[data-parent], .wk-more, .wk-dh, .wk-ev.multi');
+    if (!t || t.closest('[data-hol]')) return;
+    if (t.dataset.itemId) { openPeek(t.dataset.itemId, t); return; }
+    if (t.dataset.parent) { openPeek(t.dataset.parent, t); return; }
+    const iso = t.dataset.date, anchor = box.querySelector(`.wk-dh[data-date="${iso}"]`) || t;
+    if (holPopEl && holPopEl.dataset.for === 'day:' + iso) { closeHolPop(); return; }
+    selectedDate = iso; openDayPop(iso, anchor);
+  });
+  setInterval(() => { if (viewMode === 'week' && !document.hidden) updateWeekNowLine(); }, 60000);
+})();
+function weekSlide(dir) {
+  const g = document.querySelector('#weekView .wk');
+  if (!g || !dir || typeof g.animate !== 'function' || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const low = document.documentElement.classList.contains('low-fps');
+  const ease = getComputedStyle(document.documentElement).getPropertyValue('--spring').trim() || 'cubic-bezier(0.22, 1, 0.36, 1)';
+  try { g.animate([{ transform: `translateX(${dir * (low ? 14 : 36)}px)`, opacity: 0.35 }, { transform: 'none', opacity: 1 }], { duration: low ? 200 : 560, easing: low ? 'ease-out' : ease }); } catch (e) {}
 }
 
 const VIEW_ORDER = ['today', 'month', 'week', 'list', 'checklist'];
@@ -3861,19 +3983,19 @@ function setViewMode(mode, animate) {
   document.getElementById('sbSettingsBtn').classList.toggle('active', mode === 'settings');
   if (!isProfile) profilePrevView = mode;
   document.getElementById('monthView').style.display = mode === 'month' ? 'block' : 'none';
-  document.getElementById('weekView').style.display = mode === 'week' ? 'flex' : 'none';
+  document.getElementById('weekView').style.display = mode === 'week' ? 'block' : 'none';
   document.getElementById('listView').style.display = mode === 'list' ? 'block' : 'none';
   document.getElementById('checklistView').style.display = mode === 'checklist' ? 'block' : 'none';
   document.getElementById('todayView').style.display = mode === 'today' ? 'block' : 'none';
   document.getElementById('calHead').style.display = mode === 'today' || isProfile ? 'none' : '';
   document.getElementById('detailPanel').style.display = 'none';   // v81: 날짜를 누르면 뜨는 창으로 옮김
-  document.getElementById('prevBtn').style.display = mode === 'month' ? '' : 'none';
-  document.getElementById('nextBtn').style.display = mode === 'month' ? '' : 'none';
+  document.getElementById('prevBtn').style.display = mode === 'month' || mode === 'week' ? '' : 'none';   // v97: 이번 주도 앞뒤 주로 넘김
+  document.getElementById('nextBtn').style.display = mode === 'month' || mode === 'week' ? '' : 'none';
 
   if (mode === 'today') {
     renderTodayView();
   } else if (mode === 'week') {
-    document.getElementById('monthLabel').textContent = '이번 주';
+    document.getElementById('monthLabel').textContent = weekRangeLabel(weekViewDates());
     renderWeekView();
   } else if (isProfile) {
     renderProfileUi();
@@ -4053,6 +4175,7 @@ function calSlide(dir) {
   } catch (e) {}
 }
 document.getElementById('prevBtn').addEventListener('click', () => {
+  if (viewMode === 'week') { closeHolPop(); weekOffset--; renderWeekView(); weekSlide(-1); return; }
   if (viewMode !== 'month') return;
   viewMonth--;
   if (viewMonth < 0) { viewMonth = 11; viewYear--; }
@@ -4060,6 +4183,7 @@ document.getElementById('prevBtn').addEventListener('click', () => {
   calSlide(-1);
 });
 document.getElementById('nextBtn').addEventListener('click', () => {
+  if (viewMode === 'week') { closeHolPop(); weekOffset++; renderWeekView(); weekSlide(1); return; }
   if (viewMode !== 'month') return;
   viewMonth++;
   if (viewMonth > 11) { viewMonth = 0; viewYear++; }
@@ -4072,7 +4196,7 @@ document.getElementById('todayBtn').addEventListener('click', () => {
   viewYear = d.getFullYear();
   viewMonth = d.getMonth();
   if (viewMode === 'month') setTimeout(() => calSlide(dir), 0);
-  if (viewMode === 'week') renderWeekView();
+  if (viewMode === 'week') { const dir = -Math.sign(weekOffset); weekOffset = 0; renderWeekView(); weekSlide(dir); }
   else if (viewMode === 'list') renderListView();
   else if (viewMode === 'checklist') renderChecklistView();
   else renderCalendar();
@@ -5263,7 +5387,7 @@ function closeSidebar() {
   const EDGE = 8, MIN_DX = 28, RATIO = 1.1, MAX_MS = 1500, FLICK_DX = 14, FLICK_V = 0.22;   // 편하게: 28px 이상이거나 짧아도 빠르게 튕기면(14px·0.22px/ms) 넘김
   const LIVE_DX = 56, LIVE_RATIO = 1.2;       // 손을 떼기 전이라도 56px 넘게 가로로 밀면 바로 넘김(느긋하게 끌어도, 손가락을 못 떼는 상황에도 반응)
   const switchTab = (step, onCal) => {       // step: +1 다음 탭, -1 이전 탭. 맨 앞(오늘)에서 더 오른쪽으로 밀면 메뉴가 열린다(메뉴가 오늘 왼쪽의 한 쪽처럼)
-    if (onCal && viewMode === 'month') { closeHolPop(); document.getElementById(step > 0 ? 'nextBtn' : 'prevBtn').click(); return; }   // v84: 달력 칸 위에서 밀면 달을 넘김
+    if (onCal && (viewMode === 'month' || viewMode === 'week')) { closeHolPop(); document.getElementById(step > 0 ? 'nextBtn' : 'prevBtn').click(); return; }   // v84: 달력 칸 위에서 밀면 달을 넘김
     const i = VIEW_ORDER.indexOf(viewMode), ni = i + step;
     if (i === 0 && step < 0) { openSidebar(); return; }
     if (i >= 0 && ni >= 0 && ni < VIEW_ORDER.length) setViewMode(VIEW_ORDER[ni], true);
@@ -5297,7 +5421,7 @@ function closeSidebar() {
     if (inHScroll(el)) return;
     if (t.clientX < EDGE || t.clientX > window.innerWidth - EDGE) return;
     if (holPopEl && holPopEl.contains(el)) return;   // 떠 있는 일정 창 안에서 민 것은 무시
-    tab = { x0: t.clientX, y0: t.clientY, t0: Date.now(), cal: !!(el.closest && el.closest('#calGrid')) };
+    tab = { x0: t.clientX, y0: t.clientY, t0: Date.now(), cal: !!(el.closest && el.closest('#calGrid, #weekView .wk')) };
   }, { passive: true });
 
   document.addEventListener('touchmove', (e) => {
@@ -5578,7 +5702,7 @@ function peekAnchor(explicit) {
   if (!el || !el.closest) return null;
   if (el.closest('.day-pop')) return document.querySelector('.cal-cell.is-open');          // 날짜 창에서 고른 일정은 그 날짜 칸을 가리킴
   if (el.closest('.peek-panel, .hol-pop, .search-pop, .cmd-overlay, .sidebar, .topbar, .toast, .ctx-menu')) return null;
-  return el.closest('.cal-cell, .item, .tbl-row, .cv-group, .week-day .item, .step-row') || null;
+  return el.closest('.cal-cell, .item, .tbl-row, .cv-group, .wk-ev, .wk-ad, .step-row') || null;
 }
 function safeTopPx() {   // 상태 표시줄 높이(홈 화면 앱·아이패드). 그 아래 흐림 띠까지 피하려고 씀
   const d = document.createElement('div'); d.style.cssText = 'position:fixed;top:0;left:0;visibility:hidden;pointer-events:none;height:env(safe-area-inset-top)';
