@@ -1722,7 +1722,7 @@
       <div class="drawer-group-label">연결</div>
       <details class="drawer-section fold" id="calFeedSection">
         <summary class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-month"/></svg>애플 캘린더 구독</summary>
-        <p class="drawer-desc">설정해 둔 구독 주소를 넣으면 일정이 캘린더 앱에 자동으로 나타납니다. 완료한 일정은 ✓가 붙고 지운 일정은 사라지며, 메모·팁·체크리스트도 함께 들어가고, 반영에는 몇 분에서 1시간쯤 걸릴 수 있습니다. 주소를 아는 사람은 내용을 볼 수 있으니 공유하면 안 됩니다.</p>
+        <p class="drawer-desc">설정해 둔 구독 주소를 넣으면 일정이 캘린더 앱에 자동으로 나타납니다. 완료한 일정은 제목 앞에 체크 표시가 붙고 지운 일정은 사라지며, 메모·팁·체크리스트도 함께 들어가고, 반영에는 몇 분에서 1시간쯤 걸릴 수 있습니다. 주소를 아는 사람은 내용을 볼 수 있으니 공유하면 안 됩니다.</p>
         <input type="text" id="calFeedInput" class="settings-input" placeholder="구독 주소 붙여넣기" autocomplete="off" autocapitalize="off" spellcheck="false">
         <div class="settings-actions">
           <button class="btn-ghost" id="calFeedSaveBtn">저장</button>
@@ -1899,7 +1899,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v103';
+const APP_VERSION = 'v104';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2934,7 +2934,28 @@ function markDone(it, done) {
   it.done = !!done;
   if (it.done) it.doneAt = new Date().toISOString(); else delete it.doneAt;
   if (it.done && timer && timer.id === it.id) finishTimerSync(it);
-  items.forEach(p => { if (Array.isArray(p.checklist)) p.checklist.forEach(e => { if (e && e.ref === it.id) e.d = it.done; }); });   // 이 일정이 어떤 체크리스트의 연결 항목이면 그쪽도 맞춘다
+  items.forEach(p => {                                  // 이 일정이 어떤 체크리스트의 연결 항목이면 그쪽도 맞춘다
+    if (!Array.isArray(p.checklist) || p === it) return;
+    let linked = false;
+    p.checklist.forEach(e => { if (e && e.ref === it.id) { e.d = it.done; linked = true; } });
+    if (linked) syncDoneWithSteps(p, it.done);
+  });
+}
+// 체크리스트를 모두 끝내면 일정도 자동 완료, 끝낸 단계를 다시 풀면 완료도 풀린다(v104).
+// 단계를 체크하지 않은 변경에서는 건드리지 않는다: 단계가 남은 일정을 직접 완료해 둔 경우를 되돌리지 않게.
+function syncDoneWithSteps(it, checked) {
+  const list = normChecklist(it.checklist);
+  if (!list.length) return;
+  if (checked && !it.done && list.every(stepDone)) {
+    markDone(it, true);
+    setTimeout(() => {
+      if (!items.includes(it) || !it.done) return;
+      showToast('체크리스트를 모두 끝내 일정을 완료했습니다', '되돌리기', async () => {
+        if (!items.includes(it)) return;
+        markDone(it, false); await saveItems(); refreshAll(); if (peekId === it.id) renderPeek();
+      }, 6000);
+    }, 0);
+  } else if (!checked && it.done) markDone(it, false);
 }
 function doneDayOf(it) {
   if (!it.done || !it.doneAt) return '';
@@ -2994,12 +3015,9 @@ async function toggleStep(it, i, checked) {
   it.checklist = list;
   const child = list[i].ref && items.find(x => x.id === list[i].ref);
   if (child && child.done !== !!checked) markDone(child, !!checked);      // markDone이 이 항목의 d도 맞춰 준다
+  syncDoneWithSteps(it, !!checked);
   await saveItems(); refreshAll();
   if (peekId === it.id) renderPeek();
-  if (checked && it.checklist.length && it.checklist.every(stepDone) && !it.done) showToast('체크리스트를 모두 끝냈습니다', '일정도 완료', async () => {
-    if (!items.includes(it)) return;
-    markDone(it, true); await saveItems(); refreshAll(); if (peekId === it.id) renderPeek();
-  }, 6000);
 }
 function normChecklist(arr) {
   if (!Array.isArray(arr)) return [];
