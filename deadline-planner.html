@@ -294,6 +294,19 @@
   /* 오른쪽 위 검색(v83, 애플 캘린더처럼): 일정 제목·메모·유형·주제에서 찾고 누르면 상세 */
   .page-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 4px; }
   .page-head .page-title { margin: 0; min-width: 0; }
+  /* 오늘 탭 밖에서는 제목·소개·요약을 한 줄로 줄인다(v105): 요약은 작은 글자 하나, 검색은 작게 */
+  .hdr-mini { display: inline-flex; align-items: center; gap: 6px; min-width: 0; flex: 1 1 auto; padding: 0; border: 0; background: none; color: var(--ink-dim); font: inherit; font-size: 0.82rem; text-align: left; cursor: pointer; }
+  .hdr-mini[hidden] { display: none; }
+  .hdr-mini > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hdr-mini .ic { flex-shrink: 0; }
+  .hdr-mini.urgent { color: var(--danger); }
+  body:not(.view-compact) .hdr-mini { display: none; }
+  body.view-compact .page-sub, body.view-compact #summaryBanner { display: none !important; }
+  body.view-compact .page-head { margin-bottom: 12px; min-height: 34px; }
+  body.view-compact .page-head .page-title { flex: none; gap: 0; font-size: 1rem; }
+  body.view-compact .page-title .page-emoji { margin-right: 6px; }
+  body.view-compact .page-title .page-emoji .ic { width: 1.15rem; height: 1.15rem; stroke-width: 1.7; }
+  body.view-compact .hdr-mini + .hdr-search { flex: 0 1 200px; height: 34px; }
   .hdr-search { position: relative; flex: 0 1 240px; min-width: 0; display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg); box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: border-color 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out); }
   .hdr-search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
   .hdr-search > .ic { width: 17px; height: 17px; color: var(--ink-dim); flex-shrink: 0; }
@@ -309,7 +322,8 @@
   .search-pop .sr-row .type-tag { grid-row: 1 / span 2; grid-column: 2; }
   .search-pop .sr-empty { padding: 14px 12px; font-size: 0.86rem; color: var(--ink-dim); }
   .search-pop mark { background: color-mix(in srgb, var(--accent) 22%, transparent); color: inherit; border-radius: 3px; }
-  @media (max-width: 900px) { .hdr-search { flex-basis: 170px; height: 36px; padding: 0 12px; } .hdr-search input { font-size: 16px; } }
+  @media (max-width: 900px) { .hdr-search { flex-basis: 170px; height: 36px; padding: 0 12px; } .hdr-search input { font-size: 16px; } body.view-compact .hdr-mini + .hdr-search { flex-basis: 128px; } }
+  @media (max-width: 420px) { body.view-compact .hdr-mini + .hdr-search { flex-basis: 112px; } body.view-compact .hdr-mini .ic { display: none; } }
   .page-title { display: flex; align-items: center; gap: 10px; font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 4px; }
   .page-title .page-emoji { display: inline-flex; margin-right: 10px; vertical-align: middle; color: var(--accent); }
   .page-title .page-emoji .ic { width: 2rem; height: 2rem; stroke-width: 1.5; vertical-align: 0; }
@@ -1488,6 +1502,7 @@
   <div class="page">
     <div class="page-head">
       <h1 class="page-title"><span class="page-emoji"><svg class="ic" aria-hidden="true"><use href="#i-notebook"/></svg></span>Δuenoτe</h1>
+      <button type="button" class="hdr-mini" id="hdrMini" hidden></button>
       <div class="hdr-search" id="hdrSearchWrap">
         <svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>
         <input type="search" id="hdrSearch" placeholder="검색" autocomplete="off" enterkeyhint="search" aria-label="일정 검색" aria-controls="hdrSearchPop">
@@ -1899,7 +1914,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v104';
+const APP_VERSION = 'v105';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -3788,8 +3803,10 @@ function renderSummaryBanner() {
   pillList.style.display = overdueItems.length ? 'block' : 'none'; pillList.textContent = overdueItems.length;
   updateAppBadge(urgentN);
 
+  const mini = document.getElementById('hdrMini');
   if (!overdueItems.length && !todayItems.length && !tomorrowItems.length) {
     el.style.display = 'none';
+    mini.hidden = true;
     return;
   }
   const parts = [];
@@ -3802,6 +3819,9 @@ function renderSummaryBanner() {
   el.style.display = 'block';
   briefingEl.style.display = 'none';
   briefingEl.textContent = '';
+  mini.hidden = false;
+  mini.classList.toggle('urgent', overdueItems.length > 0);
+  mini.innerHTML = ic(overdueItems.length ? 'alert' : 'clock', 'ic sm') + '<span>' + escapeHtml(parts.join(' · ')) + '</span>';
 }
 
 async function generateBriefing() {
@@ -3845,6 +3865,7 @@ function fixGreeting(text, tod) {                 // AI가 그래도 시간대�
   return tod.greet + '! ' + t.slice(m[0].length).trim();
 }
 
+document.getElementById('hdrMini').addEventListener('click', () => document.getElementById('summaryText').click());
 document.getElementById('summaryText').addEventListener('click', () => {
   listDoneFilter = '임박';
   listTypeFilter = '전체';
@@ -4031,8 +4052,39 @@ function weekSlide(dir) {
 const VIEW_ORDER = ['today', 'month', 'week', 'list', 'checklist'];
 let profilePrevView = 'today';           // 프로필 탭에서 돌아갈 화면
 let lastCloud = { state: 'off', email: '' };
+// 오늘 탭 ↔ 다른 탭: 큰 제목이 작은 로고로 줄어들고 아래 내용이 함께 올라간다(v105). transform·opacity만 움직인다.
+function prepHeadFlip(prev, next, animate) {
+  const sub = (m) => m === 'profile' || m === 'settings' || m === 'library';
+  if (!animate || prev === next || sub(prev) || sub(next) || (prev === 'today') === (next === 'today')) return null;
+  const de = document.documentElement;
+  if (de.classList.contains('low-fps') || matchMedia('(prefers-reduced-motion: reduce)').matches) return null;
+  const title = document.querySelector('.page-title'), search = document.getElementById('hdrSearchWrap'), quick = document.getElementById('quickWrap');
+  if (!title || typeof title.animate !== 'function') return null;
+  const t0 = title.getBoundingClientRect(), s0 = search.getBoundingClientRect(), q0 = quick.getBoundingClientRect();
+  if (t0.bottom < 0) return null;                       // 이미 스크롤로 지나간 곳이면 움직일 것이 안 보인다
+  const fades = [...document.querySelectorAll('.page-sub, #summaryBanner')].filter(e => e.offsetHeight > 0);
+  const ghosts = next === 'today' ? [] : fades.map(e => {   // 사라지는 소개·요약은 복사본이 제자리에서 흐려진다
+    const r = e.getBoundingClientRect(), g = e.cloneNode(true);
+    [g, ...g.querySelectorAll('[id]')].forEach(x => x.removeAttribute('id'));
+    g.setAttribute('aria-hidden', 'true');
+    Object.assign(g.style, { position: 'fixed', left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', margin: 0, pointerEvents: 'none', zIndex: 1 });
+    return g;
+  });
+  return () => {
+    const ease = getComputedStyle(de).getPropertyValue('--ease-out').trim() || 'cubic-bezier(0.22, 1, 0.36, 1)', opt = { duration: 480, easing: ease };
+    const t1 = title.getBoundingClientRect(), s1 = search.getBoundingClientRect(), dy = q0.top - quick.getBoundingClientRect().top;
+    title.animate([{ transformOrigin: '0 0', transform: `translate(${t0.left - t1.left}px, ${t0.top - t1.top}px) scale(${t0.height / (t1.height || 1)})` }, { transformOrigin: '0 0', transform: 'none' }], opt);
+    search.animate([{ transform: `translate(${s0.left - s1.left}px, ${s0.top - s1.top}px)` }, { transform: 'none' }], opt);
+    const after = [...document.querySelector('.page').children].filter(e => e.offsetHeight > 0 && !e.classList.contains('page-head') && !fades.includes(e));
+    if (Math.abs(dy) > 1) after.forEach(e => e.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], { ...opt, composite: 'add' }));   // add: 화면 넘김 슬라이드와 겹쳐도 합쳐진다
+    if (next === 'today') fades.forEach(e => e.animate([{ opacity: 0, transform: 'translateY(-8px)' }, { opacity: 1, transform: 'none' }], { ...opt, delay: 90, fill: 'backwards' }));
+    else document.getElementById('hdrMini').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, delay: 160, easing: ease, fill: 'backwards' });
+    ghosts.forEach(g => { document.body.appendChild(g); g.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 180, easing: ease, fill: 'forwards' }).onfinish = () => g.remove(); });
+  };
+}
 function setViewMode(mode, animate) {
   const prevMode = viewMode;
+  const headFlip = prepHeadFlip(prevMode, mode, animate);
   viewMode = mode;
   if (mode !== 'list' && selectMode) {
     selectMode = false;
@@ -4049,6 +4101,7 @@ function setViewMode(mode, animate) {
   closeSidebar();
   const isProfile = mode === 'profile' || mode === 'settings' || mode === 'library';      // 프로필·설정: 일정 입력·요약을 숨기는 별도 화면(마지막 화면으로 기억하지 않음)
   document.body.classList.toggle('view-profile', isProfile);
+  document.body.classList.toggle('view-compact', !isProfile && mode !== 'today');   // 오늘 탭만 제목·요약을 크게 보인다(v105)
   document.getElementById('profileView').style.display = mode === 'profile' ? 'block' : 'none';
   document.getElementById('settingsView').style.display = mode === 'settings' ? 'block' : 'none';
   document.getElementById('libraryView').style.display = mode === 'library' ? 'block' : 'none';
@@ -4088,6 +4141,7 @@ function setViewMode(mode, animate) {
   // 앱을 다시 열어도 마지막에 보던 화면으로 돌아오게 기억
   if (!isProfile) store.set('view', mode).catch(() => {});
   if (isProfile) window.scrollTo({ top: 0 });
+  if (headFlip) headFlip();
   if (animate && !isProfile && prevMode !== mode && (animate === 'swipe' || window.matchMedia('(max-width: 900px)').matches)) slideInView(mode, VIEW_ORDER.indexOf(mode) > VIEW_ORDER.indexOf(prevMode));
 }
 
@@ -5471,6 +5525,17 @@ function closeSidebar() {
 // (1) 탭 넘기기: 왼쪽으로 밀면 다음 탭, 오른쪽으로 밀면 이전 탭(양 끝에서는 그대로). 손을 뗄 때 판정한다: 가로가 세로의 1.1배 이상이고 1.5초 안에 28px 이상(또는 14px 이상을 0.22px/ms 넘는 속도로 튕기기). 또 손을 떼기 전이라도 56px 넘게(세로의 1.2배 이상) 밀면 바로 넘긴다. 처음(v42)은 60px·1.8배·0.9초, v44는 40px·1.3배였다.
 //     입력칸·채팅 패널·가로로 스크롤되는 영역(탭 줄·보드 등)·다른 창이 열려 있을 때·화면 맨 끝 16px(iOS 뒤로 가기 제스처)에서 시작한 것과 프로필 탭에서는 무시한다.
 // (2) 열려 있는 메뉴를 왼쪽으로 밀어 닫는 것은 그대로다(손가락을 따라 메뉴가 같이 움직임).
+// 달력에서 날짜 없는 빈 곳(달 앞뒤의 빈 칸)인지: 여기서 밀면 달이 아니라 탭을 넘긴다(v105).
+// 마지막 날 뒤쪽은 칸이 없어서 달력 판 자체가 잡히므로, 마지막 날짜 칸보다 뒤인지로 가른다(칸 사이 틈은 달 넘기기 그대로).
+function isCalBlank(el, x, y) {
+  if (el.closest('.cal-cell.empty')) return true;
+  const grid = document.getElementById('calGrid');
+  if (el !== grid) return false;
+  const cells = grid.querySelectorAll('.cal-cell[data-date]'), last = cells[cells.length - 1];
+  if (!last) return false;
+  const r = last.getBoundingClientRect();
+  return y > r.bottom || (y >= r.top && x > r.right);
+}
 (function setupSwipes() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sbOverlay');
@@ -5522,7 +5587,7 @@ function closeSidebar() {
     if (inHScroll(el)) return;
     if (t.clientX < EDGE || t.clientX > window.innerWidth - EDGE) return;
     if (holPopEl && holPopEl.contains(el)) return;   // 떠 있는 일정 창 안에서 민 것은 무시
-    tab = { x0: t.clientX, y0: t.clientY, t0: Date.now(), cal: !!(el.closest && el.closest('#calGrid, #weekView .wk')) };
+    tab = { x0: t.clientX, y0: t.clientY, t0: Date.now(), cal: !!(el.closest && el.closest('#calGrid, #weekView .wk')) && !isCalBlank(el, t.clientX, t.clientY) };
   }, { passive: true });
 
   document.addEventListener('touchmove', (e) => {
