@@ -1722,7 +1722,7 @@
       <div class="drawer-group-label">연결</div>
       <details class="drawer-section fold" id="calFeedSection">
         <summary class="drawer-section-title"><svg class="ic" aria-hidden="true"><use href="#i-month"/></svg>애플 캘린더 구독</summary>
-        <p class="drawer-desc">설정해 둔 구독 주소를 넣으면 일정이 캘린더 앱에 자동으로 나타납니다. 완료하거나 지운 일정은 캘린더에서도 사라지고, 반영에는 몇 분에서 1시간쯤 걸릴 수 있습니다. 메모는 보내지 않습니다.</p>
+        <p class="drawer-desc">설정해 둔 구독 주소를 넣으면 일정이 캘린더 앱에 자동으로 나타납니다. 완료한 일정은 ✓가 붙고 지운 일정은 사라지며, 반영에는 몇 분에서 1시간쯤 걸릴 수 있습니다. 메모는 보내지 않습니다.</p>
         <input type="text" id="calFeedInput" class="settings-input" placeholder="구독 주소 붙여넣기" autocomplete="off" autocapitalize="off" spellcheck="false">
         <div class="settings-actions">
           <button class="btn-ghost" id="calFeedSaveBtn">저장</button>
@@ -1899,7 +1899,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v101';
+const APP_VERSION = 'v102';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
