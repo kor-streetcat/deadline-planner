@@ -1887,7 +1887,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v99';
+const APP_VERSION = 'v100';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -6844,18 +6844,8 @@ function traySummary() {
   const soon = active.filter(x => { const n = daysUntil(x.dueDate); return n >= 2 && n <= 7; }).sort(byDate);
   const list = [...overdue, ...today, ...tomorrow, ...soon].slice(0, 8).map(x => ({ id: x.id, title: String(x.title || '').slice(0, 40), dueDate: x.dueDate, dday: daysUntil(x.dueDate), high: x.priority === 'high', time: normTime(x.dueTime) }));
   const timed = today.filter(x => normTime(x.dueTime)).slice(0, 20).map(x => ({ id: x.id, title: String(x.title || '').slice(0, 40), time: normTime(x.dueTime) }));   // Mac 마감 알림용: 오늘 마감 시각이 있는 미완료 일정
-  return { overdue: overdue.length, today: today.length, tomorrow: tomorrow.length, urgent: overdue.length + today.length, list, timed, sig: itemsSig() };
+  return { overdue: overdue.length, today: today.length, tomorrow: tomorrow.length, urgent: overdue.length + today.length, list, timed };
 }
-// 일정이 바뀌었는지 Mac 앱이 알아채게 하는 짧은 표시값(v94): 오늘 날짜 + 일정의 날짜·시각·완료·우선순위·제목을 섞은 값.
-// 이 값이 바뀌면 Mac 앱이 데스크톱 위젯에 바로 새로고침을 요청한다(내용은 보내지 않음).
-function itemsSig() {
-  let h = 0x811c9dc5;
-  const add = (str) => { for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } };
-  add(todayISO());
-  items.map(x => [x.id, x.dueDate, x.dueTime || '', x.done ? 1 : 0, x.priority || '', x.title || ''].join('|')).sort().forEach(add);
-  return todayISO() + '-' + h.toString(16);
-}
-
 // ---- AI로 큰 마감 쪼개기 · 이번 주 계획 ----
 // 둘 다 runAI를 거친다(키가 있으면 바로 호출, 없으면 복사·붙여넣기 창). 결과는 바로 반영하지 않고 확인 창에서 사용자가 고른 뒤에 반영한다.
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'];
