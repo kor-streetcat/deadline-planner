@@ -324,8 +324,8 @@
   .search-pop mark { background: color-mix(in srgb, var(--accent) 22%, transparent); color: inherit; border-radius: 3px; }
   @media (max-width: 900px) { .hdr-search { flex-basis: 170px; height: 36px; padding: 0 12px; } .hdr-search input { font-size: 16px; } body.view-compact .hdr-mini + .hdr-search { flex-basis: 128px; } }
   @media (max-width: 420px) { body.view-compact .hdr-mini + .hdr-search { flex-basis: 112px; } body.view-compact .hdr-mini .ic { display: none; } }
-  .page-title { display: flex; align-items: center; gap: 10px; font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 4px; }
-  .page-title .page-emoji { display: inline-flex; margin-right: 10px; vertical-align: middle; color: var(--accent); }
+  .page-title { display: flex; align-items: center; gap: 4px; font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 4px; }
+  .page-title .page-emoji { display: inline-flex; margin-right: 0; vertical-align: middle; color: var(--accent); }
   .page-title .page-emoji .ic { width: 2rem; height: 2rem; stroke-width: 1.5; vertical-align: 0; }
   .page-sub { color: var(--ink-dim); font-size: 0.86rem; margin: 0 0 20px; }
 
@@ -1926,7 +1926,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v108';
+const APP_VERSION = 'v109';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
