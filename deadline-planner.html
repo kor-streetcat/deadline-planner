@@ -284,7 +284,7 @@
   .sb-overlay { position: fixed; inset: 0; background: rgba(15,15,15,0.4); z-index: 44; opacity: 0; visibility: hidden; transition: opacity 0.35s var(--ease-out), visibility 0.35s var(--ease-out); }
   .sb-overlay.open { opacity: 1; visibility: visible; }
 
-  .main { margin-left: var(--sidebar-w); min-height: 100vh; min-height: 100dvh; }
+  .main { margin-left: var(--sidebar-w); min-height: 100vh; min-height: 100dvh; overflow-x: clip; }   /* 밀려 들어오는 내용이 가로 스크롤 폭을 늘리지 않게. 넘길 때마다 켜고 끄면 전체 배치가 다시 돌아서 항상 둔다(v107) */
   .topbar { display: none; }
   .page {
     max-width: 960px;
@@ -387,8 +387,6 @@
     /* 화면이 바뀔 때 새 내용이 눌린 알약 쪽 방향에서 옆으로 밀려 들어옴 */
     @keyframes viewInR { 0% { opacity: 0; transform: translateX(28px); } 55% { opacity: 1; } 100% { opacity: 1; transform: none; } }
     @keyframes viewInL { 0% { opacity: 0; transform: translateX(-28px); } 55% { opacity: 1; } 100% { opacity: 1; transform: none; } }
-    body.view-sliding { overflow-x: hidden; }
-    body.view-sliding .main { overflow-x: clip; }   /* 밀려 들어오는 동안 내용이 오른쪽으로 삐져도 가로 스크롤 폭이 늘지 않게 */
     .view-in-r { animation: viewInR 0.55s var(--ease-out); }
     .view-in-l { animation: viewInL 0.55s var(--ease-out); }
     @media (prefers-reduced-motion: reduce) { .view-in-r, .view-in-l { animation: none; } .tb-pill, .tb-pill .tb-label { transition: none; } }
@@ -668,7 +666,7 @@
   .bulk-bar button { padding: 4px 10px; font-size: 0.78rem; }
   .select-check { flex-shrink: 0; width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; }
 
-  .tbl { border-top: 1px solid var(--border); }
+  .tbl { display: flex; flex-direction: column; gap: 8px; }
   .tbl-head, .tbl-row {
     display: grid;
     grid-template-columns: 28px minmax(0, 1fr) 132px 100px 88px 28px 28px;
@@ -677,23 +675,26 @@
   }
   .tbl-head.selectable, .tbl-row.selectable { grid-template-columns: 24px 28px minmax(0, 1fr) 132px 100px 88px 28px 28px; }
   .cell-meta { display: contents; }
-  .tbl-head { border-bottom: 1px solid var(--border); font-size: 0.74rem; color: var(--ink-faint); }
+  .tbl-head { font-size: 0.74rem; color: var(--ink-faint); }
   .tbl-head .th { background: none; text-align: left; color: var(--ink-faint); font-size: 0.74rem; font-weight: 500; padding: 6px 6px; border-radius: 0; }
   .tbl-head .th:hover { background: var(--hover); color: var(--ink-dim); }
   .tbl-head .th.sorted { color: var(--ink); font-weight: 600; }
-  .tbl-group { border-bottom: 1px solid var(--border); }
-  .tbl-head, .tbl-row { padding-left: 8px; padding-right: 8px; }
-  .tbl-row { min-height: 40px; padding-top: 5px; padding-bottom: 5px; border-radius: 12px; transition: background-color 0.22s var(--ease-out); }
-  .tbl-row:hover { background: var(--sidebar); }
+  /* 행마다 체크리스트 탭 같은 회색 둥근 카드(v107). 화면 밖 행은 배치를 건너뛰어 탭이 가볍게 열린다 */
+  .tbl-group { background: var(--sidebar); border-radius: 18px; transition: background-color 0.22s var(--ease-out); content-visibility: auto; contain-intrinsic-size: auto 50px; }
+  @media (hover: hover) { .tbl-group:hover { background: var(--hover); } }
+  .tbl-head, .tbl-row { padding-left: 12px; padding-right: 12px; }
+  .tbl-row { min-height: 40px; padding-top: 4px; padding-bottom: 4px; }
   .tbl-row.is-done .cell-title { text-decoration: line-through; color: var(--ink-faint); }
   .tbl-row .check { width: 20px; height: 20px; margin: 0 auto; accent-color: var(--accent); cursor: pointer; }
   .cell-title-wrap { display: flex; align-items: center; min-width: 0; }
   .cell-title { flex: 1; min-width: 0; border: 1px solid transparent; background: transparent; border-radius: var(--radius); font-size: 0.92rem; font-weight: 500; padding: 5px 6px; }
-  .cell-title:hover { background: var(--hover); }
+  .tbl-row .cell-title:hover { background: transparent; }
   .cell-title:focus { background: var(--bg); }
   .cell-date { border: 1px solid transparent; background: transparent; border-radius: var(--radius); font-size: 0.82rem; padding: 4px 4px; width: 100%; min-width: 0; }
-  .cell-date:hover { background: var(--hover); }
+  .tbl-row .cell-date:hover { background: transparent; }
   .cell-date.overdue { color: var(--danger); font-weight: 600; }
+  .cell-date-wrap { display: contents; }
+  .cell-date-txt { display: none; }
   select.cell-type, select.cell-priority {
     -webkit-appearance: none;
     appearance: none;
@@ -723,12 +724,16 @@
 
   @media (max-width: 760px) {
     .tbl-head { display: none; }
-    .tbl-row, .tbl-row.selectable { grid-template-columns: 28px minmax(0, 1fr) 28px 28px; row-gap: 2px; padding: 12px 6px 14px; }
+    .tbl-row, .tbl-row.selectable { grid-template-columns: 28px minmax(0, 1fr) 28px 28px; row-gap: 0; padding: 8px 8px 10px 10px; }
     .tbl-row.selectable { grid-template-columns: 24px 28px minmax(0, 1fr) 28px 28px; }
     .tbl-row > *:not(.cell-meta) { grid-row: 1; }
     .cell-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; grid-row: 2; grid-column: 2 / -1; padding: 0 6px; }
     .tbl-row.selectable .cell-meta { grid-column: 3 / -1; }
-    .cell-date { width: auto; }
+    /* 폰(v107): 날짜는 작은 글자로 보이고, 진짜 칸(iOS 확대 방지로 16px)은 그 위에 투명하게 겹쳐 누르면 날짜 선택이 열린다 */
+    .cell-date-wrap { display: inline-flex; position: relative; align-items: center; min-height: 26px; padding: 0 2px; }
+    .cell-date-txt { display: inline; font-size: 0.8rem; color: var(--ink-dim); white-space: nowrap; }
+    .cell-date-txt.overdue { color: var(--danger); font-weight: 600; }
+    .tbl-row .cell-date { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; opacity: 0; }
     .tbl-extras { padding-left: 12px; }
   }
 
@@ -1210,15 +1215,8 @@
      그때 같이 넣은 부드러운 움직임만 남겼다. 색·모양은 앞쪽 원래 규칙 그대로다.
      - 스프링 곡선은 실제 스프링 식(감쇠비 1.0·0.72)으로 계산한 값(linear())이고, 지원 안 하면 cubic-bezier로 대체된다.
      ====================================================================== */
+  /* v107: linear() 스프링을 뺐다. 3차 곡선은 브라우저가 그래픽 칩에서 그대로 돌릴 수 있어 본문 작업에 안 끌려간다 */
   :root { --spring: cubic-bezier(0.22, 1, 0.36, 1); --spring-bounce: cubic-bezier(0.34, 1.3, 0.64, 1); }
-  @supports (transition-timing-function: linear(0, 1)) {
-    :root {
-      /* 감쇠비 1.0 + 초기 속도(v106: 출발이 빠르고 끝만 길게 감속, 처음엔 멈춰 있다 출발해서 둔했음): 사이드바·화면 넘김 */
-      --spring: linear(0, 0.0628, 0.1343, 0.2094, 0.2848, 0.358, 0.4276, 0.4924, 0.5521, 0.6064, 0.6555, 0.6994, 0.7385, 0.7732, 0.8037, 0.8305, 0.8539, 0.8743, 0.8921, 0.9074, 0.9207, 0.9322, 0.9421, 0.9506, 0.9579, 0.9642, 0.9695, 0.9741, 0.978, 0.9814, 0.9842, 0.9866, 0.9887, 0.9904, 0.9919, 0.9932, 0.9942, 0.9951, 0.9959, 0.9965, 0.9971, 0.9975, 0.9979, 0.9983, 1);
-      /* 감쇠비 0.72(최대 3.8% 살짝 넘쳤다 돌아옴): 창·메뉴가 톡 튀어나올 때, 버튼에서 손을 뗄 때 */
-      --spring-bounce: linear(0, 0.0792, 0.1703, 0.2666, 0.3628, 0.4554, 0.542, 0.621, 0.6916, 0.7536, 0.8071, 0.8526, 0.8905, 0.9217, 0.947, 0.967, 0.9825, 0.9942, 1.0028, 1.0088, 1.0128, 1.0151, 1.0162, 1.0164, 1.0159, 1.015, 1.0137, 1.0123, 1.0109, 1.0094, 1.008, 1.0067, 1.0056, 1.0045, 1.0036, 1.0028, 1.0021, 1.0016, 1.0011, 1.0008, 1.0005, 1.0002, 1.0001, 0.9999, 1);
-    }
-  }
 
   /* 미끄러지는 판: 사이드바(폰 메뉴·데스크톱 접기)·상세·자료 시트 */
   .sidebar { transition: transform 0.62s var(--spring); }
@@ -1275,14 +1273,15 @@
   @media (max-width: 900px) { .cal-cell .hol-tag, .cal-cell .hol-tag.is-open { padding: 1px 4px; background-image: none; } }   /* 좁은 폰 칸은 별 없이 이름만(누른 칩도: 예전엔 누른 칩에만 별이 다시 들어가 글자와 겹쳤음, v79) */   /* 좁은 폰 칸은 별 없이 이름만 */
 
   /* 화면을 넘길 때 들어오는 움직임도 스프링으로 */
-  .view-in-r, .view-in-l { animation-duration: 0.6s; animation-timing-function: var(--spring); will-change: transform, opacity; }
+  .view-in-r, .view-in-l { animation-duration: 0.5s; animation-timing-function: var(--spring); will-change: transform, opacity; }
 
   /* 화면 알약 이름이 펼쳐지고 접히는 것·옵션 칸이 열리는 것도 스프링으로(애플 앱처럼 끝에서 아주 천천히 멈춤) */
-  .sb-pill .sp-label, .tb-pill .tb-label { transition: grid-template-columns 0.34s var(--spring), opacity 0.18s var(--ease-out), margin 0.34s var(--spring); }   /* 접히는 쪽은 펼쳐지는 쪽(0.6초)보다 짧게 */
-  .sb-pill.active .sp-label, .tb-pill.active .tb-label { transition: grid-template-columns 0.6s var(--spring), opacity 0.36s var(--ease-out) 0.06s, margin 0.6s var(--spring); }
-  .sb-pill.active, .tb-pill.active { transition: background-color 0.35s var(--ease-out), color 0.35s var(--ease-out), padding 0.6s var(--spring), scale 0.55s var(--spring-bounce); }
-  .sb-pill:not(.active), .tb-pill:not(.active) { transition: background-color 0.3s var(--ease-out), color 0.3s var(--ease-out), padding 0.34s var(--spring), scale 0.55s var(--spring-bounce); }
-  .sb-pill:active, .tb-pill:not(.active):active { transform: none; scale: 0.93; transition-duration: 0.3s, 0.3s, 0.34s, 0.14s; }
+  .sb-pills, .tb-nav { contain: layout style; }   /* 알약 폭이 바뀌어도 알약 줄만 다시 배치한다(v107) */
+  .sb-pill .sp-label, .tb-pill .tb-label { transition: grid-template-columns 0.24s var(--spring), opacity 0.14s var(--ease-out), margin 0.24s var(--spring); }   /* 접히는 쪽은 펼쳐지는 쪽(0.6초)보다 짧게 */
+  .sb-pill.active .sp-label, .tb-pill.active .tb-label { transition: grid-template-columns 0.36s var(--spring), opacity 0.26s var(--ease-out) 0.06s, margin 0.36s var(--spring); }
+  .sb-pill.active, .tb-pill.active { transition: background-color 0.35s var(--ease-out), color 0.35s var(--ease-out), padding 0.36s var(--spring), scale 0.55s var(--spring-bounce); }
+  .sb-pill:not(.active), .tb-pill:not(.active) { transition: background-color 0.3s var(--ease-out), color 0.3s var(--ease-out), padding 0.24s var(--spring), scale 0.55s var(--spring-bounce); }
+  .sb-pill:active, .tb-pill:not(.active):active { transform: none; scale: 0.93; transition-duration: 0.3s, 0.3s, 0.24s, 0.14s; }
   .quick-opts { transition: grid-template-rows 0.6s var(--spring), visibility 0s 0.6s; }
   .quick-opts.open { transition: grid-template-rows 0.6s var(--spring), visibility 0s; }
   .quick-opts-inner { transition: opacity 0.4s var(--ease-out), transform 0.6s var(--spring); }
@@ -1394,7 +1393,7 @@
   @media (hover: none) {
     .cal-cell:not(.empty):hover { background: var(--bg); }
     .cal-cell.selected:not(.empty):hover { background: var(--accent-soft); }
-    .item:hover, .tbl-row:hover { background: transparent; }
+    .item:hover { background: transparent; }
     .sb-profile:hover, .sb-item:hover, .pf-row:hover { background: transparent; }
     .sb-new:hover { background: var(--accent); }
     .btn-ghost:hover, .pending-btn:hover { background: transparent; color: var(--ink-dim); }
@@ -1420,6 +1419,17 @@
   html.low-fps .topbar, html.low-fps .peek-overlay, html.low-fps .dlg-overlay { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
   html.low-fps .topbar { background: var(--bg); }
   html.low-fps .peek-overlay { background: rgba(15,15,15,0.3); }
+
+  /* 시작 화면(v107): 저장된 옛 화면이 보이다가 바뀌지 않게, 서버 일정을 받을 때까지 덮는다. 스크립트가 멈춰도 9초 뒤 CSS만으로 걷힌다 */
+  .boot-splash { position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: var(--bg); animation: bootAuto 0.01s linear 9s forwards; }
+  .boot-splash.out { opacity: 0; pointer-events: none; transition: opacity 0.3s var(--ease-out); }
+  .boot-mark { display: flex; align-items: center; gap: 8px; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.01em; color: var(--ink); }
+  .boot-mark .ic { width: 1.8rem; height: 1.8rem; color: var(--accent); }
+  .boot-bar { width: 96px; height: 3px; border-radius: 999px; background: var(--hover); overflow: hidden; }
+  .boot-bar i { display: block; width: 40%; height: 100%; border-radius: 999px; background: var(--accent); animation: bootSlide 1.1s var(--ease-out) infinite; }
+  @keyframes bootSlide { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+  @keyframes bootAuto { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+  @media (prefers-reduced-motion: reduce) { .boot-bar i { animation: none; width: 100%; } .boot-splash.out { transition: none; } }
 </style>
 </head>
 <body>
@@ -1462,6 +1472,7 @@
 <symbol id="i-panel-left-close" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M9.5 4.5v15M16 9.5l-2.5 2.5 2.5 2.5"/></symbol>
 <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4h-4"/></symbol>
 </defs></svg>
+<div class="boot-splash" id="bootSplash" role="status" aria-label="불러오는 중"><div class="boot-mark"><svg class="ic" aria-hidden="true"><use href="#i-notebook"/></svg><span>Δuenoτe</span></div><div class="boot-bar"><i></i></div></div>
 <div class="mac-drag" aria-hidden="true"></div>
 <div id="sbOverlay" class="sb-overlay"></div>
 
@@ -1915,7 +1926,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v106';
+const APP_VERSION = 'v107';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -3524,7 +3535,7 @@ function renderTableRow(it, opts) {
       ${ddayHtml(it)}${timeChipHtml(it)}${checkChipHtml(it)}${aiBusyHtml(it)}${it.recurringId ? `<span class="recurring-tag">${ic('repeat')}</span>` : ''}
     </div>
     <div class="cell-meta">
-      <input type="date" class="cell-date ${overdue ? 'overdue' : ''}" value="${it.dueDate}" aria-label="마감일">
+      <span class="cell-date-wrap"><span class="cell-date-txt ${overdue ? 'overdue' : ''}">${Number(it.dueDate.slice(5, 7))}월 ${Number(it.dueDate.slice(8, 10))}일</span><input type="date" class="cell-date ${overdue ? 'overdue' : ''}" value="${it.dueDate}" aria-label="마감일"></span>
       <select class="cell-type t-${escapeHtml(type)}" aria-label="유형">
         ${TYPE_OPTIONS.map(t => `<option value="${t}" ${type === t ? 'selected' : ''}>${t}</option>`).join('')}
       </select>
@@ -4156,7 +4167,7 @@ function slideInView(mode, fromRight) {
   els.forEach(el => { void el.offsetWidth; el.classList.add(fromRight ? 'view-in-r' : 'view-in-l'); });
   document.body.classList.add('view-sliding');
   clearTimeout(slideTimer);
-  slideTimer = setTimeout(clearViewSlide, 600);
+  slideTimer = setTimeout(clearViewSlide, 520);
 }
 // 연타하면 이미 숨겨진 화면에도 모션 표시가 남을 수 있어서, 전부 찾아서 지운다
 function clearViewSlide() {
@@ -7347,6 +7358,31 @@ function renderTopicChoices(it, topics, tok) {
   addPlanButton('취소', 'btn-ghost', closePlanModal);
 }
 
+// 시작 화면(v107): 이 기기의 화면을 다 그렸고(local) 서버 일정도 받았을 때(cloud) 걷는다.
+// 로그인 안 함·오프라인·동기화 오류면 서버를 기다리지 않고, 서버가 늦으면 7초 뒤 이 기기 데이터로 시작한다(동기화는 뒤에서 계속).
+const bootState = { local: false, cloud: false, done: false };
+function bootFinish() {
+  if (bootState.done) return;
+  bootState.done = true;
+  const el = document.getElementById('bootSplash');
+  if (!el) return;
+  const fonts = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+  Promise.race([fonts, new Promise(r => setTimeout(r, 400))]).then(() => requestAnimationFrame(() => requestAnimationFrame(() => {   // 받은 내용이 그려진 뒤에 걷는다
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 340);
+  })));
+}
+function bootMark(what) { bootState[what] = true; if (bootState.local && bootState.cloud) bootFinish(); }
+window.__bootCloud = () => bootMark('cloud');
+(function setupBoot() {
+  if (typeof document.getElementById !== 'function' || typeof window.addEventListener !== 'function' || !document.getElementById('bootSplash')) return;
+  if (/HeadlessChrome/.test(navigator.userAgent) && !window.__bootTest) { document.getElementById('bootSplash').remove(); return; }   // 자동 검사는 e2e-boot만 시작 화면을 본다
+  if (navigator.onLine === false) bootState.cloud = true;
+  window.addEventListener('offline', () => bootMark('cloud'));
+  window.addEventListener('cloud-status', (e) => { if (e.detail && (e.detail.state === 'off' || e.detail.state === 'error')) bootMark('cloud'); });
+  setTimeout(bootFinish, 7000);
+})();
+
 (async function init() {
   const d = new Date();
   viewYear = d.getFullYear();
@@ -7381,6 +7417,7 @@ function renderTopicChoices(it, topics, tok) {
   window.__plannerResolve();
   updateDiagState();
   handleUrlAdd();
+  bootMark('local');
 })();
 
 // ---- PWA: 서비스 워커 등록 (file:// 이나 미지원 환경에서는 조용히 건너뜀) ----
@@ -7621,6 +7658,7 @@ async function startListening() {
     gotItems = true;
     await maybeReady();
     statusFromMeta();
+    if (!fromCache && window.__bootCloud) window.__bootCloud();
   }, handleListenError);
 
   unsubPrefs = onSnapshot(prefsRef(), { includeMetadataChanges: true }, async (snap) => {
