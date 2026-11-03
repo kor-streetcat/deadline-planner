@@ -305,7 +305,7 @@
   body.view-compact .page-head { margin-bottom: 12px; min-height: 34px; }
   body.view-compact .page-head .page-title { flex: none; gap: 0; font-size: 1rem; }
   body.view-compact .page-title .page-emoji { margin-right: 6px; }
-  body.view-compact .page-title .page-emoji .ic { width: 1.15rem; height: 1.15rem; stroke-width: 1.7; }
+  body.view-compact .page-title .page-emoji .ic { width: 1.15rem; height: 1.15rem; }
   body.view-compact .hdr-mini + .hdr-search { flex: 0 1 200px; height: 34px; }
   .hdr-search { position: relative; flex: 0 1 240px; min-width: 0; display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg); box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: border-color 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out); }
   .hdr-search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
@@ -1513,7 +1513,7 @@
 
   <div class="page">
     <div class="page-head">
-      <h1 class="page-title"><span class="page-emoji"><svg class="ic" aria-hidden="true"><use href="#i-notebook"/></svg></span>Δuenoτe</h1>
+      <h1 class="page-title"><span class="page-emoji"><svg class="ic" aria-hidden="true"><use href="#i-notebook"/></svg></span><span class="pt-text">Δuenoτe</span></h1>
       <button type="button" class="hdr-mini" id="hdrMini" hidden></button>
       <div class="hdr-search" id="hdrSearchWrap">
         <svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>
@@ -1926,7 +1926,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v107';
+const APP_VERSION = 'v108';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -4072,7 +4072,8 @@ function prepHeadFlip(prev, next, animate) {
   if (de.classList.contains('low-fps') || matchMedia('(prefers-reduced-motion: reduce)').matches) return null;
   const title = document.querySelector('.page-title'), search = document.getElementById('hdrSearchWrap'), quick = document.getElementById('quickWrap');
   if (!title || typeof title.animate !== 'function') return null;
-  const t0 = title.getBoundingClientRect(), s0 = search.getBoundingClientRect(), q0 = quick.getBoundingClientRect();
+  const parts = [title.querySelector('.page-emoji'), title.querySelector('.pt-text')];   // 아이콘과 글자는 크기·간격 비율이 달라서 따로 움직여야 첫 프레임이 튀지 않는다(v108)
+  const t0 = title.getBoundingClientRect(), p0 = parts.map(e => e.getBoundingClientRect()), s0 = search.getBoundingClientRect(), q0 = quick.getBoundingClientRect();
   if (t0.bottom < 0) return null;                       // 이미 스크롤로 지나간 곳이면 움직일 것이 안 보인다
   const fadeEls = () => [...document.querySelectorAll('.page-sub, #summaryBanner')].filter(e => e.offsetHeight > 0);   // 오늘로 돌아올 때는 이 시점에 숨어 있으므로 화면을 바꾼 뒤에 다시 찾는다
   const ghosts = next === 'today' ? [] : fadeEls().map(e => {   // 사라지는 소개·요약은 복사본이 제자리에서 흐려진다
@@ -4084,10 +4085,10 @@ function prepHeadFlip(prev, next, animate) {
   });
   return () => {
     const ease = getComputedStyle(de).getPropertyValue('--spring').trim() || 'cubic-bezier(0.22, 1, 0.36, 1)', opt = { duration: 560, easing: ease };
-    const t1 = title.getBoundingClientRect(), s1 = search.getBoundingClientRect(), dy = q0.top - quick.getBoundingClientRect().top;
+    const s1 = search.getBoundingClientRect(), dy = q0.top - quick.getBoundingClientRect().top;
     const fades = fadeEls();
-    title.animate([{ transformOrigin: '0 0', transform: `translate(${t0.left - t1.left}px, ${t0.top - t1.top}px) scale(${t0.height / (t1.height || 1)})` }, { transformOrigin: '0 0', transform: 'none' }], opt);
-    search.animate([{ transform: `translate(${s0.left - s1.left}px, ${s0.top - s1.top}px)` }, { transform: 'none' }], opt);
+    parts.forEach((e, i) => { const a = p0[i], b = e.getBoundingClientRect(); e.animate([{ transformOrigin: '0 0', transform: `translate(${a.left - b.left}px, ${a.top - b.top}px) scale(${a.width / (b.width || 1)})` }, { transformOrigin: '0 0', transform: 'none' }], opt); });
+    search.animate([{ transform: `translate(${s0.right - s1.right}px, ${s0.top - s1.top}px)` }, { transform: 'none' }], opt);   // 검색칸은 폭이 달라서 오른쪽 끝을 맞춘다
     const after = [...document.querySelector('.page').children].filter(e => e.offsetHeight > 0 && !e.classList.contains('page-head') && !fades.includes(e));
     if (Math.abs(dy) > 1) after.forEach(e => e.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], { ...opt, composite: 'add' }));   // add: 화면 넘김 슬라이드와 겹쳐도 합쳐진다
     if (next === 'today') fades.forEach(e => e.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, delay: 230, easing: 'ease-out', fill: 'backwards' }));   // 입력창이 다 내려온 뒤에 나타나야 겹치지 않는다
