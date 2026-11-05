@@ -908,6 +908,9 @@
   .chat-msg { padding: 8px 12px; border-radius: 18px; font-size: 0.85rem; line-height: 1.55; max-width: 88%; white-space: pre-wrap; animation: msgIn 0.4s var(--ease-out); }
   .chat-msg.user { align-self: flex-end; background: var(--accent); color: #fff; }
   .chat-msg.assistant { align-self: flex-start; background: var(--sidebar); color: var(--ink); }
+  .chat-src { align-self: flex-start; max-width: 88%; margin-top: -4px; padding: 0 4px; display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 0.72rem; color: var(--ink-dim); }
+  .chat-src a { color: var(--accent); text-decoration: none; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chat-suggest { align-self: stretch; width: 100%; height: 48px; border: 0; margin-top: -4px; background: transparent; color-scheme: normal; }
   .chat-input-row { display: flex; gap: 8px; }
   .chat-input-row input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.88rem; padding: 8px 10px; }
   .chat-input-row button { flex-shrink: 0; width: auto; margin-top: 0; padding: 8px 14px; }
@@ -1926,7 +1929,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v109';
+const APP_VERSION = 'v110';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2430,10 +2433,12 @@ setInterval(() => { if (document.getElementById('aiSection').open) renderAiUsage
 renderAiUsage();
 
 // media: [{ mime, data(base64) }]
-async function callGemini({ system, text, media, maxTokens, history, signal }) {
+async function callGemini({ system, text, media, maxTokens, history, signal, search, onGrounding }) {
   const userParts = [{ text }];
   (media || []).forEach(m => userParts.push({ inlineData: { mimeType: m.mime, data: m.data } }));
   const contents = [...(history || []), { role: 'user', parts: userParts }];
+  // search: 구글 검색 도구를 붙인다(AI 비서). 키·모델이 검색을 못 쓰면(무료 등급 제한 등) 검색 없이 한 번 더 보낸다.
+  let useSearch = !!search, searchSkipped = false;
 
   const doFetch = () => fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel)}:generateContent`,
@@ -2444,6 +2449,7 @@ async function callGemini({ system, text, media, maxTokens, history, signal }) {
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: system }] },
         contents,
+        ...(useSearch ? { tools: [{ google_search: {} }] } : {}),
         // 최근 Gemini 모델은 내부 "생각" 토큰도 이 한도에 포함돼서, 여유분을 더하지 않으면 본문이 비어 나올 수 있음
         generationConfig: { maxOutputTokens: (maxTokens || 1000) + THINKING_TOKEN_BUFFER }
       })
@@ -2468,6 +2474,15 @@ async function callGemini({ system, text, media, maxTokens, history, signal }) {
     await new Promise(r => setTimeout(r, GEMINI_RETRY_DELAYS_MS[attempt]));
     response = await netFetch();
   }
+  if (!response.ok && useSearch) {
+    let d = '';
+    try { d = (await response.clone().json()).error?.message || ''; } catch (e) {}
+    if (response.status === 400 || response.status === 403 || (response.status === 429 && /search|ground/i.test(d))) {
+      useSearch = false; searchSkipped = true;
+      { const u = aiUsage(); u.count++; u.recent.push(Date.now()); aiUsageSave(u); }
+      response = await netFetch();
+    }
+  }
   if (!response.ok) {
     let detail = '';
     try { detail = (await response.json()).error?.message || ''; } catch (e) {}
@@ -2491,6 +2506,14 @@ async function callGemini({ system, text, media, maxTokens, history, signal }) {
   const cand = data.candidates?.[0];
   const parts = cand?.content?.parts || [];
   const out = parts.map(p => p.text || '').join('\n').trim();
+  if (search && onGrounding) {
+    const g = cand?.groundingMetadata || {};
+    const seen = new Set();
+    const sources = (g.groundingChunks || []).map(c => c.web).filter(w => w && /^https:\/\//i.test(w.uri || ''))
+      .filter(w => { const k = w.title || w.uri; if (seen.has(k)) return false; seen.add(k); return true; })
+      .slice(0, 5).map(w => ({ uri: w.uri, title: String(w.title || w.uri).slice(0, 80) }));
+    onGrounding({ searchSkipped, sources, rendered: g.searchEntryPoint?.renderedContent || '' });
+  }
   if (!out) {
     const reason = data.promptFeedback?.blockReason
       ? `요청이 차단됨(${data.promptFeedback.blockReason})`
@@ -2547,9 +2570,9 @@ function askViaClipboard({ title, prompt, note }) {
   });
 }
 
-async function runAI({ system, text, media, maxTokens, title, history, signal }) {
+async function runAI({ system, text, media, maxTokens, title, history, signal, search, onGrounding }) {
   if (geminiKey) {
-    return callGemini({ system, text, media, maxTokens, history, signal });
+    return callGemini({ system, text, media, maxTokens, history, signal, search, onGrounding });
   }
   const hasMedia = media && media.length;
   const nonImage = hasMedia && media.some(m => !m.mime.startsWith('image/'));
@@ -5277,6 +5300,7 @@ function buildChatContext() {
     : '(등록된 참고 자료 없음)';
 
   return `너는 이 사람의 개인 비서야. 질문/조언에는 아래 정보를 참고해서 자연스럽게 존댓말로 짧게 답해. 목록에 없는 내용을 지어내지 말고, 모르면 모른다고 솔직히 말해. 조언은 추상적으로 말고 실행 가능한 내용으로 구체적으로 답해. 불필요하게 길게 늘어놓지 마.
+구글 검색 도구를 쓸 수 있어. 최신 정보·사실 확인·일정 밖의 질문(날씨, 뉴스, 마감 공지, 개념 설명 등)은 검색해서 답하고, 일정 목록만으로 답할 수 있는 질문은 검색하지 마. 검색어에 이 사람의 일정 제목·메모·참고 자료 내용을 그대로 넣지 말고 필요한 일반 단어만 써.
 
 오늘 날짜: ${todayISO()}
 
@@ -5372,6 +5396,33 @@ function renderChatLog() {
     div.className = 'chat-msg ' + msg.role;
     div.textContent = msg.text;
     log.appendChild(div);
+    if (msg.role !== 'assistant') return;
+    if (msg.sources && msg.sources.length) {
+      const src = document.createElement('div');
+      src.className = 'chat-src';
+      src.appendChild(Object.assign(document.createElement('span'), { textContent: '출처' }));
+      msg.sources.forEach(s => {
+        const a = document.createElement('a');
+        a.href = s.uri; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = s.title;
+        src.appendChild(a);
+      });
+      log.appendChild(src);
+    }
+    // 구글 검색을 쓴 답에는 구글이 주는 "검색 제안"을 그대로 보여야 한다(검색 도구 이용 조건). 스크립트가 못 도는 틀 안에 넣는다.
+    if (msg.rendered) {
+      const f = document.createElement('iframe');
+      f.className = 'chat-suggest';
+      f.setAttribute('sandbox', 'allow-popups allow-popups-to-escape-sandbox');
+      f.setAttribute('title', '구글 검색 제안');
+      f.srcdoc = '<base target="_blank"><style>body{margin:0}</style>' + msg.rendered;
+      log.appendChild(f);
+    }
+    if (msg.searchSkipped) {
+      const n = document.createElement('div');
+      n.className = 'chat-src';
+      n.textContent = '이 AI 키·모델은 웹 검색을 쓸 수 없어 검색 없이 답했습니다';
+      log.appendChild(n);
+    }
   });
   log.scrollTop = log.scrollHeight;
 }
@@ -5407,7 +5458,9 @@ async function sendChatMessage() {
       text: last.text,
       history,
       maxTokens: 1000,
-      title: 'AI 비서'
+      title: 'AI 비서',
+      search: true,
+      onGrounding: (g) => { loadingMsg.sources = g.sources; loadingMsg.rendered = g.rendered; loadingMsg.searchSkipped = g.searchSkipped; }
     });
     const { text: cleanText, actions } = parseActionsFromReply(rawReply);
     loadingMsg.text = cleanText || '(빈 응답)';
