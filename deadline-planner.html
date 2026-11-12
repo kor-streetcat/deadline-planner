@@ -936,9 +936,6 @@
   .peek-title { width: 100%; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.01em; border: 1px solid transparent; background: transparent; border-radius: var(--radius); padding: 4px 6px; margin: 0 0 10px -6px; }
   .peek-title:hover { background: var(--hover); }
   .peek-title:focus { background: var(--bg); }
-  .peek-ai-busy { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 12px; padding: 9px 12px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); font-size: 0.8rem; line-height: 1.45; }
-  .peek-ai-busy .pending-dot { margin-top: 5px; }
-  .peek-ai-busy span:last-child { word-break: keep-all; overflow-wrap: anywhere; }
   .peek-row { display: grid; grid-template-columns: 84px 1fr; align-items: center; gap: 8px; padding: 4px 0; }
   .peek-key { font-size: 0.8rem; color: var(--ink-dim); }
   .peek-row input[type="date"] { border: 1px solid transparent; background: transparent; border-radius: var(--radius); font-size: 0.86rem; padding: 4px 6px; justify-self: start; }
@@ -1929,7 +1926,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v110';
+const APP_VERSION = 'v111';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -1954,6 +1951,8 @@ async function loadItems() {
   try {
     const res = await store.get(STORAGE_KEY);
     items = res && res.value ? JSON.parse(res.value) : [];
+    if (!Array.isArray(items)) items = [];
+    healItems(items);
   } catch (e) {
     items = [];
   }
@@ -3411,7 +3410,7 @@ function renderItemRow(it, opts) {
     <div class="bar ${isOverdue ? 'high' : it.priority}"></div>
     <div class="body">
       <div class="title ${it.done ? 'done' : ''}">${escapeHtml(it.title)}${it.recurringId ? `<span class="recurring-tag">${ic('repeat')}반복</span>` : ''}</div>
-      <div class="meta">${dateLabel ? `<span>${dateLabel}</span>` : ''}${ddayHtml(it)}${timeChipHtml(it)}${checkChipHtml(it)}${aiBusyHtml(it)}<span class="type-tag t-${escapeHtml(it.type || '기타')}">${escapeHtml(it.type || '기타')}</span><span>우선순위 ${priorityLabel(it.priority)}</span></div>
+      <div class="meta">${dateLabel ? `<span>${dateLabel}</span>` : ''}${ddayHtml(it)}${timeChipHtml(it)}${checkChipHtml(it)}<span class="type-tag t-${escapeHtml(it.type || '기타')}">${escapeHtml(it.type || '기타')}</span><span>우선순위 ${priorityLabel(it.priority)}</span></div>
       ${nextStepHtml(it)}
       ${it.notes ? `<div class="notes">${escapeHtml(it.notes)}</div>` : ''}
       ${it.aiComment ? `<div class="ai-comment"><span class="icon">${ic('bulb')}</span><span>${escapeHtml(it.aiComment)}</span></div>` : ''}
@@ -3515,6 +3514,7 @@ function buildItemExtras(it) {
   box.querySelector('.extras-notes').addEventListener('change', async (e) => {
     it.notes = e.target.value.trim();
     await saveItems();
+    if (box.closest('#peekPanel')) refreshAll();      // 전체 표의 펼친 줄에서는 다시 그리면 다음 칸으로 옮긴 포커스가 사라짐
   });
   const eb = box.querySelector('.elaborate-btn:not(.topic-recommend-btn)');
   if (eb) bindElaborateButton(eb, it);
@@ -3555,7 +3555,7 @@ function renderTableRow(it, opts) {
     <input type="checkbox" class="check cell-done" ${it.done ? 'checked' : ''} aria-label="완료">
     <div class="cell-title-wrap">
       <input type="text" class="cell-title" value="${escapeHtml(it.title)}" aria-label="제목">
-      ${ddayHtml(it)}${timeChipHtml(it)}${checkChipHtml(it)}${aiBusyHtml(it)}${it.recurringId ? `<span class="recurring-tag">${ic('repeat')}</span>` : ''}
+      ${ddayHtml(it)}${timeChipHtml(it)}${checkChipHtml(it)}${it.recurringId ? `<span class="recurring-tag">${ic('repeat')}</span>` : ''}
     </div>
     <div class="cell-meta">
       <span class="cell-date-wrap"><span class="cell-date-txt ${overdue ? 'overdue' : ''}">${Number(it.dueDate.slice(5, 7))}월 ${Number(it.dueDate.slice(8, 10))}일</span><input type="date" class="cell-date ${overdue ? 'overdue' : ''}" value="${it.dueDate}" aria-label="마감일"></span>
@@ -3931,15 +3931,17 @@ document.getElementById('briefingBtn').addEventListener('click', async () => {
 });
 
 function refreshAll() {
-  updateBackupSummary();
-  renderTimerBar();
-  renderCalendar();
-  renderSummaryBanner();
-  if (viewMode === 'today') renderTodayView();
-  else if (viewMode === 'week') renderWeekView();
-  else if (viewMode === 'list') renderListView();
-  else if (viewMode === 'checklist') renderChecklistView();
-  else if (viewMode !== 'profile' && viewMode !== 'settings' && viewMode !== 'library') renderDetail();
+  // 한 부분이 오류가 나도 나머지(특히 지금 보는 화면)는 그린다. 오류는 문제 기록에 남는다.
+  const run = (f) => { try { f(); } catch (e) { console.error('화면 그리기 오류', e); } };
+  run(updateBackupSummary);
+  run(renderTimerBar);
+  run(renderCalendar);
+  run(renderSummaryBanner);
+  if (viewMode === 'today') run(renderTodayView);
+  else if (viewMode === 'week') run(renderWeekView);
+  else if (viewMode === 'list') run(renderListView);
+  else if (viewMode === 'checklist') run(renderChecklistView);
+  else if (viewMode !== 'profile' && viewMode !== 'settings' && viewMode !== 'library') run(renderDetail);
 }
 
 function renderDetail() {
@@ -4813,11 +4815,10 @@ const jobMedia = new Map();          // 이미지는 메모리에만 둔다(용�
 let jobChain = Promise.resolve();    // AI 작업은 한 번에 하나씩(키가 없으면 복사·붙여넣기 창이 하나뿐이라 겹치면 안 됨)
 const PARSE_EMPTY_MSG = '마감일 정보를 찾지 못했습니다. 조금 더 구체적으로 입력하시기 바랍니다.';
 
-// ---- 먼저 등록: 글에 날짜가 다 들어 있으면 AI 없이 날짜·시각만 바로 읽어서 등록하고, AI는 이어서 나머지를 채운다 ----
+// ---- 글에서 날짜·시각 읽기(AI 없이): AI를 끈 등록(registerWithoutAI)이 쓴다 ----
 // 줄(또는 쉼표)마다 날짜가 읽혀야만 이 경로를 쓴다. 하나라도 못 읽으면 통째로 AI에 맡기는 기존 경로(정리 중 칸)로 간다.
 // 날짜를 잘못 읽는 것이 가장 위험하므로 확실한 형태(연도·월일·오늘/내일/모레·N일 뒤·다음주/이번주 요일)는 AI가 못 고치게 하고,
 // 애매한 형태(월/일 줄임, 요일만, 시만 있는 시각)만 사용자가 안 건드렸을 때 AI가 고칠 수 있게 한다.
-const enrichingIds = new Set();      // 등록은 됐고 AI가 아직 채우는 중인 일정(메모리에만: 카드에 "AI 정리 중…" 표시용)
 function isoOfDate(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
 function readLocalWhen(line, todayIso) {
   let s = ' ' + line + ' ', date = '', sure = false, time = '', timeSure = false, m;
@@ -4889,30 +4890,7 @@ function readLocalWhen(line, todayIso) {
   const title = tidy(noParticle.replace(/(^|\s)(마감|기한)(?=\s|$)/g, ' ')) || tidy(noParticle);      // "마감"만 남으면 그것이 제목
   return { date, sure, time, timeSure, title, dur };
 }
-function readLocalPlan(text) {
-  const t = String(text || '').trim();
-  if (!t || t.length > 600) return null;
-  const segs = t.split(/[\n,，;；]+/).map(x => x.trim()).filter(Boolean);
-  if (!segs.length || segs.length > 10) return null;
-  const today = todayISO(), out = [];
-  for (const raw of segs) {
-    const r = readLocalWhen(raw, today);
-    if (!r || !r.title) return null;
-    out.push({ ...r, raw });
-  }
-  return out;
-}
-function aiBusyHtml(it) { return enrichingIds.has(it.id) ? '<span class="ai-busy">AI 정리 중…</span>' : ''; }
-
 // 등록이 끝났을 때 화면 아래에 뜨는 "등록 완료" 알림(6초, 되돌리기 포함). 입력창 밑의 작은 상태 글만으로는 눈에 안 띄어서 넣었다.
-// 상세 패널이 열려 있는 일정을 AI가 다 채웠을 때 패널을 다시 그린다. 그 패널에서 글을 쓰는 중이면 손을 뗄 때까지 미룬다(쓰던 글이 사라지지 않게).
-function refreshPeekAfterAI(ids) {
-  if (!peekId || !ids.includes(peekId)) return;
-  const id = peekId, body = document.getElementById('peekBody'), a = document.activeElement;
-  if (a && body.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) {
-    body.addEventListener('focusout', () => setTimeout(() => { if (peekId === id) renderPeek(); }, 50), { once: true });
-  } else renderPeek();
-}
 function announceRegistered(ids, extra) {
   const list = ids.map(id => items.find(x => x.id === id)).filter(Boolean);
   if (!list.length) return;
@@ -4924,94 +4902,6 @@ function announceRegistered(ids, extra) {
     await saveItems(); refreshAll();
   }, 6000);
 }
-async function registerInstantly(plan, kw) {
-  const created = plan.map(p => ({ id: uid(), title: p.title, shortLabel: '', type: '기타', dueDate: p.date, priority: 'medium', notes: '', aiComment: '', topicSuggestion: '', topicKeyword: '', done: false, ...(p.time ? { dueTime: p.time } : {}), ...(p.dur ? { durationMin: p.dur } : {}) }));
-  items = items.concat(created);
-  await saveItems();
-  selectedDate = created[0].dueDate;
-  const [y, mo] = selectedDate.split('-');
-  viewYear = parseInt(y); viewMonth = parseInt(mo) - 1;
-  const statusEl = document.getElementById('status');
-  statusEl.className = 'status';
-  statusEl.textContent = `${created.length}건 등록했습니다 · AI가 이어서 정리하는 중…`;
-  const ctx = { ids: created.map(c => c.id), plan, kw, cancelled: false };
-  const p = enqueueEnrich(ctx);
-  refreshAll();
-  const first = created[0].title.length > 24 ? created[0].title.slice(0, 24) + '…' : created[0].title;
-  showToast(created.length === 1 ? `"${first}" 등록했습니다 · ${formatShortDate(created[0].dueDate)}` : `${created.length}건 등록했습니다`, '되돌리기', async () => {
-    ctx.cancelled = true;
-    ctx.ids.forEach(id => enrichingIds.delete(id));
-    const gone = new Set(ctx.ids);
-    items = items.filter(x => !gone.has(x.id));
-    await saveItems(); refreshAll();
-  }, 6000);
-  return { ctx, done: p, count: created.length };
-}
-function enqueueEnrich(ctx) {
-  ctx.ids.forEach(id => enrichingIds.add(id));
-  const p = jobChain.then(() => runEnrich(ctx));
-  jobChain = p.catch(() => {});
-  return p;
-}
-async function runEnrich(ctx) {
-  const statusEl = document.getElementById('status');
-  const finish = () => { ctx.ids.forEach(id => enrichingIds.delete(id)); refreshPeekAfterAI(ctx.ids); };
-  if (ctx.cancelled) { finish(); return { ok: false, cancelled: true }; }
-  try {
-    const lines = ctx.plan.map((p, i) => `${i + 1}. 원문: ${p.raw} | 읽은 날짜: ${p.date}${p.time ? ' ' + p.time : ''}`).join('\n');
-    const system = buildSystemPrompt(ctx.kw) + `
-
-[이미 날짜를 읽어서 등록한 일정이라, 새로 추출하지 말고 아래 줄마다 정보를 채워줘]
-- 줄 하나당 정확히 1개 객체를 반환하고, 객체에 "n"(줄 번호, 1부터)을 넣어. 줄 수와 순서를 바꾸지 마.
-- title은 날짜·시각 표현을 뺀 깔끔한 제목. dueDate는 "읽은 날짜"를 그대로 쓰고, 원문 표현이 그것과 분명히 다를 때만 고쳐. dueTime은 원문에 시각이 있을 때만.
-- 나머지(shortLabel, type, priority, notes, aiComment, topicSuggestion, durationMin)는 위 형식대로 채워.`;
-    const raw = await runAI({ system, text: lines, maxTokens: 2000, title: '일정 정리' });
-    if (ctx.cancelled) { finish(); return { ok: false, cancelled: true }; }
-    const rows = extractJsonArray(raw);
-    if (!Array.isArray(rows)) throw new Error('AI 답을 읽지 못했습니다');
-    let filled = 0;
-    rows.forEach(r => {
-      if (!r || typeof r !== 'object') return;
-      const i = parseInt(r.n, 10) - 1;
-      if (!(i >= 0 && i < ctx.ids.length)) return;
-      const it = items.find(x => x.id === ctx.ids[i]), loc = ctx.plan[i];
-      if (!it) return;
-      filled++;
-      const title = cleanText(r.title, 300);
-      if (!it.aiOrig) it.aiOrig = makeAiOrig(r, loc.raw);   // AI가 처음 준 값(사용자가 고친 것과 비교해 학습)
-      if (title && it.title === loc.title) it.title = title;                      // 그 사이 사용자가 고친 제목은 건드리지 않는다
-      if (!it.shortLabel) it.shortLabel = cleanText(r.shortLabel, 40);
-      if (it.type === '기타' && TYPE_OPTIONS.includes(r.type)) it.type = r.type;
-      if (it.priority === 'medium' && ['high', 'low'].includes(r.priority)) it.priority = r.priority;
-      if (!it.notes && r.notes) it.notes = String(r.notes).slice(0, 2000);
-      if (!it.aiComment && r.aiComment) it.aiComment = cleanText(r.aiComment, 300);
-      if (!it.topicSuggestion && r.topicSuggestion) { it.topicSuggestion = cleanText(r.topicSuggestion, 300); it.topicKeyword = ctx.kw || ''; }
-      if (!it.durationMin && normDuration(r.durationMin)) setAiDuration(it, r.durationMin);
-      const tm = normTime(r.dueTime);
-      if (tm && (!it.dueTime || (it.dueTime === loc.time && !loc.timeSure))) it.dueTime = tm;
-      if (isValidISO(r.dueDate) && r.dueDate !== it.dueDate && !loc.sure && it.dueDate === loc.date) it.dueDate = r.dueDate;   // 애매하게 읽은 날짜만 AI가 고칠 수 있음
-    });
-    finish();
-    await saveItems();
-    statusEl.className = 'status';
-    statusEl.textContent = `${ctx.ids.length}건 등록 완료`;
-    refreshAll();
-    announceRegistered(ctx.ids);
-    return { ok: true, count: ctx.ids.length, filled };
-  } catch (err) {
-    finish();
-    refreshAll();
-    if (err && err.message === '취소함') {
-      statusEl.className = 'status'; statusEl.textContent = 'AI 정리를 건너뛰었습니다 · 일정은 등록돼 있습니다';
-      return { ok: true, count: ctx.ids.length, filled: 0, skipped: true };
-    }
-    console.error(err);
-    statusEl.className = 'status err'; statusEl.textContent = '등록은 됐지만 AI 정리에 실패했습니다: ' + ((err && err.message) || err);
-    showToast('AI 정리에 실패했습니다 · 일정은 등록돼 있습니다', '다시 시도', async () => { ctx.cancelled = false; enqueueEnrich(ctx); refreshAll(); }, 8000);
-    return { ok: true, count: ctx.ids.length, filled: 0, error: String((err && err.message) || err) };
-  }
-}
-
 function savePending() {
   try {
     const data = pendingJobs.map(j => ({ id: j.id, text: j.text, hasImage: !!j.hasImage, kw: j.kw || '', status: j.status, error: j.error || '', drafts: j.drafts || [] }));
@@ -5063,15 +4953,15 @@ function makeParsedItem(p, kw, src) {
   return {
     aiOrig: makeAiOrig(p, src),
     id: uid(),
-    title: p.title || '제목 없음',
-    shortLabel: p.shortLabel || '',
-    type: p.type || '기타',
+    title: cleanText(p.title, 300) || '제목 없음',
+    shortLabel: cleanText(p.shortLabel, 40),
+    type: TYPE_OPTIONS.includes(p.type) ? p.type : '기타',
     dueDate: p.dueDate,
     priority: ['high','medium','low'].includes(p.priority) ? p.priority : 'medium',
-    notes: p.notes || '',
-    aiComment: p.aiComment || '',
-    topicSuggestion: p.topicSuggestion || '',
-    topicKeyword: p.topicSuggestion ? kw : '',
+    notes: typeof p.notes === 'string' ? p.notes.slice(0, 2000) : '',
+    aiComment: cleanText(p.aiComment, 300),
+    topicSuggestion: cleanText(p.topicSuggestion, 300),
+    topicKeyword: cleanText(p.topicSuggestion, 300) ? String(kw || '') : '',
     done: false,
     ...(normTime(p.dueTime) ? { dueTime: normTime(p.dueTime) } : {}),
     ...(normDuration(p.durationMin) ? { durationMin: normDuration(p.durationMin), durationAi: normDuration(p.durationMin) } : {})
@@ -5268,7 +5158,6 @@ document.getElementById('parseBtn').addEventListener('click', async () => {
     await registerWithoutAI(text);
     return;
   }
-  const plan = media.length ? null : readLocalPlan(text);          // 글에 날짜가 다 들어 있으면 AI를 기다리지 않고 바로 등록
   // 접수: 입력창·옵션 칸을 바로 비워서 다음 입력을 받을 수 있게 한다
   qi.value = ''; growQuickInput();
   document.getElementById('itemKeywordInput').value = '';
@@ -5277,7 +5166,7 @@ document.getElementById('parseBtn').addEventListener('click', async () => {
   document.getElementById('thumb').style.display = 'none';
   pendingImageBase64 = null; pendingImageMediaType = null;
   statusEl.className = 'status'; statusEl.textContent = '';
-  if (plan) { await registerInstantly(plan, combinedKeywords.join(', ')); return; }
+  // AI 켬이면 항상 "정리 중" 칸을 거친다(v111, 사용자 요청: 날짜를 읽으면 먼저 등록하고 AI가 채우던 길과 섞여 헷갈렸음)
   enqueueParse({ text, media, kw: combinedKeywords.join(', ') });
 });
 
@@ -6061,6 +5950,9 @@ function openPeek(id, anchorEl) {
 }
 function closePeek() {
   if (!peekId && !document.getElementById('peekPanel').classList.contains('open')) return;
+  // 입력 중인 칸(제목·메모·체크리스트 글)은 포커스가 빠질 때 저장된다. 닫기 전에 먼저 빼서 확실히 저장되게 한다
+  const ae = document.activeElement;
+  if (ae && ae !== document.body && document.getElementById('peekPanel').contains(ae)) ae.blur();
   peekId = null;
   document.getElementById('peekOverlay').classList.remove('open');
   const pk = document.getElementById('peekPanel'); pk.classList.remove('open');
@@ -6129,7 +6021,6 @@ function renderPeek() {
   if (!it) { closePeek(); return; }
   const type = it.type || '기타';
   body.innerHTML = `
-    ${enrichingIds.has(it.id) ? '<div class="peek-ai-busy" role="status"><span class="pending-dot"></span><span>AI가 정리하는 중입니다. 끝나면 유형·우선순위·메모·예상시간이 채워집니다.</span></div>' : ''}
     <div class="pk-hero${it.priority === 'high' || (!it.done && it.dueDate < todayISO()) ? ' hot' : ''}${it.done ? ' is-done' : ''}">
       <div class="pk-card pk-title-card"><input type="text" class="peek-title" value="${escapeHtml(it.title)}" aria-label="제목"></div>
       <div class="pk-card pk-when">
@@ -6391,6 +6282,17 @@ function stableStringify(v) {
 
 // 객체 정체성을 유지한 채로 내용만 맞춤 (열려 있는 상세 패널·표 행이 옛 객체를 붙잡고 있어도 안전하게)
 // keep: 서버 내용으로 건드리면 안 되는 id들 (아직 올리지 못한 이 기기의 변경이 있는 일정) — 덮어쓰기·추가·삭제 모두 건너뜀
+// 글자여야 하는 칸에 숫자·객체 등이 들어간 일정을 글자로 고친다(v111). AI가 짧은 제목을 숫자로 준 일정 하나 때문에
+// 달력 그리기가 오류로 멈추면 refreshAll이 지금 보는 화면까지 못 가서, 무엇을 고쳐도 탭을 넘기기 전엔 반영이 안 됐다.
+function healItems(list) {
+  const ITEM_TEXT_KEYS = ['title', 'shortLabel', 'type', 'notes', 'aiComment', 'topicSuggestion', 'topicKeyword'];
+  (list || []).forEach(it => {
+    if (!it || typeof it !== 'object') return;
+    if (typeof it.dueDate !== 'string') it.dueDate = it.dueDate == null ? '' : String(it.dueDate);
+    ITEM_TEXT_KEYS.forEach(k => { if (k in it && typeof it[k] !== 'string') it[k] = it[k] == null ? '' : (typeof it[k] === 'object' ? JSON.stringify(it[k]) : String(it[k])); });
+  });
+  return list;
+}
 function reconcileList(target, incoming, keep) {
   let changed = false;
   const byId = new Map(target.map(x => [x.id, x]));
@@ -6605,6 +6507,7 @@ window.plannerApp = {
 
   // 이 기기에서 처음 연결할 때: 클라우드와 기기 데이터를 합침 (같은 id는 클라우드가 우선)
   async mergeFromCloud(cloudItems, cloudTrash, cloudPrefs) {
+    healItems(cloudItems); healItems(cloudTrash);
     const cloudIds = new Set([...cloudItems, ...cloudTrash].map(x => x.id));
     items = [...cloudItems, ...items.filter(x => !cloudIds.has(x.id))];
     trashedItems = [...cloudTrash, ...trashedItems.filter(x => !cloudIds.has(x.id))];
@@ -6618,6 +6521,7 @@ window.plannerApp = {
 
   // 클라우드에서 바뀐 내용이 들어옴
   async applyCloudItems(cloudItems, cloudTrash, keep) {
+    healItems(cloudItems); healItems(cloudTrash);
     const a = reconcileList(items, cloudItems, keep);
     const b = reconcileList(trashedItems, cloudTrash, keep);
     if (a || b) {

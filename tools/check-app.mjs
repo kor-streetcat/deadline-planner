@@ -50,19 +50,18 @@ const grab = (from, to) => { const a = html.indexOf(from), b = html.indexOf(to, 
   }
 }
 
-// ---- 3) 날짜·시각 읽기(먼저 등록 경로) ----
+// ---- 3) 날짜·시각 읽기(AI 끔 등록 경로) ----
 {
   const TODAY = '2026-09-21';   // 월요일
   const normTime = (v) => { const m = String(v == null ? '' : v).trim().match(/^(\d{1,2}):(\d{2})$/); if (!m) return ''; const hh = +m[1], mi = +m[2]; return hh > 23 || mi > 59 ? '' : String(hh).padStart(2, '0') + ':' + m[2]; };
-  const seg = grab('function isoOfDate', 'function aiBusyHtml');
-  const { readLocalWhen, readLocalPlan } = new Function('cleanText', 'normTime', 'todayISO', seg + '; return { readLocalWhen, readLocalPlan };')(cleanText, normTime, () => TODAY);
+  const seg = grab('function isoOfDate', '// 등록이 끝났을 때 화면 아래에 뜨는');
+  const { readLocalWhen } = new Function('cleanText', 'normTime', 'todayISO', seg + '; return { readLocalWhen };')(cleanText, normTime, () => TODAY);
   const w = (x) => { const r = readLocalWhen(x, TODAY); return r && [r.date, r.title]; };
   eq('"보고서 10/3까지" 읽기', w('보고서 10/3까지'), ['2026-10-03', '보고서']);
   eq('"내일 발표 준비" 읽기', w('내일 발표 준비'), ['2026-09-22', '발표 준비']);
   eq('"10월 3일 논문 초안" 읽기', w('10월 3일 논문 초안'), ['2026-10-03', '논문 초안']);
   eq('"다음주 금요일 세미나" 읽기', w('다음주 금요일 세미나'), ['2026-10-02', '세미나']);
   eq('날짜가 없으면 안 읽음', w('ALD 공부'), null);
-  eq('두 건을 쉼표로', readLocalPlan('보고서 10/3까지, 치과 화요일 3시').map(r => [r.title, r.date, r.time]), [['보고서', '2026-10-03', ''], ['치과', '2026-09-22', '15:00']]);
 }
 
 // ---- 4) 값 정리 함수 ----
