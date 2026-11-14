@@ -1926,7 +1926,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v111';
+const APP_VERSION = 'v112';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -4774,6 +4774,7 @@ ${existingSummary}${durationLearningBlock()}${editLearningBlock()}
   - low: 남은 날이 14일을 넘거나, 안 해도 큰 문제가 없는 선택적·취미·참고용 일
   - medium: 나머지. 확신이 없으면 medium. 모든 일정을 high로 만들지 마.
 ■ notes(메모): 제목만으로는 사라지는 구체 정보(장소·준비물·분량·형식·요구사항·연락처·링크)가 원문에 있을 때만, 그 정보를 한두 문장으로 정리해서 써. 원문을 그대로 베끼거나 제목을 풀어 쓰지 말고, 해당 정보가 없으면 빈 문자열로 둬.
+■ 나누기: 한 글에 서로 다른 일이 여러 개면(마감일·성격이 다르면) 뭉치지 말고 항목을 따로 만들어. 반대로 한 가지 일 안에 챙길 세부 항목이 여러 개 적혀 있으면(준비물 목록, 제출물 여러 개, "1) … 2) …" 같은 나열, 범위가 여러 단원인 공부 등) 항목은 하나로 두고 그 세부 항목들을 checklist에 나눠 담아. 원문에 나열은 없지만 누가 봐도 여러 단계로 나눠 해야 하는 큰 일(보고서·논문·발표자료 작성, 시험 대비처럼 하루에 못 끝내는 일)은 실제로 손이 가는 순서대로 3~6단계를 checklist에 넣어. 약속·예약·단순 제출·심부름처럼 한 번에 끝나는 일은 checklist를 비워. checklist에 넣은 내용을 notes에 또 쓰지 마.
 ■ aiComment(팁): 날짜·마감만 봐도 누구나 아는 말("마감이 가깝다", "서둘러라", "조속히 진행하는 것이 좋다")은 절대 쓰지 마. 일정 내용을 보고 새로 알려 줄 만한 구체적인 행동 1가지(준비 순서·미리 챙길 것·시간 배분·같은 날 다른 일정과의 충돌)가 있을 때만 합니다체 한 문장, 없으면 빈 문자열.
 
 반드시 아래 JSON 배열 형식으로만 응답해. 다른 설명, 마크다운, 코드블록 표시 없이 순수 JSON 배열만 출력해:
@@ -4789,6 +4790,7 @@ ${existingSummary}${durationLearningBlock()}${editLearningBlock()}
     "priority": "high | medium | low",
     "notes": "원문에 제목만으로 담기지 않는 구체 정보가 있을 때만(작성 규칙 참고), 없으면 빈 문자열",
     "aiComment": "새로 알려 줄 구체적인 행동 1가지일 때만 한 문장(작성 규칙 참고), 없으면 빈 문자열. 억지로 만들어내지 마.",
+    "checklist": ["나눠 담을 세부 항목·단계(각 30자 이내, 최대 8개, 작성 규칙의 '나누기' 참고). 나눌 것이 없으면 빈 배열 []"],
     "topicSuggestion": "type이 '보고서' 또는 '논문'이고, 과목명은 있지만 구체적인 주제가 아직 정해지지 않은 경우에만 작성. 추상적인 방향 제시가 아니라 실제로 조사·실험 가능한 구체적인 주제 1개를 한 문장으로 제안. 그 외 유형이면 빈 문자열로 둬."
   }
 ]
@@ -4937,6 +4939,7 @@ function sanitizeDraft(p) {
   };
   if (normTime(p.dueTime)) d.dueTime = normTime(p.dueTime);
   if (normDuration(p.durationMin)) { d.durationMin = normDuration(p.durationMin); d.durationAi = d.durationMin; }
+  if (aiChecklist(p.checklist).length) d.checklist = aiChecklist(p.checklist);
   return d;
 }
 // AI가 처음 준 값(원문·제목·분류·우선순위·메모)을 일정에 같이 보관한다(v99). 사용자가 나중에 고치면 그 차이가 다음 정리 요청의 학습 자료가 된다.
@@ -4964,8 +4967,20 @@ function makeParsedItem(p, kw, src) {
     topicKeyword: cleanText(p.topicSuggestion, 300) ? String(kw || '') : '',
     done: false,
     ...(normTime(p.dueTime) ? { dueTime: normTime(p.dueTime) } : {}),
-    ...(normDuration(p.durationMin) ? { durationMin: normDuration(p.durationMin), durationAi: normDuration(p.durationMin) } : {})
+    ...(normDuration(p.durationMin) ? { durationMin: normDuration(p.durationMin), durationAi: normDuration(p.durationMin) } : {}),
+    ...(aiChecklist(p.checklist).length ? { checklist: aiChecklist(p.checklist) } : {})
   };
+}
+// AI가 준 체크리스트(글자 배열 또는 {t} 배열)를 앱 형식으로. 빈 글·중복은 빼고 8개까지, 하나뿐이면 나눈 의미가 없어 버린다.
+function aiChecklist(arr) {
+  if (!Array.isArray(arr)) return [];
+  const seen = new Set(), out = [];
+  arr.forEach(x => {
+    const t = cleanText(typeof x === 'string' ? x : (x && x.t), 120), k = t.toLowerCase().replace(/\s+/g, '');
+    if (!t || seen.has(k) || out.length >= 8) return;
+    seen.add(k); out.push({ t, d: false });
+  });
+  return out.length >= 2 ? out : [];
 }
 function removeJob(job) {
   job.cancelled = true;
