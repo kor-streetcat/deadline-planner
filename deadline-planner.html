@@ -94,6 +94,7 @@
     --tbg-pink: #f5e0e9;   --tfg-pink: #4c2337;
     --tbg-orange: #fadec9; --tfg-orange: #49290e;
     --tbg-gray: #e3e2e0;   --tfg-gray: #32302c;
+    --tbg-teal: #d2ebe9;   --tfg-teal: #17403d;
   }
   :root[data-theme="dark"] {
     --bg: #191919;
@@ -122,6 +123,7 @@
     --tbg-pink: #4a2b3b;   --tfg-pink: #e8b6cc;
     --tbg-orange: #4d3320; --tfg-orange: #eab98e;
     --tbg-gray: #3a3a3a;   --tfg-gray: #c9c9c9;
+    --tbg-teal: #1f403e;   --tfg-teal: #a3d9d4;
     color-scheme: dark;
   }
   @media (prefers-color-scheme: dark) {
@@ -152,6 +154,7 @@
     --tbg-pink: #4a2b3b;   --tfg-pink: #e8b6cc;
     --tbg-orange: #4d3320; --tfg-orange: #eab98e;
     --tbg-gray: #3a3a3a;   --tfg-gray: #c9c9c9;
+    --tbg-teal: #1f403e;   --tfg-teal: #a3d9d4;
     color-scheme: dark;
     }
   }
@@ -176,6 +179,7 @@
   .t-발표자료 { --tbg: var(--tbg-purple); --tfg: var(--tfg-purple); }
   .t-논문 { --tbg: var(--tbg-green);  --tfg: var(--tfg-green); }
   .t-과제 { --tbg: var(--tbg-yellow); --tfg: var(--tfg-yellow); }
+  .t-시험 { --tbg: var(--tbg-teal);   --tfg: var(--tfg-teal); }
   .t-약속 { --tbg: var(--tbg-pink);   --tfg: var(--tfg-pink); }
   .t-개인 { --tbg: var(--tbg-orange); --tfg: var(--tfg-orange); }
   .t-기타 { --tbg: var(--tbg-gray);   --tfg: var(--tfg-gray); }
@@ -707,6 +711,7 @@
     justify-self: start;
     max-width: 100%;
   }
+  select.cell-type, select.cell-priority { field-sizing: content; }   /* 고른 글자 폭에 맞춤(가장 긴 항목 폭으로 넓어지던 것). 못 쓰는 브라우저는 fitSelect가 폭을 준다 */
   select.cell-priority { background: var(--hover); color: var(--ink-dim); }
   select.cell-priority.p-high { background: var(--danger-soft); color: var(--danger); }
   select.cell-priority.p-low { background: var(--tbg-green); color: var(--tfg-green); }
@@ -1926,7 +1931,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v112';
+const APP_VERSION = 'v113';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -3388,7 +3393,7 @@ function renderTodayStats(active) {
 }
 
 // ---- Item row renderer (shared by detail panel, week view, list view) ----
-const TYPE_OPTIONS = ['보고서', '발표자료', '논문', '과제', '약속', '개인', '기타'];
+const TYPE_OPTIONS = ['보고서', '발표자료', '논문', '과제', '시험', '약속', '개인', '기타'];
 
 function renderItemRow(it, opts) {
   opts = opts || {};
@@ -3717,6 +3722,21 @@ function formatShortDate(iso) {
   const [y,m,d] = iso.split('-');
   return `${parseInt(m)}/${parseInt(d)}`;
 }
+
+// 알약 모양 선택 칸(유형·우선순위)의 폭을 고른 글자에 맞춘다. field-sizing을 아는 브라우저는 CSS가 하고, 모르면 글자 폭을 재서 준다.
+const FIELD_SIZING_OK = !(typeof window !== 'undefined' && window.__noFieldSizing) && typeof CSS !== 'undefined' && CSS.supports && CSS.supports('field-sizing', 'content');
+function fitSelect(sel) {
+  if (FIELD_SIZING_OK || !sel || !sel.isConnected) return;
+  const cs = getComputedStyle(sel), probe = document.createElement('span');
+  probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;left:-9999px;top:0';
+  probe.style.font = cs.font; probe.style.letterSpacing = cs.letterSpacing;
+  probe.textContent = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '';
+  document.body.appendChild(probe);
+  const w = probe.getBoundingClientRect().width; probe.remove();
+  sel.style.width = Math.ceil(w + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 2) + 'px';
+}
+function fitSelectsIn(root) { if (!FIELD_SIZING_OK && root) root.querySelectorAll('select.cell-type, select.cell-priority').forEach(fitSelect); }
+if (!FIELD_SIZING_OK && typeof document !== 'undefined' && document.addEventListener) document.addEventListener('change', (e) => { if (e.target && e.target.matches && e.target.matches('select.cell-type, select.cell-priority')) fitSelect(e.target); });
 
 function getShortLabel(it) {
   if (it.shortLabel && it.shortLabel.trim()) return it.shortLabel.trim();
@@ -4315,6 +4335,7 @@ function renderListView() {
   table.appendChild(renderTableHead());
   filtered.forEach(it => table.appendChild(renderTableRow(it, { selectable: selectMode, selected: selectedIds.has(it.id) })));
   container.appendChild(table);
+  fitSelectsIn(table);
   updateBulkBar();
 }
 
@@ -4768,7 +4789,7 @@ ${existingSummary}${durationLearningBlock()}${editLearningBlock()}
   좋은 예: "내일 3시까지 화학 보고서 제출해야 함" → "화학 보고서 제출" / "금요일 ALD 세미나 발표자료 준비" → "ALD 세미나 발표자료"
   나쁜 예: "과제 하기"(무엇인지 모름), "화학 보고서를 내일 오후 3시까지 제출하기"(날짜·시각이 제목에 남음)
 ■ shortLabel: title을 한 번 더 줄인 것. 한글 기준 8자 이내(영문·숫자는 12자 안팎), 2~3어절, 핵심어를 앞에 둬. 칸이 좁아 잘리면 안 돼.
-■ type(분류): 서면으로 내는 결과물이면 '보고서', 발표·PPT·세미나 자료면 '발표자료', 학술 논문이면 '논문', 수업 과제·시험 대비·공부·연습문제면 '과제', 다른 사람과 시각을 맞춘 만남·예약·면담·병원이면 '약속', 혼자 하는 생활 용무(운동·수리·구매·정리·백업)나 취미면 '개인', 어디에도 안 맞을 때만 '기타'.
+■ type(분류): 서면으로 내는 결과물이면 '보고서', 발표·PPT·세미나 자료면 '발표자료', 학술 논문이면 '논문', 수업 과제·공부·연습문제면 '과제', 시험·퀴즈·중간/기말고사·자격시험 응시나 그 대비 공부면 '시험', 다른 사람과 시각을 맞춘 만남·예약·면담·병원이면 '약속', 혼자 하는 생활 용무(운동·수리·구매·정리·백업)나 취미면 '개인', 어디에도 안 맞을 때만 '기타'.
 ■ priority(우선순위): 먼저 오늘 날짜와 dueDate로 남은 날을 직접 계산해.
   - high: 남은 날이 3일 이내이면서 제출·시험·발표·예약처럼 놓치면 되돌리기 어려운 일, 또는 원문에 "중요/급/꼭/필수"가 있는 일
   - low: 남은 날이 14일을 넘거나, 안 해도 큰 문제가 없는 선택적·취미·참고용 일
@@ -4783,7 +4804,7 @@ ${existingSummary}${durationLearningBlock()}${editLearningBlock()}
   {
     "title": "핵심 명사구 제목(위 작성 규칙 참고)",
     "shortLabel": "8자 이내 아주 짧은 요약(위 작성 규칙 참고). 예: '화학 보고서', '치과 예약', 'ALD 논문 초안'.",
-    "type": "보고서 | 발표자료 | 논문 | 과제 | 약속 | 개인 | 기타 중 하나 (학업 관련 아니면 약속 또는 개인 사용)",
+    "type": "보고서 | 발표자료 | 논문 | 과제 | 시험 | 약속 | 개인 | 기타 중 하나 (학업 관련 아니면 약속 또는 개인 사용)",
     "dueDate": "YYYY-MM-DD 형식, 날짜를 알 수 없으면 null",
     "dueTime": "HH:MM 24시간 형식(예: 15:30). 텍스트/이미지에 마감·약속 시각이 분명히 적혀 있을 때만, 없거나 불확실하면 null",
     "durationMin": "이 일을 끝내는 데 드는 예상 총 작업·소요 시간(분 단위 정수, 5~1440). 텍스트/이미지에 시간이 적혀 있으면 그것을 쓰고, 없으면 유형과 내용으로 현실적으로 추정해서 항상 채워. 하루(1440분)를 넘는 큰 일은 1440. 약속이면 이동·대기를 포함한 대략의 시간. 이 요청 끝에 '이 사용자의 시간 감각' 기록이 있으면 그 경향에 맞춰.",
@@ -6066,6 +6087,7 @@ function renderPeek() {
   actions.className = 'peek-actions';
   actions.innerHTML = (it.done ? '' : '<button class="peek-split" id="peekSplitBtn">' + ic('sparkle', 'ic sm') + ' AI로 쪼개기</button>') + '<button class="peek-del" id="peekDelBtn">휴지통으로 이동</button>';
   body.appendChild(actions);
+  fitSelectsIn(body);
 
   const q = (sel) => body.querySelector(sel);
   q('.peek-title').addEventListener('change', async (e) => {
