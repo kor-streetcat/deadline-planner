@@ -1455,6 +1455,26 @@
     .item .edit-btn, .item .del { opacity: 0; transition: opacity 0.2s var(--ease-out); }
     .item:hover .edit-btn, .item:hover .del, .item .edit-btn:focus-visible, .item .del:focus-visible, .item:focus-within .edit-btn, .item:focus-within .del { opacity: 1; }
   }
+  .view-hold { animation-play-state: paused !important; }
+  /* ---- 폰 세로 오늘 화면 가볍게(v115): 소개 문구 숨김, 제목·요약·날짜 줄을 작고 촘촘하게 ---- */
+  @media (max-width: 600px) {
+    body:not(.view-compact):not(.view-profile) .page-sub { display: none; }
+    body:not(.view-compact):not(.view-profile) .page-head { margin-bottom: 14px; }
+    body:not(.view-compact) .page-title { font-size: 1.32rem; letter-spacing: -0.015em; }
+    body:not(.view-compact) .page-title .page-emoji .ic { width: 1.4rem; height: 1.4rem; }
+    body:not(.view-compact) .hdr-search { flex-basis: 132px; height: 34px; box-shadow: none; background: var(--sidebar); border-color: transparent; }
+    .summary-banner { margin-bottom: 12px; padding: 8px 8px 8px 12px; border-radius: 14px; font-size: 0.82rem; }
+    .summary-banner .briefing-btn { padding: 3px 9px; }
+    #status:empty { display: none; }
+    .today-head { margin: 18px 0 6px; }
+    .today-date { font-size: 1.05rem; }
+    .today-progress-text { font-size: 0.76rem; }
+    .today-progress { height: 4px; }
+    .today-head .briefing-btn { padding: 3px 9px; font-size: 0.72rem; }
+    .today-section { margin-top: 16px; }
+    .today-section > h3 { font-size: 0.84rem; }
+    .today-section .sec-btn { font-size: 0.68rem; padding: 2px 8px; }
+  }
 </style>
 </head>
 <body>
@@ -1951,7 +1971,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v114';
+const APP_VERSION = 'v115';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -4236,15 +4256,28 @@ function slideInView(mode, fromRight) {
   const id = { today: 'todayView', month: 'monthView', week: 'weekView', list: 'listView', checklist: 'checklistView' }[mode];
   const els = [document.getElementById(id), document.getElementById('calHead'), mode === 'month' ? document.getElementById('detailPanel') : null].filter(el => el && el.style.display !== 'none');
   clearViewSlide();
-  els.forEach(el => { void el.offsetWidth; el.classList.add(fromRight ? 'view-in-r' : 'view-in-l'); });
+  els.forEach(el => { void el.offsetWidth; el.classList.add(fromRight ? 'view-in-r' : 'view-in-l', 'view-hold'); });
   document.body.classList.add('view-sliding');
   clearTimeout(slideTimer);
-  slideTimer = setTimeout(clearViewSlide, 520);
+  // v115: 새 화면을 처음 그리는 프레임은 무겁다(폰에서 수십~수백 ms). 그동안 움직임을 시작 지점에 멈춰 두었다가
+  // 그 프레임이 화면에 나간 뒤(두 프레임 뒤)에 풀어서 앞부분이 건너뛰지 않고 처음부터 부드럽게 보이게 한다.
+  const tok = ++slideToken;
+  let started = false;
+  const go = () => {
+    if (started || tok !== slideToken) return;
+    started = true;
+    els.forEach(el => el.classList.remove('view-hold'));
+    slideTimer = setTimeout(clearViewSlide, 540);
+  };
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => requestAnimationFrame(go));
+  else go();
+  setTimeout(go, 120);   // 탭이 숨겨져 requestAnimationFrame이 멈춘 경우 대비
 }
+let slideToken = 0;
 // 연타하면 이미 숨겨진 화면에도 모션 표시가 남을 수 있어서, 전부 찾아서 지운다
 function clearViewSlide() {
   document.body.classList.remove('view-sliding');
-  document.querySelectorAll('.view-in-r, .view-in-l').forEach(el => el.classList.remove('view-in-r', 'view-in-l'));
+  document.querySelectorAll('.view-in-r, .view-in-l, .view-hold').forEach(el => el.classList.remove('view-in-r', 'view-in-l', 'view-hold'));
 }
 
 document.querySelectorAll('[data-view]').forEach(b => {
