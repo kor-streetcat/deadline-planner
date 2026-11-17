@@ -1537,6 +1537,9 @@
   .cal-cell .item-label.high::before { display: none; }
   .cal-cell .item-label.pill.timed.high::before { display: block; }
   .cal-cell .item-label.high { font-weight: 700; }
+  /* v117: 시각 있는 일정(.pill.timed)은 글자색·굵기를 덮어써서 높음 굵게·지난 마감 빨강이 안 먹던 것 */
+  .cal-cell .item-label.pill.timed.high { font-weight: 700; }
+  .cal-cell .item-label.pill.timed.overdue { color: var(--danger); }
   .cal-cell .item-label.overdue { box-shadow: none; color: var(--danger); }
   .cal-cell .item-label.pill.overdue:not(.timed) { background: var(--danger-soft); }
   .cal-cell .item-label.done { opacity: 0.5; text-decoration: line-through; }
@@ -2122,7 +2125,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v116';
+const APP_VERSION = 'v117';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
