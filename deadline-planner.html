@@ -1628,6 +1628,18 @@
   .dmenu button .ic { width: 15px; height: 15px; stroke-width: 2.6; }
   .dmenu .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--tdot, var(--tdot-gray)); }
   @media (prefers-reduced-motion: reduce) { .dmenu, .dmenu.closing { animation: none; } .pk-picker { transition: none; } .switch-in::after { transition: none; } }
+  /* v118: 폰의 작은 머리 줄에서 검색칸이 85px까지 눌려 "검색" 글자가 잘리던 것: 검색칸은 줄지 않고 요약 글자가 줄임표로 줄어든다 */
+  @media (max-width: 900px) { body.view-compact .hdr-mini + .hdr-search { flex-shrink: 0; } }
+  @media (max-width: 420px) { body.view-compact .hdr-mini + .hdr-search { flex-basis: 112px; } }
+  /* v118: 폰에서 맨 아래까지 내리면 AI 비서 버튼이 마지막 줄의 D-day를 가리던 것: 끝에 닿으면 버튼이 아래로 비켜 숨는다 */
+  .chat-fab { transition: background-color 0.3s var(--ease-out), color 0.3s var(--ease-out), border-color 0.3s var(--ease-out), box-shadow 0.35s var(--ease-out), opacity 0.3s var(--ease-out), scale 0.55s var(--spring-bounce), translate 0.4s var(--ease-out); }
+  .chat-fab.fab-tuck { translate: 0 calc(90px + env(safe-area-inset-bottom)); opacity: 0; pointer-events: none; }
+  /* v118: 상세(보기·수정)를 연 일정의 달력 알약에만 표시. 일정을 눌러 연 날짜 창은 칸을 강조하지 않음 */
+  .cal-cell .item-label.peek-on { box-shadow: 0 0 0 2px var(--accent); position: relative; z-index: 1; }
+  @media (hover: none) {
+    .cal-cell.selected:not(.empty):hover { background: var(--bg); }
+    .cal-cell.sun.selected:not(.empty):hover, .cal-cell.sat.selected:not(.empty):hover { background: var(--weekend); }
+  }
 </style>
 </head>
 <body>
@@ -2125,7 +2137,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v117';
+const APP_VERSION = 'v118';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2940,7 +2952,7 @@ function fillDayPop(pop, iso) {
   dayItems.forEach(it => list.appendChild(renderItemRow(it)));
   daySteps.forEach(({ it, i, e }) => list.appendChild(renderStepRow(it, i, e)));
 }
-function openDayPop(iso, anchor) {
+function openDayPop(iso, anchor, noMark) {
   closeHolPop();
   const pop = document.createElement('div'); pop.className = 'hol-pop day-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', iso + ' 일정');
   const close = document.createElement('button'); close.className = 'hol-pop-close'; close.type = 'button'; close.setAttribute('aria-label', '닫기');
@@ -2949,9 +2961,10 @@ function openDayPop(iso, anchor) {
   pop.appendChild(close);
   const body = document.createElement('div'); body.className = 'day-pop-body'; pop.appendChild(body);
   pop.dataset.for = 'day:' + iso;
+  if (noMark) pop.dataset.mark = '1';
   holPopEl = pop;
   fillDayPop(pop, iso);
-  anchor.classList.add('is-open');
+  if (!noMark) anchor.classList.add('is-open');
   document.body.appendChild(pop);
   placePop(pop, anchor, true);
 }
@@ -2966,8 +2979,8 @@ function openDayPop(iso, anchor) {
       e.stopPropagation(); e.preventDefault();
       const iso = p.closest('.cal-cell').dataset.date;
       if (holPopEl && holPopEl.dataset.for === 'day:' + iso) { closeHolPop(); return; }
-      closeHolPop(); selectedDate = iso; renderCalendar(); renderDetail();
-      const c = document.querySelector(`.cal-cell[data-date="${iso}"]`); if (c) openDayPop(iso, c);
+      closeHolPop();   // v118: 일정을 눌러 연 날짜 창은 날짜 칸을 선택·강조하지 않는다(날짜를 고른 것처럼 헷갈려서). 일정 표시는 상세를 열 때만
+      const c = p.closest('.cal-cell'); if (c) openDayPop(iso, c, true);
       return;
     }
     if (holPopEl && !holPopEl.contains(e.target)) closeHolPop();
@@ -3994,7 +4007,7 @@ function renderCalendar() {
     const cell = document.createElement('div');
     cell.className = 'cal-cell';
     cell.dataset.date = iso;
-    if (holPopEl && holPopEl.dataset.for === 'day:' + iso) cell.classList.add('is-open');
+    if (holPopEl && holPopEl.dataset.for === 'day:' + iso && !holPopEl.dataset.mark) cell.classList.add('is-open');
     if (iso === today) cell.classList.add('today');
     if (iso === selectedDate) cell.classList.add('selected');
     const wd = (firstDay + day - 1) % 7;
@@ -4054,6 +4067,7 @@ function renderCalendar() {
       renderCalendar();
       renderDetail();
     });
+    if (peekId) { const m = cell.querySelector(`.item-label[data-item-id="${CSS.escape(peekId)}"]`); if (m) m.classList.add('peek-on'); }   // v118: 상세를 연 일정 표시
     grid.appendChild(cell);
   }
 }
@@ -4379,7 +4393,8 @@ function setViewMode(mode, animate) {
   closeSidebar();
   const isProfile = mode === 'profile' || mode === 'settings' || mode === 'library';      // 프로필·설정: 일정 입력·요약을 숨기는 별도 화면(마지막 화면으로 기억하지 않음)
   document.body.classList.toggle('view-profile', isProfile);
-  document.body.classList.toggle('view-compact', !isProfile && mode !== 'today');   // 오늘 탭만 제목·요약을 크게 보인다(v105)
+  document.body.classList.toggle('view-compact', !isProfile && mode !== 'today');
+  if (window.__fabTuckUpdate && typeof requestAnimationFrame === 'function') requestAnimationFrame(window.__fabTuckUpdate);   // v118: 화면이 바뀌면 AI 비서 버튼 숨김 다시 판단   // 오늘 탭만 제목·요약을 크게 보인다(v105)
   document.getElementById('profileView').style.display = mode === 'profile' ? 'block' : 'none';
   document.getElementById('settingsView').style.display = mode === 'settings' ? 'block' : 'none';
   document.getElementById('libraryView').style.display = mode === 'library' ? 'block' : 'none';
@@ -6042,6 +6057,24 @@ if (window.visualViewport) {
 document.getElementById('chatInput').addEventListener('focus', () => { fitChatToKeyboard(); setTimeout(fitChatToKeyboard, 350); });
 document.getElementById('chatInput').addEventListener('blur', () => setTimeout(fitChatToKeyboard, 100));
 document.getElementById('chatFab').addEventListener('click', () => toggleChat());
+// v118: 폰(≤900px)에서 페이지 끝에 닿으면 AI 비서 버튼을 숨겨 마지막 줄을 가리지 않게 한다(조금 올리면 다시 나타남)
+(function setupFabTuck() {
+  const fab = document.getElementById('chatFab');
+  if (!fab || typeof window.matchMedia !== 'function') return;
+  const mq = window.matchMedia('(max-width: 900px)');
+  let raf = 0;
+  const update = () => {
+    raf = 0;
+    const de = document.documentElement;
+    const scrollable = de.scrollHeight - window.innerHeight > 40;
+    const atEnd = window.innerHeight + window.scrollY >= de.scrollHeight - 72;
+    fab.classList.toggle('fab-tuck', mq.matches && scrollable && atEnd);
+  };
+  const req = () => { if (!raf) raf = requestAnimationFrame(update); };
+  window.addEventListener('scroll', req, { passive: true });
+  window.addEventListener('resize', req);
+  window.__fabTuckUpdate = update;
+})();
 document.getElementById('chatCloseBtn').addEventListener('click', () => toggleChat(false));
 
 // ---- 체크리스트 탭(v53): 체크리스트가 있는 일정을 일정별 묶음으로 모아 보여 준다 ----
@@ -6170,7 +6203,10 @@ function peekAnchor(explicit) {
   const recent = lastPress && Date.now() - lastPress.t <= 1500 && lastPress.el && lastPress.el.closest ? lastPress.el : null;
   const el = explicit && explicit.isConnected ? explicit : recent;
   if (!el || !el.closest) return null;
-  if (el.closest('.day-pop')) return document.querySelector('.cal-cell.is-open');          // 날짜 창에서 고른 일정은 그 날짜 칸을 가리킴
+  if (el.closest('.day-pop')) {          // 날짜 창에서 고른 일정은 그 날짜 칸(이번 주 화면은 요일 머리)을 가리킴
+    const d = holPopEl && (holPopEl.dataset.for || '').startsWith('day:') ? holPopEl.dataset.for.slice(4) : '';
+    return d ? document.querySelector(`.cal-cell[data-date="${d}"], .wk-dh[data-date="${d}"]`) : null;
+  }
   if (el.closest('.peek-panel, .hol-pop, .search-pop, .cmd-overlay, .sidebar, .topbar, .toast, .ctx-menu')) return null;
   return el.closest('.cal-cell, .item, .tbl-row, .cv-group, .wk-ev, .wk-ad, .step-row') || null;
 }
@@ -6202,11 +6238,14 @@ function openPeek(id, anchorEl) {
   closeHolPop();
   const wasOpen = document.getElementById('peekPanel').classList.contains('open');
   peekId = id;
+  markPeekPill();
   renderPeek();
   if (!wasOpen) {
     // 날짜 창이 닫히며 칸 표시가 지워져도 위치는 기억해 둔 자리로
     let a = anchor;
     if (a && !a.isConnected && rect) a = null;
+    // v118: 달력에서 상세를 열면 꼬리가 그 일정 알약을 가리킨다
+    if (a && a.classList && a.classList.contains('cal-cell')) { const pl = a.querySelector(`.item-label[data-item-id="${CSS.escape(id)}"]`); if (pl) a = pl; }
     const ghost = !a && rect ? Object.assign(document.createElement('i'), {}) : null;
     if (ghost) { ghost.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;pointer-events:none;visibility:hidden`; document.body.appendChild(ghost); }
     placePeek(ghost || a);
@@ -6216,12 +6255,17 @@ function openPeek(id, anchorEl) {
   document.getElementById('peekPanel').classList.add('open');
   lockPage('peek');
 }
+function markPeekPill() {   // v118: 상세(보기·수정)를 연 일정의 달력 알약에만 파란 테두리
+  document.querySelectorAll('.cal-cell .item-label.peek-on').forEach(x => x.classList.remove('peek-on'));
+  if (peekId) document.querySelectorAll(`.cal-cell .item-label[data-item-id="${CSS.escape(peekId)}"]`).forEach(x => x.classList.add('peek-on'));
+}
 function closePeek() {
   if (!peekId && !document.getElementById('peekPanel').classList.contains('open')) return;
   // 입력 중인 칸(제목·메모·체크리스트 글)은 포커스가 빠질 때 저장된다. 닫기 전에 먼저 빼서 확실히 저장되게 한다
   const ae = document.activeElement;
   if (ae && ae !== document.body && document.getElementById('peekPanel').contains(ae)) ae.blur();
   peekId = null;
+  markPeekPill();
   closeDMenu();
   document.getElementById('peekOverlay').classList.remove('open');
   const pk = document.getElementById('peekPanel'); pk.classList.remove('open');
