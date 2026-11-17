@@ -95,6 +95,10 @@
     --tbg-orange: #fadec9; --tfg-orange: #49290e;
     --tbg-gray: #e3e2e0;   --tfg-gray: #32302c;
     --tbg-teal: #d2ebe9;   --tfg-teal: #17403d;
+    /* Δ UI v116: 분류 점·상태 글자·주말 칸·스위치·메뉴 */
+    --tdot-blue: #4a87c4; --tdot-purple: #9a6fc0; --tdot-green: #4f9a62; --tdot-yellow: #d0a12a;
+    --tdot-pink: #cc6a98; --tdot-orange: #d9823f; --tdot-gray: #9b9a97; --tdot-teal: #3a9c94;
+    --soon: #b35a14; --weekend: #fbfbfa; --switch-on: #34c759; --menu-bg: rgba(255,255,255,0.72);
   }
   :root[data-theme="dark"] {
     --bg: #191919;
@@ -124,6 +128,9 @@
     --tbg-orange: #4d3320; --tfg-orange: #eab98e;
     --tbg-gray: #3a3a3a;   --tfg-gray: #c9c9c9;
     --tbg-teal: #1f403e;   --tfg-teal: #a3d9d4;
+    --tdot-blue: #6ea6d8; --tdot-purple: #b590d6; --tdot-green: #73ba88; --tdot-yellow: #dcb64e;
+    --tdot-pink: #dc8ab0; --tdot-orange: #e39b62; --tdot-gray: #86857f; --tdot-teal: #5cb9b1;
+    --soon: #eab98e; --weekend: #1c1c1c; --switch-on: #30d158; --menu-bg: rgba(42,42,42,0.78);
     color-scheme: dark;
   }
   @media (prefers-color-scheme: dark) {
@@ -155,6 +162,9 @@
     --tbg-orange: #4d3320; --tfg-orange: #eab98e;
     --tbg-gray: #3a3a3a;   --tfg-gray: #c9c9c9;
     --tbg-teal: #1f403e;   --tfg-teal: #a3d9d4;
+    --tdot-blue: #6ea6d8; --tdot-purple: #b590d6; --tdot-green: #73ba88; --tdot-yellow: #dcb64e;
+    --tdot-pink: #dc8ab0; --tdot-orange: #e39b62; --tdot-gray: #86857f; --tdot-teal: #5cb9b1;
+    --soon: #eab98e; --weekend: #1c1c1c; --switch-on: #30d158; --menu-bg: rgba(42,42,42,0.78);
     color-scheme: dark;
     }
   }
@@ -183,6 +193,8 @@
   .t-약속 { --tbg: var(--tbg-pink);   --tfg: var(--tfg-pink); }
   .t-개인 { --tbg: var(--tbg-orange); --tfg: var(--tfg-orange); }
   .t-기타 { --tbg: var(--tbg-gray);   --tfg: var(--tfg-gray); }
+  .t-보고서 { --tdot: var(--tdot-blue); } .t-발표자료 { --tdot: var(--tdot-purple); } .t-논문 { --tdot: var(--tdot-green); } .t-과제 { --tdot: var(--tdot-yellow); }
+  .t-시험 { --tdot: var(--tdot-teal); } .t-약속 { --tdot: var(--tdot-pink); } .t-개인 { --tdot: var(--tdot-orange); } .t-기타 { --tdot: var(--tdot-gray); }
   .type-tag, .item-label.pill, select.cell-type {
     background: var(--tbg, var(--tbg-gray));
     color: var(--tfg, var(--tfg-gray));
@@ -1475,6 +1487,144 @@
     .today-section > h3 { font-size: 0.84rem; }
     .today-section .sec-btn { font-size: 0.68rem; padding: 2px 8px; }
   }
+
+  /* ==== Δ UI 다듬기(v116): 애플 기본 앱처럼 — 목록 줄 상태 열, 묶음 제목, 달력 격자, 상세 카드 묶음 목록·메뉴·분할 버튼·스위치 ==== */
+  /* 목록 줄: 막대 · 체크 · 본문 · 오른쪽 상태 열(D-day 글자 + 시각·소요). 알약은 유형 태그 하나 */
+  .item { position: relative; border-bottom: 0; }
+  .item + .item::after { content: ""; position: absolute; top: 0; left: 59px; right: 10px; height: 1px; background: var(--border); transition: opacity 0.2s var(--ease-out); }
+  .item:hover::after, .item:hover + .item::after { opacity: 0; }
+  .item .status { flex-shrink: 0; display: grid; justify-items: end; text-align: right; line-height: 1.3; font-variant-numeric: tabular-nums; padding-top: 1px; min-width: 44px; }
+  .item .status b { font-size: 0.84rem; font-weight: 600; color: var(--ink); white-space: nowrap; }
+  .item .status b.over { color: var(--danger); } .item .status b.today { color: var(--accent); } .item .status b.soon { color: var(--soon); }
+  .item .status b.fin { color: var(--ink-faint); font-weight: 500; }
+  .item .status span { font-size: 0.74rem; color: var(--ink-dim); white-space: nowrap; }
+  .item .status span.late { color: var(--danger); }
+  .item .status { order: 5; margin-left: auto; }
+  .item .body { order: 1; } .item .edit-btn, .item .del { order: 2; align-self: flex-start; }
+  .item .meta .chk-chip { background: none; padding: 0; color: var(--ink-dim); font-weight: 400; }
+  .item .meta .chk-chip .ic { display: none; }
+  .item .meta .chk-chip::before { content: "단계 "; }
+  .item .meta .chk-chip.all { color: var(--success); }
+  .item .meta .item-date { color: var(--ink-dim); }
+  @media (max-width: 600px) { .item + .item::after { left: 55px; } .item .status { min-width: 38px; } }
+  /* 오늘 화면 묶음 제목: 이름 굵게 + 날짜 + 오른쪽 개수, 아래 줄. 아이콘 없음 */
+  .today-section h3 { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 0.86rem; font-weight: 700; color: var(--ink); padding: 6px 2px 6px; margin: 0 0 2px; border-bottom: 1px solid var(--border); text-transform: none; letter-spacing: 0; }
+  .today-section h3 .h-sub { font-size: 0.8rem; font-weight: 500; color: var(--ink-dim); }
+  .today-section h3 .count { margin-left: auto; order: 5; background: none; padding: 0; font-size: 0.78rem; font-weight: 500; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .today-section h3 .count::after { content: "건"; }
+  .today-section h3 .sec-actions { order: 6; margin-left: 4px; }
+  .today-section.overdue h3 { color: var(--danger); }
+  /* 달력: 얇은 격자, 주말 칸 옅은 회색, 날짜 오른쪽 위, 시각 있는 일정은 점·없는 일정은 막대 */
+  .cal-grid { gap: 0; border-top: 1px solid var(--border); }
+  #dowRow { border-top: 0; }
+  #dowRow .cal-dow { text-align: right; padding: 0 8px 6px; font-weight: 600; color: var(--ink-dim); }
+  #dowRow .cal-dow.sun { color: var(--danger); } #dowRow .cal-dow.sat { color: var(--sat); }
+  .cal-cell { border: 0; border-radius: 0; border-bottom: 1px solid var(--border); border-left: 1px solid var(--border); padding: 5px 5px 6px; gap: 3px; background: var(--bg); }
+  .cal-grid > .cal-cell:nth-child(7n+1) { border-left: 0; }
+  .cal-cell.empty { border-bottom-color: var(--border); }
+  .cal-cell.sun:not(.empty), .cal-cell.sat:not(.empty) { background: var(--weekend); }
+  .cal-cell.selected { background: var(--bg); }
+  .cal-cell.sun.selected, .cal-cell.sat.selected { background: var(--weekend); }
+  .cal-cell:not(.empty):hover { background: var(--sidebar); }
+  .cal-cell .day-num { align-self: flex-end; min-width: 22px; height: 22px; line-height: 22px; padding: 0 3px; font-size: 0.78rem; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .cal-cell.selected:not(.today) .day-num { background: var(--ink); color: var(--bg); }
+  .cal-cell.is-open { box-shadow: inset 0 0 0 2px var(--accent); }
+  .cal-cell .item-label.pill { font-size: 0.7rem; line-height: 1.35; border-radius: 4px; padding: 1px 5px; font-weight: 500; box-shadow: none; }
+  .cal-cell .item-label.pill.timed { display: flex; align-items: center; gap: 5px; background: none; color: var(--ink); padding: 0 3px; font-weight: 400; }
+  .cal-cell .item-label.pill.timed::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--tdot, var(--tdot-gray)); margin: 0; position: static; }
+  .cal-cell .item-label.pill.timed .pl-tx { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .cal-cell .item-label.pill .pill-time { order: 2; margin: 0; opacity: 1; color: var(--ink-dim); font-size: 0.66rem; }
+  .cal-cell .item-label.high::before { display: none; }
+  .cal-cell .item-label.pill.timed.high::before { display: block; }
+  .cal-cell .item-label.high { font-weight: 700; }
+  .cal-cell .item-label.overdue { box-shadow: none; color: var(--danger); }
+  .cal-cell .item-label.pill.overdue:not(.timed) { background: var(--danger-soft); }
+  .cal-cell .item-label.done { opacity: 0.5; text-decoration: line-through; }
+  .cal-cell .item-label.step-pill { border-radius: 4px; }
+  .cal-cell .item-label.more { color: var(--ink-faint); }
+  .cal-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.74rem; color: var(--ink-dim); margin-top: 10px; }
+  .cal-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .cal-legend .lg-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--tdot-purple); }
+  .cal-legend .lg-bar { width: 18px; height: 9px; border-radius: 3px; background: var(--tbg-teal); }
+  .cal-legend .lg-over { color: var(--danger); }
+  @media (max-width: 760px) { .cal-cell { min-height: 70px; padding: 3px 2px 4px; border-radius: 0; } .cal-cell .item-label.pill { font-size: 0.6rem; padding: 0 2px; } .cal-cell .item-label.pill.timed { gap: 3px; padding: 0 1px; } .cal-cell .item-label.pill.timed::before { width: 5px; height: 5px; } }
+  @media (max-width: 900px) { .cal-cell .item-label.pill .pill-time { display: none; } }
+  /* 상세 카드: 제목·요약 → 묶음 목록(마감·하루 종일 / 유형·우선순위·소요 / …) → 체크리스트·메모 → 동작 · 삭제 */
+  .pk-hero { padding-left: 0; gap: 6px; margin: 2px 0 14px; }
+  .pk-hero::before { display: none; }
+  .pk-title-card { padding: 0; background: none; }
+  .pk-title-card .peek-title { padding: 2px 0; border-radius: 0; background: none; border: 0; border-bottom: 1.5px solid transparent; font-size: 1.35rem; letter-spacing: -0.015em; }
+  .pk-title-card .peek-title:hover { background: none; border-bottom-color: var(--border); }
+  .pk-title-card .peek-title:focus { background: none; border-bottom-color: var(--accent); outline: none; }
+  .pk-sum { font-size: 0.86rem; color: var(--ink-dim); line-height: 1.45; font-variant-numeric: tabular-nums; }
+  .pk-sum b { font-weight: 600; color: var(--ink); } .pk-sum b.over { color: var(--danger); } .pk-sum b.today { color: var(--accent); } .pk-sum b.soon { color: var(--soon); } .pk-sum b.fin { color: var(--ink-faint); }
+  .pk-hero .type-tag { justify-self: start; }
+  .pk-card.pk-when, .pk-card.pk-group { background: var(--sidebar); border-radius: 12px; padding: 0; margin-bottom: 14px; }
+  .pk-when .peek-row, .pk-group .peek-row { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 14px; min-height: 46px; border-top: 0 !important; }
+  .pk-when .peek-row + .peek-row::before, .pk-group .peek-row + .peek-row::before, .pk-when .pk-picker + .peek-row::before { content: ""; position: absolute; top: 0; left: 14px; right: 0; height: 1px; background: var(--border); }
+  .pk-when .peek-key, .pk-group .peek-key { font-size: 0.88rem; color: var(--ink); flex-shrink: 0; }
+  .pk-val { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; min-width: 0; }
+  .vh { position: absolute !important; width: 1px !important; height: 1px !important; overflow: hidden !important; clip: rect(0 0 0 0) !important; white-space: nowrap !important; border: 0 !important; padding: 0 !important; margin: -1px !important; }
+  .pk-cap { position: relative; display: inline-flex; align-items: center; font: inherit; font-size: 0.88rem; color: var(--ink); background: var(--hover); border: 0; border-radius: 7px; padding: 5px 10px; cursor: pointer; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .pk-cap.on { color: var(--accent); }
+  .pk-cap.empty { color: var(--ink-dim); }
+  .pk-cap input[type="time"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; margin: 0; font-size: 16px; }
+  .pk-picker { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.32s var(--ease-out); }
+  .pk-picker > div { overflow: hidden; min-height: 0; }
+  .pk-picker.open { grid-template-rows: 1fr; }
+  .pkp { padding: 2px 14px 12px; }
+  .pkp-h { display: flex; align-items: center; justify-content: space-between; padding: 2px 0 6px; font-size: 0.92rem; font-weight: 600; }
+  .pkp-h button { width: 30px; height: 30px; padding: 0; border-radius: 50%; background: none; color: var(--accent); font-size: 1.1rem; }
+  .pkp-g { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; row-gap: 2px; }
+  .pkp-g .w { font-size: 0.68rem; font-weight: 600; color: var(--ink-faint); padding-bottom: 4px; }
+  .pkp-g button { width: 36px; height: 36px; margin: 0 auto; padding: 0; border-radius: 50%; background: none; color: var(--ink); font-size: 0.9rem; font-weight: 400; font-variant-numeric: tabular-nums; }
+  .pkp-g button:hover { background: var(--hover); }
+  .pkp-g button.past { color: var(--ink-faint); } .pkp-g button.td { color: var(--danger); font-weight: 600; }
+  .pkp-g button.on { background: var(--accent); color: #fff; font-weight: 600; }
+  .pkp-q { display: flex; gap: 14px; padding-top: 8px; margin-top: 6px; border-top: 1px solid var(--border); }
+  .pkp-q button { background: none; padding: 4px 0; color: var(--accent); font-size: 0.84rem; font-weight: 400; }
+  .switch-in { appearance: none; -webkit-appearance: none; position: relative; flex: none; width: 51px !important; height: 31px !important; margin: 0; border-radius: 999px; background: var(--hover); cursor: pointer; transition: background-color 0.25s var(--ease-out); }
+  .switch-in::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.18), 0 0 1px rgba(0,0,0,0.2); transition: translate 0.32s var(--sheet); }
+  .switch-in:checked { background: var(--switch-on); }
+  .switch-in:checked::after { translate: 20px 0; }
+  .switch-in:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .peek-row input.switch-in:active { scale: 0.96; }
+  .pk-pop { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 0.88rem; color: var(--ink-dim); background: none; border: 0; padding: 3px 6px; margin: -3px -6px; border-radius: 7px; cursor: pointer; }
+  .pk-pop .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--tdot, var(--tdot-gray)); }
+  .pk-pop .ic { width: 12px; height: 12px; color: var(--ink-faint); }
+  .pk-pop[aria-expanded="true"] { color: var(--ink); }
+  .pk-pop:focus:not(:focus-visible) { outline: 0; }
+  .pk-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 2px; border-radius: 9px; background: var(--hover); width: 186px; max-width: 60%; }
+  .pk-seg button { padding: 4px 0; font-size: 0.8rem; font-weight: 500; border-radius: 7px; background: none; color: var(--ink-dim); }
+  .pk-seg button.on { background: var(--bg); color: var(--ink); font-weight: 600; box-shadow: 0 3px 8px rgba(0,0,0,0.12), 0 0 0 0.5px rgba(0,0,0,0.04); }
+  .pk-seg button.on.hi { color: var(--danger); }
+  .pk-group .peek-mini { color: var(--accent); }
+  .peek-actions { display: grid; gap: 14px; border-top: 0; padding-top: 0; margin-top: 4px; }
+  .peek-actions .pk-act { background: var(--sidebar); border-radius: 12px; display: grid; overflow: hidden; }
+  .peek-actions .pk-act > button { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 6px; text-align: left; border: 0; border-radius: 0; background: none; padding: 12px 14px; font-size: 0.88rem; font-weight: 400; position: relative; }
+  .peek-actions .pk-act > button + button::before { content: ""; position: absolute; top: 0; left: 14px; right: 0; height: 1px; background: var(--border); }
+  .peek-actions .peek-split { color: var(--accent); }
+  .peek-actions .peek-split:hover, .peek-actions .peek-del:hover { background: var(--hover); color: inherit; }
+  .peek-actions .peek-split:hover { color: var(--accent); }
+  .peek-actions .peek-del { justify-content: center; color: var(--danger); font-weight: 500; }
+  .peek-actions .peek-del:hover { color: var(--danger); }
+  /* 고르기 메뉴(Δ UI Menu): 값을 누르면 그 자리에서 뜸 */
+  .dmenu { position: fixed; z-index: 120; min-width: 220px; max-height: min(420px, calc(100dvh - 24px)); overflow-y: auto; padding: 8px 6px; border-radius: 26px; background: var(--menu-bg); -webkit-backdrop-filter: blur(30px) saturate(190%); backdrop-filter: blur(30px) saturate(190%); box-shadow: 0 16px 48px rgba(0,0,0,0.16), 0 0 0 0.5px rgba(0,0,0,0.1); transform-origin: top right; animation: dmenuIn 0.28s var(--sheet); }
+  :root[data-theme="dark"] .dmenu { box-shadow: 0 16px 48px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.1); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .dmenu { box-shadow: 0 16px 48px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.1); } }
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .dmenu { background: var(--bg); } }
+  @media (prefers-reduced-transparency: reduce) { .dmenu { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; } }
+  html.low-fps .dmenu { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; animation-duration: 0.14s; }
+  .dmenu.closing { animation: dmenuOut 0.16s ease-in forwards; pointer-events: none; }
+  @keyframes dmenuIn { from { opacity: 0; transform: scale(0.86); } }
+  @keyframes dmenuOut { to { opacity: 0; transform: scale(0.94); } }
+  .dmenu .dm-h { font-size: 0.8rem; font-weight: 600; color: var(--ink-faint); padding: 4px 14px 6px 40px; }
+  .dmenu button { display: grid; grid-template-columns: 18px 12px minmax(0, 1fr); align-items: center; gap: 10px; width: 100%; font: inherit; font-size: 0.95rem; font-weight: 400; color: var(--ink); background: none; border: 0; text-align: left; padding: 9px 18px 9px 12px; border-radius: 16px; cursor: pointer; }
+  .dmenu button.nodot { grid-template-columns: 18px minmax(0, 1fr); }
+  .dmenu button:hover, .dmenu button:focus-visible, .dmenu button[aria-checked="true"] { background: var(--hover); outline: 0; }
+  .dmenu button .ic { width: 15px; height: 15px; stroke-width: 2.6; }
+  .dmenu .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--tdot, var(--tdot-gray)); }
+  @media (prefers-reduced-motion: reduce) { .dmenu, .dmenu.closing { animation: none; } .pk-picker { transition: none; } .switch-in::after { transition: none; } }
 </style>
 </head>
 <body>
@@ -1655,6 +1805,7 @@
     <div id="monthView">
       <div class="cal-grid" id="dowRow"></div>
       <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-legend" aria-hidden="true"><span><i class="lg-dot"></i>마감 시각 있는 일정</span><span><i class="lg-bar"></i>시각 없는 일정</span><span><b>굵게</b> 높은 우선순위</span><span class="lg-over">빨강 지난 마감</span></div>
     </div>
 
     <div id="weekView" class="week-list" style="display:none;"></div>
@@ -1971,7 +2122,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v115';
+const APP_VERSION = 'v116';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -3281,6 +3432,19 @@ function cmpDay(a, b) {
   if (!ta && tb) return 1;
   return (a.priority === 'high' ? 0 : 1) - (b.priority === 'high' ? 0 : 1);
 }
+// Δ UI 상태 열(v116): 칩 대신 오른쪽 끝 글자. 위 D-day(지남 빨강·오늘 파랑·곧 주황), 아래 시각·예상 소요
+function ddayParts(it) {
+  if (it.done) return { label: '완료', cls: 'fin' };
+  const n = daysUntil(it.dueDate);
+  if (n === 0) return { label: 'D-day', cls: 'today' };
+  if (n > 0) return { label: `D-${n}`, cls: n <= 3 ? 'soon' : '' };
+  return { label: `D+${-n}`, cls: 'over' };
+}
+function statusColHtml(it) {
+  const p = ddayParts(it), t = normTime(it.dueTime), d = normDuration(it.durationMin);
+  const nowT = new Date(), late = t && !it.done && it.dueDate === todayISO() && t < String(nowT.getHours()).padStart(2, '0') + ':' + String(nowT.getMinutes()).padStart(2, '0');
+  return `<div class="status"><b class="${p.cls}">${p.label}</b>${t ? `<span class="${late ? 'late' : ''}">${fmtTime(t)}</span>` : ''}${d && !it.done ? `<span>${t ? '' : '약 '}${fmtDuration(d)}</span>` : ''}</div>`;
+}
 function ddayHtml(it) {
   if (it.done) return '';
   const n = daysUntil(it.dueDate);
@@ -3357,10 +3521,10 @@ function renderTodayView() {
   const active = items.filter(it => !it.done);
   const byDate = cmpDue;
   const groups = [
-    { cls: 'overdue', title: ic('alert') + ' 지난 마감', list: active.filter(it => daysUntil(it.dueDate) < 0).sort(byDate) },
-    { cls: 'today', title: ic('pin') + ' 오늘', list: active.filter(it => daysUntil(it.dueDate) === 0).sort(byDate) },
-    { cls: 'tomorrow', title: ic('sunrise') + ' 내일', list: active.filter(it => daysUntil(it.dueDate) === 1).sort(byDate) },
-    { cls: 'week', title: ic('week') + ' 앞으로 7일', list: active.filter(it => { const n = daysUntil(it.dueDate); return n >= 2 && n <= 7; }).sort(byDate) }
+    { cls: 'overdue', title: '지난 마감', list: active.filter(it => daysUntil(it.dueDate) < 0).sort(byDate) },
+    { cls: 'today', title: `오늘<span class="h-sub">${formatLongDate(t)}</span>`, list: active.filter(it => daysUntil(it.dueDate) === 0).sort(byDate) },
+    { cls: 'tomorrow', title: `내일<span class="h-sub">${formatLongDate(addDaysISO(t, 1))}</span>`, list: active.filter(it => daysUntil(it.dueDate) === 1).sort(byDate) },
+    { cls: 'week', title: '앞으로 7일', list: active.filter(it => { const n = daysUntil(it.dueDate); return n >= 2 && n <= 7; }).sort(byDate) }
   ];
 
   // 오늘 진행률: 오늘이 마감인 일정 중 완료한 비율
@@ -3455,7 +3619,7 @@ function renderItemRow(it, opts) {
     <div class="bar ${isOverdue ? 'high' : it.priority}" title="우선순위 ${priorityLabel(it.priority)}${isOverdue ? ' · 지난 마감' : ''}"></div>
     <div class="body">
       <div class="title ${it.done ? 'done' : ''}">${escapeHtml(it.title)}${it.recurringId ? `<span class="recurring-tag">${ic('repeat')}반복</span>` : ''}</div>
-      <div class="meta"><span class="type-tag t-${escapeHtml(it.type || '기타')}">${escapeHtml(it.type || '기타')}</span>${dateLabel ? `<span class="item-date">${dateLabel}</span>` : ''}${timeChipHtml(it)}${ddayHtml(it)}${checkChipHtml(it)}</div>
+      <div class="meta"><span class="type-tag t-${escapeHtml(it.type || '기타')}">${escapeHtml(it.type || '기타')}</span>${dateLabel ? `<span class="item-date">${dateLabel}</span>` : ''}${checkChipHtml(it)}</div>
       ${nextStepHtml(it)}
       ${it.notes ? `<div class="notes">${escapeHtml(it.notes)}</div>` : ''}
       ${it.aiComment ? `<div class="ai-comment"><span class="icon">${ic('bulb')}</span><span>${escapeHtml(it.aiComment)}</span></div>` : ''}
@@ -3465,6 +3629,7 @@ function renderItemRow(it, opts) {
         ${it.topicElaboration ? `<div class="topic-elaboration">${escapeHtml(it.topicElaboration)}</div>` : ''}
       ` : ''}
     </div>
+    ${statusColHtml(it)}
     <button class="edit-btn" data-id="${it.id}">수정</button>
     <button class="del" data-id="${it.id}">삭제</button>
   `;
@@ -3759,6 +3924,10 @@ function renderItemEditForm(it) {
 }
 
 // v114: 일정 줄 날짜 "11월 15일 (일)" (Δ UI Figma 오늘 화면)
+function formatLongDate(iso) {   // "11월 17일 화요일"
+  const [y, m, d] = String(iso).split('-').map(Number), dt = new Date(y, m - 1, d);
+  return `${m}월 ${d}일 ${['일', '월', '화', '수', '목', '금', '토'][dt.getDay()]}요일`;
+}
 function formatDowDate(iso) {
   const [y, m, d] = String(iso).split('-').map(Number);
   if (!y || !m || !d) return String(iso || '');
@@ -3836,20 +4005,21 @@ function renderCalendar() {
     const daySteps = stepsOnDate(iso);   // 별도 일정과 연결되지 않은 체크리스트 단계(연결된 것은 그 일정이 dayItems로 이미 보임)
 
     if (dayItems.length || daySteps.length) {
-      const shown = dayItems.slice(0, 2);
+      const shown = dayItems.slice(0, 3);
       shown.forEach(it => {
         const label = document.createElement('div');
         const overdue = it.dueDate < today && !it.done;
-        label.className = 'item-label pill t-' + (it.type || '기타') + (it.priority === 'high' ? ' high' : '') + (overdue ? ' overdue' : '') + (it.done ? ' done' : '');
-        label.dataset.itemId = it.id;
-        label.textContent = getShortLabel(it);
         const tm = normTime(it.dueTime);
-        if (tm) { const sp = document.createElement('span'); sp.className = 'pill-time'; sp.textContent = tm; label.prepend(sp); }   // 시각은 넓은 화면에서만 글자로, 좁은 칸에서는 마우스를 올리면(title) 보임
+        // Δ UI 달력(v116): 시각 있는 일정은 분류 점 + 제목 + (넓은 화면) 시각, 시각 없는 일정은 분류 색 막대
+        label.className = 'item-label pill t-' + (it.type || '기타') + (tm ? ' timed' : '') + (it.priority === 'high' ? ' high' : '') + (overdue ? ' overdue' : '') + (it.done ? ' done' : '');
+        label.dataset.itemId = it.id;
+        const tx = document.createElement('span'); tx.className = 'pl-tx'; tx.textContent = getShortLabel(it); label.appendChild(tx);
+        if (tm) { const sp = document.createElement('span'); sp.className = 'pill-time'; sp.textContent = fmtTime(tm); label.appendChild(sp); }   // 시각은 넓은 화면에서만 글자로, 좁은 칸에서는 마우스를 올리면(title) 보임
         label.title = getShortLabel(it) + (tm ? ' · ' + fmtTime(tm) : '');
         // 지난 마감은 이모지 대신 빨간 테두리로 표시(좁은 칸에서 글자 자리를 뺏지 않게)
         cell.appendChild(label);
       });
-      const stepSlots = Math.max(0, 2 - shown.length);
+      const stepSlots = Math.max(0, 3 - shown.length);
       const shownSteps = daySteps.slice(0, stepSlots);
       shownSteps.forEach(({ it, e }) => {
         const label = document.createElement('div');
@@ -6049,6 +6219,7 @@ function closePeek() {
   const ae = document.activeElement;
   if (ae && ae !== document.body && document.getElementById('peekPanel').contains(ae)) ae.blur();
   peekId = null;
+  closeDMenu();
   document.getElementById('peekOverlay').classList.remove('open');
   const pk = document.getElementById('peekPanel'); pk.classList.remove('open');
   if (pk._orig) { const o = pk._orig; pk._orig = null; pk.style.bottom = o.bottom; }
@@ -6105,6 +6276,105 @@ function buildChecklistBox(it) {
 
 // 날짜·시각 칸에서 값이 바뀌어도 그 칸을 쓰는 중(포커스·아이폰 휠이 열려 있음)이면 상세 창을 다시 그리지 않고,
 // 손을 뗀 뒤에 다시 그린다(v96, 사용자 제보: 시간만 바꿨는데 분을 고르기 전에 창이 꺼짐). 값 저장은 바뀔 때마다 바로 한다.
+// ---- Δ UI 고르기 메뉴(v116): 숨긴 <select>의 항목을 애플식 메뉴로 띄우고, 고르면 그 select에 change를 보낸다 ----
+let dmenuEl = null, dmenuBtn = null;
+function closeDMenu(focusBack) {
+  if (!dmenuEl) return;
+  const m = dmenuEl; dmenuEl = null;
+  if (dmenuBtn) { dmenuBtn.setAttribute('aria-expanded', 'false'); if (focusBack && dmenuBtn.isConnected) dmenuBtn.focus({ preventScroll: true }); }
+  dmenuBtn = null;
+  if (document.documentElement.classList.contains('low-fps') || matchMedia('(prefers-reduced-motion: reduce)').matches) { m.remove(); return; }
+  m.classList.add('closing'); setTimeout(() => m.remove(), 160);
+}
+function openSelectMenu(btn, sel, title, withDots) {
+  if (dmenuEl && dmenuBtn === btn) { closeDMenu(true); return; }
+  closeDMenu();
+  const CK = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>';
+  const m = document.createElement('div');
+  m.className = 'dmenu'; m.setAttribute('role', 'menu'); m.setAttribute('aria-label', title);
+  m.innerHTML = `<div class="dm-h">${escapeHtml(title)}</div>` + [...sel.options].map(o => {
+    const on = o.value === sel.value;
+    return `<button type="button" role="menuitemradio" aria-checked="${on}" data-v="${escapeHtml(o.value)}" class="${withDots ? 't-' + escapeHtml(o.value) : 'nodot'}">${on ? CK : '<span></span>'}${withDots ? '<i class="dot"></i>' : ''}<span>${escapeHtml(o.text)}</span></button>`;
+  }).join('');
+  document.body.appendChild(m);
+  const r = btn.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight;
+  const w = m.offsetWidth, h = m.offsetHeight;
+  let left = Math.min(Math.max(8, r.right - w + 6), vw - w - 8), top = r.bottom + 6;
+  if (top + h > vh - 8) { top = Math.max(8, r.top - h - 6); m.style.transformOrigin = 'bottom right'; }
+  m.style.left = left + 'px'; m.style.top = top + 'px';
+  btn.setAttribute('aria-expanded', 'true');
+  dmenuEl = m; dmenuBtn = btn;
+  m.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-v]'); if (!b) return;
+    const key = btn.dataset.menu;
+    closeDMenu();
+    if (sel.value !== b.dataset.v) { sel.value = b.dataset.v; sel.dispatchEvent(new Event('change', { bubbles: true })); }
+    requestAnimationFrame(() => { const nb = document.querySelector(`#peekBody [data-menu="${key}"]`); if (nb) nb.focus({ preventScroll: true }); });
+  });
+  m.addEventListener('keydown', (e) => {
+    const bs = [...m.querySelectorAll('button[data-v]')], i = bs.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); bs[(i + (e.key === 'ArrowDown' ? 1 : -1) + bs.length) % bs.length].focus(); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeDMenu(true); }
+    else if (e.key === 'Tab') closeDMenu();
+  });
+  (m.querySelector('[aria-checked="true"]') || m.querySelector('button[data-v]')).focus({ preventScroll: true });
+}
+document.addEventListener('pointerdown', (e) => { if (dmenuEl && !dmenuEl.contains(e.target) && !(dmenuBtn && dmenuBtn.contains(e.target))) closeDMenu(); }, true);
+window.addEventListener('resize', () => closeDMenu());
+// 상세 카드 날짜 버튼을 누르면 그 자리에 펼쳐지는 달력
+function pkPickerHtml(it, base) {
+  const y = base.getFullYear(), mo = base.getMonth(), first = new Date(y, mo, 1).getDay(), days = new Date(y, mo + 1, 0).getDate(), t = todayISO();
+  let g = ['일', '월', '화', '수', '목', '금', '토'].map(w => `<span class="w">${w}</span>`).join('') + '<span></span>'.repeat(first);
+  for (let d = 1; d <= days; d++) {
+    const v = `${y}-${String(mo + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    g += `<button type="button" data-day="${v}" class="${v === it.dueDate ? 'on' : ''}${v === t ? ' td' : ''}${v < t ? ' past' : ''}" aria-label="${formatLongDate(v)}">${d}</button>`;
+  }
+  return `<div class="pkp"><div class="pkp-h">${y}년 ${mo + 1}월<span><button type="button" data-mon="-1" aria-label="이전 달">‹</button><button type="button" data-mon="1" aria-label="다음 달">›</button></span></div><div class="pkp-g">${g}</div>
+    <div class="pkp-q"><button type="button" data-day="${t}">오늘</button><button type="button" data-day="${addDaysISO(t, 1)}">내일</button><button type="button" data-day="${nextMondayISO()}">다음 주 월요일</button></div></div>`;
+}
+const peekLastTime = {};
+function bindPeekControls(body, it) {
+  const q = (sel) => body.querySelector(sel);
+  const repaint = () => { if (peekId === it.id) renderPeek(); };
+  // 날짜: 회색 버튼 → 펼치는 달력 → 고르면 숨긴 날짜 칸에 change
+  const cap = q('.pk-date-cap'), pick = q('.pk-picker'), dateIn = q('.peek-date');
+  let base = new Date(...it.dueDate.split('-').map((n, i) => i === 1 ? n - 1 : +n));
+  const drawPick = () => { pick.firstElementChild.innerHTML = pkPickerHtml(it, base); };
+  cap.addEventListener('click', () => {
+    const open = !pick.classList.contains('open');
+    if (open) drawPick();
+    pick.classList.toggle('open', open); cap.classList.toggle('on', open); cap.setAttribute('aria-expanded', String(open));
+  });
+  pick.addEventListener('click', (e) => {
+    const mb = e.target.closest('[data-mon]');
+    if (mb) { base = new Date(base.getFullYear(), base.getMonth() + Number(mb.dataset.mon), 1); drawPick(); return; }
+    const db = e.target.closest('[data-day]');
+    if (db) { dateIn.value = db.dataset.day; dateIn.dispatchEvent(new Event('change', { bubbles: true })); }
+  });
+  // 시각: 버튼 위에 겹친 시스템 시간 입력(누르면 기기 선택기)
+  const timeIn = q('.peek-time');
+  timeIn.addEventListener('click', () => { try { if (window.matchMedia('(pointer: fine)').matches && timeIn.showPicker) timeIn.showPicker(); } catch (e) {} });
+  timeIn.addEventListener('input', () => { const t = normTime(timeIn.value); q('.pk-time-txt').textContent = t ? fmtTime(t) : '시각 추가'; });
+  // 하루 종일 스위치: 켜면 시각을 지우고, 끄면 지우기 전 시각(없으면 오전 9시)
+  q('.pk-allday').addEventListener('change', async (e) => {
+    if (e.target.checked) { if (normTime(it.dueTime)) peekLastTime[it.id] = normTime(it.dueTime); setItemTime(it, ''); }
+    else setItemTime(it, peekLastTime[it.id] || '09:00');
+    await saveItems(); refreshAll(); repaint();
+  });
+  // 유형·예상 소요·실제 소요: 메뉴
+  body.querySelectorAll('.pk-pop[data-menu]').forEach(b => b.addEventListener('click', () => {
+    const k = b.dataset.menu;
+    if (k === 'type') openSelectMenu(b, q('.peek-type'), '유형', true);
+    else if (k === 'dur') openSelectMenu(b, q('.peek-dur'), '예상 소요', false);
+    else openSelectMenu(b, q('.peek-actual'), '실제 소요', false);
+  }));
+  // 우선순위: 분할 버튼
+  body.querySelectorAll('.pk-seg [data-pri]').forEach(b => b.addEventListener('click', () => {
+    const sel = q('.peek-priority'); if (sel.value === b.dataset.pri) return;
+    sel.value = b.dataset.pri; sel.dispatchEvent(new Event('change', { bubbles: true }));
+  }));
+  body.addEventListener('scroll', () => closeDMenu(), { passive: true });
+}
 function renderPeekWhenIdle(el, id) {
   const go = () => { if (peekId === id) renderPeek(); };
   if (el && document.activeElement === el) el.addEventListener('blur', () => setTimeout(go, 0), { once: true });
@@ -6114,39 +6384,48 @@ function renderPeek() {
   const it = items.find(x => x.id === peekId);
   const body = document.getElementById('peekBody');
   if (!it) { closePeek(); return; }
+  closeDMenu();
   const type = it.type || '기타';
+  const tm = normTime(it.dueTime), dur = normDuration(it.durationMin), st = ddayParts(it);
+  const UPDN = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg>';
+  const [yy, mm, dd] = it.dueDate.split('-').map(Number);
+  const actSel = body.ownerDocument.createElement('select'); actSel.innerHTML = actualOptionsHtml(it.actualMin);
+  const actLabel = (actSel.options[actSel.selectedIndex] || actSel.options[0] || {}).text || '기록 없음';
+  // Δ UI 상세 카드(v116): 제목·요약 → 묶음 목록. 실제 입력칸·선택 칸은 그대로 두고(저장 코드 공용) 보이는 조작만 날짜 버튼·메뉴·분할 버튼·스위치로
   body.innerHTML = `
     <div class="pk-hero${it.priority === 'high' || (!it.done && it.dueDate < todayISO()) ? ' hot' : ''}${it.done ? ' is-done' : ''}">
-      <div class="pk-card pk-title-card"><input type="text" class="peek-title" value="${escapeHtml(it.title)}" aria-label="제목"></div>
-      <div class="pk-card pk-when">
-        <div class="peek-row"><span class="peek-key">마감일</span><input type="date" class="peek-date" value="${it.dueDate}"></div>
-        <div class="peek-row"><span class="peek-key">마감 시각</span><span class="peek-time-wrap"><input type="time" class="peek-time" value="${normTime(it.dueTime)}" aria-label="마감 시각(선택)">${it.dueTime ? '<button type="button" class="peek-time-clear" aria-label="시각 지우기">지우기</button>' : ''}</span></div>
-      </div>
+      <div class="pk-title-card"><input type="text" class="peek-title" value="${escapeHtml(it.title)}" aria-label="제목"></div>
+      <div class="pk-sum">${formatLongDate(it.dueDate)} · ${tm ? fmtTime(tm) : '하루 종일'}<br><b class="${st.cls}">${st.label}</b>${dur ? ' · 예상 ' + fmtDuration(dur) : ''}</div>
+      <span class="type-tag t-${escapeHtml(type)}">${escapeHtml(type)}</span>
+    </div>
+    <div class="pk-card pk-when">
+      <div class="peek-row"><span class="peek-key">마감</span><span class="pk-val"><button type="button" class="pk-cap pk-date-cap" aria-expanded="false" aria-label="마감일 ${formatLongDate(it.dueDate)}">${yy}. ${mm}. ${dd}.</button><input type="date" class="peek-date vh" value="${it.dueDate}" tabindex="-1" aria-hidden="true"><label class="pk-cap pk-time-cap${tm ? '' : ' empty'}"><span class="pk-time-txt">${tm ? fmtTime(tm) : '시각 추가'}</span><input type="time" class="peek-time" value="${tm}" aria-label="마감 시각(선택)"></label></span></div>
+      <div class="pk-picker"><div></div></div>
+      <div class="peek-row"><span class="peek-key">하루 종일</span><input type="checkbox" class="switch-in pk-allday" role="switch" ${tm ? '' : 'checked'} aria-label="하루 종일"></div>
     </div>
     <div class="pk-card pk-group">
-    <div class="peek-row"><span class="peek-key">예상 소요</span><span class="peek-time-wrap"><select class="peek-dur" aria-label="예상 소요시간(선택)">${durationOptionsHtml(it.durationMin)}</select><button type="button" class="peek-mini peek-dur-ai">${it.durationMin ? 'AI로 다시 추정' : 'AI로 추정'}</button></span></div>
-    <div class="peek-row"><span class="peek-key">실제 소요</span><span class="peek-time-wrap"><select class="peek-actual" aria-label="실제로 걸린 시간(선택)">${actualOptionsHtml(it.actualMin)}</select>${timer && timer.id === it.id
-      ? `<span class="peek-timer"><span class="peek-timer-clock">${fmtClock(timerElapsedMs())}</span><button type="button" class="peek-mini peek-timer-pause">${timer.startedAt ? '일시정지' : '계속'}</button><button type="button" class="peek-mini peek-timer-end">끝내기</button></span>`
-      : (it.done ? '' : `<button type="button" class="peek-mini peek-timer-start">${ic('play', 'ic sm')}작업 시작</button>`)}</span></div>
-    <div class="peek-row"><span class="peek-key">유형</span>
-      <select class="cell-type peek-type t-${escapeHtml(type)}">${TYPE_OPTIONS.map(t => `<option value="${t}" ${type === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
-    <div class="peek-row"><span class="peek-key">우선순위</span>
-      <select class="cell-priority peek-priority p-${it.priority}">
+      <div class="peek-row"><span class="peek-key">유형</span><span class="pk-val"><button type="button" class="pk-pop t-${escapeHtml(type)}" data-menu="type" aria-haspopup="menu" aria-expanded="false"><i class="dot"></i>${escapeHtml(type)}${UPDN}</button><select class="cell-type peek-type vh t-${escapeHtml(type)}" tabindex="-1" aria-hidden="true">${TYPE_OPTIONS.map(t => `<option value="${t}" ${type === t ? 'selected' : ''}>${t}</option>`).join('')}</select></span></div>
+      <div class="peek-row"><span class="peek-key">우선순위</span><div class="pk-seg" role="radiogroup" aria-label="우선순위">${[['low', '낮음'], ['medium', '보통'], ['high', '높음']].map(([v, l]) => `<button type="button" role="radio" aria-checked="${it.priority === v}" class="${it.priority === v ? 'on' : ''}${v === 'high' ? ' hi' : ''}" data-pri="${v}">${l}</button>`).join('')}</div><select class="cell-priority peek-priority vh p-${it.priority}" tabindex="-1" aria-hidden="true">
         <option value="high" ${it.priority === 'high' ? 'selected' : ''}>높음</option>
         <option value="medium" ${it.priority === 'medium' ? 'selected' : ''}>보통</option>
         <option value="low" ${it.priority === 'low' ? 'selected' : ''}>낮음</option>
       </select></div>
-    <div class="peek-row"><span class="peek-key">상태</span><label><input type="checkbox" class="peek-done" ${it.done ? 'checked' : ''}> 완료${it.recurringId ? ` <span class="recurring-tag">${ic('repeat')}반복</span>` : ''}</label></div>
-    ${it.done ? '' : peekPostponeHtml(it)}
+      <div class="peek-row"><span class="peek-key">예상 소요</span><span class="pk-val"><button type="button" class="peek-mini peek-dur-ai">${it.durationMin ? 'AI로 다시 추정' : 'AI로 추정'}</button><button type="button" class="pk-pop" data-menu="dur" aria-haspopup="menu" aria-expanded="false">${dur ? fmtDuration(dur) : '정하지 않음'}${UPDN}</button><select class="peek-dur vh" tabindex="-1" aria-hidden="true">${durationOptionsHtml(it.durationMin)}</select></span></div>
+      <div class="peek-row"><span class="peek-key">실제 소요</span><span class="pk-val">${timer && timer.id === it.id
+        ? `<span class="peek-timer"><span class="peek-timer-clock">${fmtClock(timerElapsedMs())}</span><button type="button" class="peek-mini peek-timer-pause">${timer.startedAt ? '일시정지' : '계속'}</button><button type="button" class="peek-mini peek-timer-end">끝내기</button></span>`
+        : (it.done ? '' : `<button type="button" class="peek-mini peek-timer-start">${ic('play', 'ic sm')}작업 시작</button>`)}<button type="button" class="pk-pop" data-menu="actual" aria-haspopup="menu" aria-expanded="false">${escapeHtml(actLabel)}${UPDN}</button><select class="peek-actual vh" tabindex="-1" aria-hidden="true">${actualOptionsHtml(it.actualMin)}</select></span></div>
+      <div class="peek-row"><span class="peek-key">완료${it.recurringId ? ` <span class="recurring-tag">${ic('repeat')}반복</span>` : ''}</span><input type="checkbox" class="switch-in peek-done" role="switch" ${it.done ? 'checked' : ''} aria-label="완료"></div>
+      ${it.done ? '' : peekPostponeHtml(it)}
     </div>
   `;
   body.appendChild(buildChecklistBox(it));
   body.appendChild(buildItemExtras(it));
   const actions = document.createElement('div');
   actions.className = 'peek-actions';
-  actions.innerHTML = (it.done ? '' : '<button class="peek-split" id="peekSplitBtn">' + ic('sparkle', 'ic sm') + ' AI로 쪼개기</button>') + '<button class="peek-del" id="peekDelBtn">휴지통으로 이동</button>';
+  actions.innerHTML = (it.done ? '' : '<div class="pk-act"><button class="peek-split" id="peekSplitBtn"><span>' + ic('sparkle', 'ic sm') + ' AI로 쪼개기</span><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></div>') + '<div class="pk-act"><button class="peek-del" id="peekDelBtn">휴지통으로 이동</button></div>';
   body.appendChild(actions);
   fitSelectsIn(body);
+  bindPeekControls(body, it);
 
   const q = (sel) => body.querySelector(sel);
   q('.peek-title').addEventListener('change', async (e) => {
@@ -6161,6 +6440,7 @@ function renderPeek() {
     it.dueDate = e.target.value;
     await saveItems();
     refreshAll();
+    if (peekId === it.id) renderPeek();
   });
   q('.peek-time').addEventListener('change', async (e) => {
     setItemTime(it, e.target.value);
@@ -6179,6 +6459,7 @@ function renderPeek() {
     setItemDuration(it, e.target.value);
     await saveItems();
     refreshAll();
+    if (peekId === it.id) renderPeek();
   });
   q('.peek-dur-ai').addEventListener('click', async (e) => {
     const b = e.currentTarget; b.disabled = true; b.textContent = '추정하는 중…';
@@ -6189,6 +6470,7 @@ function renderPeek() {
     setItemActual(it, e.target.value);
     await saveItems();
     refreshAll();
+    if (peekId === it.id) renderPeek();
   });
   const tStart = q('.peek-timer-start'); if (tStart) tStart.addEventListener('click', () => startTimer(it));
   const tPause = q('.peek-timer-pause'); if (tPause) tPause.addEventListener('click', () => { if (timer.startedAt) pauseTimer(); else startTimer(it); });
@@ -6196,21 +6478,23 @@ function renderPeek() {
   body.querySelectorAll('.peek-snooze').forEach(b => b.addEventListener('click', () => postponeItems([it], b.dataset.d, b.dataset.l)));
   q('.peek-type').addEventListener('change', async (e) => {
     it.type = e.target.value;
-    e.target.className = 'cell-type peek-type t-' + it.type;
+    e.target.className = 'cell-type peek-type vh t-' + it.type;
     await saveItems();
     refreshAll();
     if (peekId === it.id) renderPeek();          // 유형에 따라 분야 칸이 나타나거나 사라짐
   });
   q('.peek-priority').addEventListener('change', async (e) => {
     it.priority = e.target.value;
-    e.target.className = 'cell-priority peek-priority p-' + it.priority;
+    e.target.className = 'cell-priority peek-priority vh p-' + it.priority;
     await saveItems();
     refreshAll();
+    if (peekId === it.id) renderPeek();
   });
   q('.peek-done').addEventListener('change', async (e) => {
     markDone(it, e.target.checked);
     await saveItems();
     refreshAll();
+    if (peekId === it.id) setTimeout(() => { if (peekId === it.id) renderPeek(); }, 320);   // 스위치가 움직인 뒤 요약을 바꿈
   });
   const splitBtn = q('#peekSplitBtn');
   if (splitBtn) splitBtn.addEventListener('click', () => splitItemWithAI(it));
