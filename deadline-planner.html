@@ -1476,7 +1476,7 @@
     body:not(.view-compact) .page-title .page-emoji .ic { width: 1.4rem; height: 1.4rem; }
     body:not(.view-compact) .hdr-search { flex-basis: 132px; height: 34px; box-shadow: none; background: var(--sidebar); border-color: transparent; }
     .summary-banner { margin-bottom: 12px; padding: 8px 8px 8px 12px; border-radius: 14px; font-size: 0.82rem; }
-    .summary-banner .briefing-btn { padding: 3px 9px; }
+    
     #status:empty { display: none; }
     .today-head { margin: 18px 0 6px; }
     .today-date { font-size: 1.05rem; }
@@ -1739,9 +1739,7 @@
     <div id="summaryBanner" class="summary-banner" style="display:none;">
       <div class="summary-banner-row">
         <span id="summaryText" class="summary-text-clickable"></span>
-        <button id="briefingBtn" class="briefing-btn"><svg class="ic sm" aria-hidden="true"><use href="#i-sunrise"/></svg><span>브리핑</span></button>
       </div>
-      <div id="briefingText" class="briefing-text" style="display:none;"></div>
     </div>
 
     <div class="quick-wrap" id="quickWrap">
@@ -2138,7 +2136,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v121';
+const APP_VERSION = 'v122';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -4156,7 +4154,6 @@ function renderCalendar() {
 function renderSummaryBanner() {
   const el = document.getElementById('summaryBanner');
   const textEl = document.getElementById('summaryText');
-  const briefingEl = document.getElementById('briefingText');
   const today = todayISO();
   const tmr = new Date();
   tmr.setDate(tmr.getDate() + 1);
@@ -4186,54 +4183,12 @@ function renderSummaryBanner() {
   el.classList.toggle('urgent', overdueItems.length > 0);
   textEl.innerHTML = ic(overdueItems.length ? 'alert' : 'clock', 'ic sm') + ' ' + parts.join(' · ');
   el.style.display = 'block';
-  briefingEl.style.display = 'none';
-  briefingEl.textContent = '';
   mini.hidden = false;
   mini.classList.toggle('urgent', overdueItems.length > 0);
   mini.innerHTML = ic(overdueItems.length ? 'alert' : 'clock', 'ic sm') + '<span>' + escapeHtml(parts.join(' · ')) + '</span>';
 }
 
-async function generateBriefing() {
-  const today = todayISO();
-  const tmr = new Date();
-  tmr.setDate(tmr.getDate() + 1);
-  const tomorrow = `${tmr.getFullYear()}-${String(tmr.getMonth()+1).padStart(2,'0')}-${String(tmr.getDate()).padStart(2,'0')}`;
-
-  const overdueItems = items.filter(it => it.dueDate < today && !it.done);
-  const todayItems = items.filter(it => it.dueDate === today && !it.done);
-  const tomorrowItems = items.filter(it => it.dueDate === tomorrow && !it.done);
-
-  const listText = [
-    ...overdueItems.map(it => `- 지난 마감(${formatShortDate(it.dueDate)}): ${it.title} (${it.type}, 우선순위 ${it.priority})`),
-    ...todayItems.map(it => `- 오늘: ${it.title} (${it.type}, 우선순위 ${it.priority})`),
-    ...tomorrowItems.map(it => `- 내일: ${it.title} (${it.type}, 우선순위 ${it.priority})`)
-  ].join('\n');
-
-  const tod = timeOfDayInfo();
-  const system = `너는 이 사람의 개인 비서야. 지금은 ${tod.clock}(${tod.label})이야. 아래 지난 마감/오늘/내일 마감 일정 목록을 보고, 지금 시간대에 맞는 브리핑처럼 짧고 자연스러운 문장 1~2개로 요약해줘. 인사말을 넣는다면 "${tod.greet}"처럼 지금 시간대에 맞는 것만 쓰고, 시간대에 맞지 않는 인사(예: 오후에 "좋은 아침")는 절대 쓰지 마. 인사가 꼭 필요한 건 아니니 생략해도 돼. 이미 지난 시각의 일정은 "지났다"는 느낌으로, 남은 시간 기준으로 말해줘. 존댓말로, 친근하지만 담백하게. 지난 마감이 있으면 가장 먼저, 살짝 다급하게 짚어줘. 겹치는 일정이 있으면 언급하고, 없으면 굳이 말하지 마. 목록:\n${listText}\n\n다른 설명 없이 브리핑 문장만 출력해.`;
-
-  const out = await runAI({ system, text: '브리핑 만들어줘.', maxTokens: 300, title: '브리핑' });
-  return fixGreeting(out, tod);
-}
-// 지금 시각의 시간대(v99, 사용자 제보: 오후에도 "좋은 아침입니다"): 새벽 0~5시, 아침 5~11시, 점심 11~14시, 오후 14~18시, 저녁 18~22시, 밤 22~24시
-function timeOfDayInfo(d) {
-  d = d || new Date();
-  const h = d.getHours();
-  const clock = fmtTime(String(h).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'));
-  const k = h < 5 ? 'dawn' : h < 11 ? 'morning' : h < 14 ? 'noon' : h < 18 ? 'afternoon' : h < 22 ? 'evening' : 'night';
-  const label = { dawn: '새벽', morning: '아침', noon: '점심 무렵', afternoon: '오후', evening: '저녁', night: '밤' }[k];
-  const greet = { dawn: '늦은 시간이네요', morning: '좋은 아침입니다', noon: '점심 시간이네요', afternoon: '좋은 오후입니다', evening: '좋은 저녁입니다', night: '늦은 시간이네요' }[k];
-  return { h, k, label, clock, greet };
-}
-function fixGreeting(text, tod) {                 // AI가 그래도 시간대에 안 맞는 인사로 시작하면 지금 시간대 인사로 바꾼다
-  let t = String(text || '').trim();
-  const m = t.match(/^(좋은\s*(?:아침|오후|저녁)(?:입니다|이에요|이네요|이야)?|안녕하세요|굿모닝)[!.,~\s]*/);
-  if (!m) return t;
-  const bad = (/아침|굿모닝/.test(m[1]) && tod.k !== 'morning') || (/오후/.test(m[1]) && tod.k !== 'afternoon') || (/저녁/.test(m[1]) && tod.k !== 'evening');
-  if (!bad) return t;
-  return tod.greet + '! ' + t.slice(m[0].length).trim();
-}
-
+// 브리핑(AI가 지난 마감·오늘·내일 일정을 문장으로 요약)은 v122에서 사용자 요청으로 뺐다(generateBriefing·timeOfDayInfo·fixGreeting).
 document.getElementById('hdrMini').addEventListener('click', () => document.getElementById('summaryText').click());
 document.getElementById('summaryText').addEventListener('click', () => {
   listDoneFilter = '임박';
@@ -4241,27 +4196,6 @@ document.getElementById('summaryText').addEventListener('click', () => {
   listSearchQuery = '';
   document.getElementById('listSearchInput').value = '';
   setViewMode('list');
-});
-
-document.getElementById('briefingBtn').addEventListener('click', async () => {
-  const btn = document.getElementById('briefingBtn');
-  const briefingEl = document.getElementById('briefingText');
-  btn.disabled = true;
-  btn.textContent = '만드는 중...';
-  try {
-    const text = await generateBriefing();
-    briefingEl.textContent = text;
-    briefingEl.style.display = 'block';
-  } catch (err) {
-    console.error(err);
-    if (err.message !== '취소함') {
-      briefingEl.textContent = '브리핑 생성 실패: ' + err.message;
-      briefingEl.style.display = 'block';
-    }
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = ic('refresh', 'ic sm') + '<span>다시</span>';
-  }
 });
 
 function refreshAll() {
