@@ -1675,6 +1675,7 @@
 <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4.5 3.5 19h17z"/><path d="M12 10v4M12 16.8v.1"/></symbol>
 <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21v-6M8 4.5h8l-1 6 3 3.5H6l3-3.5z"/></symbol>
 <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m8.5 12.3 2.5 2.5 4.5-5"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2.5"/><path d="M15.5 8.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5"/></symbol>
 <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3.5h7l4 4v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-15a1 1 0 0 1 1-1z"/><path d="M14 3.5v4h4M9 12.5h6M9 16h6"/></symbol>
 <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4.5 19.5l1-4L16 5a2 2 0 0 1 2.8 0l.2.2A2 2 0 0 1 19 8L8.5 18.5z"/><path d="M14 7l3 3"/></symbol>
 <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
@@ -2137,7 +2138,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v119';
+const APP_VERSION = 'v121';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2643,7 +2644,67 @@ setInterval(() => { if (document.getElementById('aiSection').open) renderAiUsage
 renderAiUsage();
 
 // media: [{ mime, data(base64) }]
-async function callGemini({ system, text, media, maxTokens, history, signal, search, onGrounding }) {
+// v120(사용자 지시): 기본은 설정의 모델(기본 3.6 Flash), 어려운 작업(주제 추천·구체화·쪼개기·이번 주 계획)은 4 Hydrogen을 먼저 쓰고,
+// 한도 초과·붐빔·응답 없음·빈 답·모델 없음으로 한 번 실패하면 바로 예비 모델(3.5 Flash-Lite, 무료 하루 약 500회)로 다시 보낸다.
+const FALLBACK_GEMINI_MODEL = 'gemini-3.5-flash-lite';
+const HARD_GEMINI_MODEL = 'gemini-4-hydrogen';
+function aiRetryable(msg) { const e = new Error(msg); e.aiRetryable = true; return e; }
+async function callGemini(opts) {
+  const first = opts.hard ? HARD_GEMINI_MODEL : geminiModel;
+  let out, used = first;
+  try {
+    out = await callGeminiOnce({ ...opts, model: first, retry503: first === FALLBACK_GEMINI_MODEL });
+  } catch (e) {
+    if (!e || !e.aiRetryable || first === FALLBACK_GEMINI_MODEL || (opts.signal && opts.signal.aborted)) throw e;
+    console.warn(`AI ${first} 실패 → ${FALLBACK_GEMINI_MODEL}로 다시 시도: ${e.message}`);
+    { const u = aiUsage(); u.lastFallback = { at: new Date().toISOString(), from: first }; aiUsageSave(u); }
+    used = FALLBACK_GEMINI_MODEL;
+    out = await callGeminiOnce({ ...opts, model: FALLBACK_GEMINI_MODEL, retry503: true });
+  }
+  // v121(사용자 지시): 4 Hydrogen이 아닌 모델이 만든 답은 3.5 Flash-Lite로 두 번 검증한다(참고 자료 원문 옮기기는 너무 커서 제외)
+  if (used !== HARD_GEMINI_MODEL && !opts.noVerify && !window.__noAiVerify) out = await verifyAiOutput(opts, out);   // __noAiVerify: 요청 수를 세는 검사용
+  return out;
+}
+const VERIFY_PASSES = 2;
+const AI_VERIFY_SYSTEM = `너는 다른 AI가 쓴 답을 검토하는 검증자야. 아래 [원래 지시]와 [입력]을 기준으로 [검토할 답]을 확인하고, 최종 답만 출력해.
+규칙:
+1) [원래 지시]가 정한 형식(JSON 구조와 키 이름, 언어, 말투, 길이, 개수)을 그대로 지켜. JSON이면 JSON만, 코드 블록·머리말 없이.
+2) 고칠 것만 고쳐: [입력]·지시에 없는 일정·사실·날짜를 지어낸 부분, 날짜·요일·시간 계산 오류, 지시 위반, 앞뒤가 맞지 않는 내용, 어색하거나 틀린 한국어.
+3) 문제가 없으면 [검토할 답]을 한 글자도 바꾸지 말고 그대로 출력해.
+4) 웹 검색 결과처럼 네가 확인할 수 없는 최신 정보는, 틀렸다는 확신이 없으면 고치지 마.
+5) 검토 의견·설명·"수정했습니다" 같은 말은 절대 쓰지 마. 최종 답 본문만.`;
+function stripAiFence(t) { return String(t || '').replace(/^\s*```[a-z]*\s*/i, '').replace(/\s*```\s*$/, '').trim(); }
+function verifiedShapeOk(orig, next) {   // 검증 답이 원래 답과 같은 꼴인지(깨진 JSON·설명 덧붙임·지나친 축약이면 버림)
+  const o = stripAiFence(orig), n = stripAiFence(next);
+  if (!n) return false;
+  const oj = /^[\[{]/.test(o), nj = /^[\[{]/.test(n);
+  if (oj !== nj) return false;
+  if (oj) {
+    if (o[0] !== n[0]) return false;
+    let oParse = true; try { JSON.parse(o); } catch (e) { oParse = false; }
+    if (oParse) { try { JSON.parse(n); } catch (e) { return false; } }
+    return true;
+  }
+  return n.length >= o.length * 0.4 && n.length <= o.length * 2.5 + 200;
+}
+async function verifyAiOutput(opts, out) {
+  let cur = out;
+  for (let pass = 1; pass <= VERIFY_PASSES; pass++) {
+    if (opts.signal && opts.signal.aborted) break;
+    try {
+      const text = `[원래 지시]\n${String(opts.system || '').slice(0, 9000)}\n\n[입력]\n${String(opts.text || '').slice(0, 3000)}\n\n[검토할 답]\n${cur}`;
+      const next = await callGeminiOnce({ system: AI_VERIFY_SYSTEM, text, media: opts.media, history: opts.history, maxTokens: Math.max(opts.maxTokens || 1000, 600), signal: opts.signal, model: FALLBACK_GEMINI_MODEL, retry503: false, timeoutMs: 30000 });
+      if (verifiedShapeOk(cur, next)) cur = /^\s*```/.test(cur) ? next : stripAiFence(next);
+      else console.warn(`AI 검증 ${pass}차 답의 형식이 달라 버림`);
+    } catch (e) {
+      if (e && e.name === 'AbortError') throw e;
+      console.warn(`AI 검증 ${pass}차 건너뜀: ${e && e.message}`);   // 검증이 실패해도 원래 답은 쓴다
+      break;
+    }
+  }
+  return cur;
+}
+async function callGeminiOnce({ system, text, media, maxTokens, history, signal, search, onGrounding, model, retry503, timeoutMs }) {
   const userParts = [{ text }];
   (media || []).forEach(m => userParts.push({ inlineData: { mimeType: m.mime, data: m.data } }));
   const contents = [...(history || []), { role: 'user', parts: userParts }];
@@ -2651,7 +2712,7 @@ async function callGemini({ system, text, media, maxTokens, history, signal, sea
   let useSearch = !!search, searchSkipped = false;
 
   // v119: 서버가 답을 붙잡고 안 주면 끝없이 기다리던 것(오류도 기록도 안 남음) → 시간 제한. 큰 요청(자료 옮기기)은 길게
-  const limitMs = window.__aiTimeoutMs || ((maxTokens || 1000) >= 8000 ? 240000 : 90000);   // __aiTimeoutMs: 검사용
+  const limitMs = window.__aiTimeoutMs || timeoutMs || ((maxTokens || 1000) >= 8000 ? 240000 : retry503 ? 90000 : 60000);   // 첫 모델은 60초면 예비 모델로   // __aiTimeoutMs: 검사용
   let timedOut = false;
   const doFetch = async () => {
     const ctl = new AbortController();
@@ -2660,12 +2721,12 @@ async function callGemini({ system, text, media, maxTokens, history, signal, sea
     const timer = setTimeout(() => { timedOut = true; ctl.abort(); }, limitMs);
     try { return await rawFetch(ctl.signal); }
     catch (e) {
-      if (timedOut && !(signal && signal.aborted)) throw new Error(`AI가 ${Math.round(limitMs / 1000)}초 동안 답하지 않아 요청을 끊었습니다. 잠시 뒤 다시 시도하면 됩니다`);
+      if (timedOut && !(signal && signal.aborted)) throw aiRetryable(`AI가 ${Math.round(limitMs / 1000)}초 동안 답하지 않아 요청을 끊었습니다. 잠시 뒤 다시 시도하면 됩니다`);
       throw e;
     } finally { clearTimeout(timer); if (signal) signal.removeEventListener('abort', onAbort); }
   };
   const rawFetch = (sig) => fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel)}:generateContent`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model || geminiModel)}:generateContent`,
     {
       method: 'POST',
       signal: sig,
@@ -2695,7 +2756,7 @@ async function callGemini({ system, text, media, maxTokens, history, signal, sea
     }
   };
   let response = await netFetch();
-  for (let attempt = 0; attempt < GEMINI_RETRY_DELAYS_MS.length && response.status === 503; attempt++) {
+  for (let attempt = 0; retry503 && attempt < GEMINI_RETRY_DELAYS_MS.length && response.status === 503; attempt++) {
     await new Promise(r => setTimeout(r, GEMINI_RETRY_DELAYS_MS[attempt]));
     response = await netFetch();
   }
@@ -2715,16 +2776,18 @@ async function callGemini({ system, text, media, maxTokens, history, signal, sea
       // 무료 키의 분당·하루 요청 한도를 넘은 것. 원문(영어, 긴 주소 포함) 대신 짧게 안내한다.
       const perDay = /per ?day|PerDay|daily/i.test(detail);
       { const u = aiUsage(); u.last429 = new Date().toISOString(); u.last429Day = perDay; aiUsageSave(u);
-        if (perDay && !aiLimits().rpd) aiLimitsSave({ rpdLearned: Math.max(1, u.count - 1) }); }   // 방금 거절된 요청은 빼고 센다
-      throw new Error(perDay
+        if (perDay && !aiLimits().rpd && (model || geminiModel) === geminiModel) aiLimitsSave({ rpdLearned: Math.max(1, u.count - 1) }); }   // v121: 하루 한도는 모델마다 따로라 기본 모델에서 걸린 것만 기억   // 방금 거절된 요청은 빼고 센다
+      throw aiRetryable(perDay
         ? `AI 사용 한도(하루)를 넘었습니다. ${fmtClockKo(aiResetAt())} 이후 다시 시도하면 됩니다`
         : 'AI 사용 한도를 넘었습니다. 1분쯤 뒤에 다시 시도하면 됩니다');
     }
     if (response.status === 503 || response.status === 500) {
-      throw new Error('AI 서버가 지금 붐빕니다. 몇 번 다시 시도했지만 응답이 없어 잠시 뒤 다시 시도하면 됩니다');
+      throw aiRetryable('AI 서버가 지금 붐빕니다. 몇 번 다시 시도했지만 응답이 없어 잠시 뒤 다시 시도하면 됩니다');
     }
     const hint = response.status === 404 ? ' (모델 이름이 잘못됐을 수 있습니다. 설정 → AI 설정에서 모델 칸을 비우면 기본 모델을 씁니다)' : '';
-    throw new Error(`AI 응답 오류 ${response.status}${detail ? ': ' + detail : ''}${hint}`);
+    const err = new Error(`AI 응답 오류 ${response.status}${detail ? ': ' + detail : ''}${hint}`);
+    if (response.status === 404) err.aiRetryable = true;   // 모델이 없어졌거나 이 키로 못 쓰는 모델
+    throw err;
   }
   const data = await response.json();
   aiUsageAddTokens(data.usageMetadata);
@@ -2746,7 +2809,7 @@ async function callGemini({ system, text, media, maxTokens, history, signal, sea
         ? `종료 사유: ${cand.finishReason}`
         : '응답에 후보가 없습니다';
     console.warn('AI 빈 응답 원본', data);
-    throw new Error(`빈 응답 (${reason})`);
+    throw aiRetryable(`빈 응답 (${reason})`);
   }
   return out;
 }
@@ -2795,9 +2858,9 @@ function askViaClipboard({ title, prompt, note }) {
   });
 }
 
-async function runAI({ system, text, media, maxTokens, title, history, signal, search, onGrounding }) {
+async function runAI({ system, text, media, maxTokens, title, history, signal, search, onGrounding, hard, noVerify }) {
   if (geminiKey) {
-    return callGemini({ system, text, media, maxTokens, history, signal, search, onGrounding });
+    return callGemini({ system, text, media, maxTokens, history, signal, search, onGrounding, hard, noVerify });
   }
   const hasMedia = media && media.length;
   const nonImage = hasMedia && media.some(m => !m.mime.startsWith('image/'));
@@ -3749,6 +3812,7 @@ function buildItemExtras(it) {
     ${it.topicSuggestion ? `
       <div class="topic-suggestion"><span class="icon">${ic('pencil')}</span><span>주제 제안: ${escapeHtml(it.topicSuggestion)}${it.topicKeyword ? ` <span class="keyword-tag">${escapeHtml(it.topicKeyword)}</span>` : ''}</span></div>
       <button class="elaborate-btn">${ic('search', 'ic sm')} ${it.topicElaboration ? '주제 다시 구체화하기' : '이 주제 구체화하기'}</button>
+      <button type="button" class="elaborate-btn topic-copy-btn" title="다른 AI에 붙여 넣으면 바로 구체화할 수 있는 지시문을 복사합니다">${ic('copy', 'ic sm')} AI용 복사</button>
       ${it.topicElaboration ? `<div class="topic-elaboration">${escapeHtml(it.topicElaboration)}</div>` : ''}
     ` : ''}
   `;
@@ -3757,7 +3821,9 @@ function buildItemExtras(it) {
     await saveItems();
     if (box.closest('#peekPanel')) refreshAll();      // 전체 표의 펼친 줄에서는 다시 그리면 다음 칸으로 옮긴 포커스가 사라짐
   });
-  const eb = box.querySelector('.elaborate-btn:not(.topic-recommend-btn)');
+  const eb = box.querySelector('.elaborate-btn:not(.topic-recommend-btn):not(.topic-copy-btn)');
+  const cb = box.querySelector('.topic-copy-btn');
+  if (cb) cb.addEventListener('click', () => copyTopicBrief(it, {}));
   if (eb) bindElaborateButton(eb, it);
   const fieldInput = box.querySelector('.extras-field');
   if (fieldInput) {
@@ -3887,7 +3953,7 @@ ${referenceContext}
 
 추상적인 조언 말고 실행 가능한 내용으로 채워줘. 다른 설명이나 인사말 없이 본문만 출력해.`;
 
-  return runAI({ system, text: '이 주제를 구체화해줘.', maxTokens: 700, title: '주제 구체화' });
+  return runAI({ system, text: '이 주제를 구체화해줘.', maxTokens: 700, title: '주제 구체화', hard: true });
 }
 
 async function deleteItemWithGroupCheck(it) {
@@ -4731,12 +4797,21 @@ document.getElementById('testAiBtn').addEventListener('click', async () => {
   const prevKey = geminiKey, prevModel = geminiModel;
   geminiKey = key; geminiModel = model;
   try {
-    const out = await callGemini({ system: '한 단어로만 답해.', text: '"ok"라고 답해.', maxTokens: 20 });
-    statusEl.className = 'status';
-    statusEl.textContent = '연결 성공: ' + out.slice(0, 30) + ' (저장 버튼을 눌러야 적용됩니다)';
-  } catch (e) {
-    statusEl.className = 'status err';
-    statusEl.textContent = '연결 실패: ' + e.message;
+    // v120: 기본·예비·어려운 작업 모델을 하나씩 따로 시험한다(예비 모델로 넘어가 성공처럼 보이지 않게)
+    const roles = [['기본', model], ['예비', FALLBACK_GEMINI_MODEL], ['어려운 작업', HARD_GEMINI_MODEL]];
+    const lines = []; let okCount = 0;
+    for (const [role, m] of roles) {
+      const shown = String(m).replace(/^gemini-/i, '');   // 화면에는 AI 서비스 이름을 쓰지 않음
+      statusEl.textContent = `연결 확인 중... (${role} ${shown})`;
+      const t0 = Date.now();
+      try {
+        await callGeminiOnce({ system: '한 단어로만 답해.', text: '"ok"라고 답해.', maxTokens: 20, model: m, retry503: false });
+        okCount++; lines.push(`${role} ${shown}: 성공 (${((Date.now() - t0) / 1000).toFixed(1)}초)`);
+      } catch (e) { lines.push(`${role} ${shown}: 실패 · ${String(e.message).replace(/gemini[- ]?/gi, '').slice(0, 80)}`); }
+    }
+    statusEl.className = okCount ? 'status' : 'status err';
+    statusEl.style.whiteSpace = 'pre-line';
+    statusEl.textContent = lines.join('\n') + (okCount ? '\n(저장 버튼을 눌러야 적용됩니다)' : '');
   } finally {
     geminiKey = prevKey; geminiModel = prevModel;
   }
@@ -4830,7 +4905,7 @@ async function processReference(pend) {
       if (geminiKey) { pend.estMs = refEstimateMs(file.size); renderReferenceList(); }   // 키가 없으면(복사·붙여넣기) 예상 시간 없이 지난 시간만
       const t0 = Date.now();
       lastAiTokens = null;
-      original = String(await runAI({ system: REFERENCE_EXTRACT_PROMPT, text, media, maxTokens: 30000, title: '참고 자료 원문 옮기기', signal: pend.ctrl && pend.ctrl.signal }) || '').trim();
+      original = String(await runAI({ system: REFERENCE_EXTRACT_PROMPT, text, media, maxTokens: 30000, noVerify: true, title: '참고 자료 원문 옮기기', signal: pend.ctrl && pend.ctrl.signal }) || '').trim();
       if (pend.cancelled) return;                                    // 기다리는 동안 취소함: 늦게 온 답은 버린다
       if (geminiKey && original) refRecordSpeed(file.size, Date.now() - t0);
     }
@@ -7514,7 +7589,7 @@ ${topicBlock ? '\n' + topicBlock + '\n' : ''}
 - 마지막 단계는 마감 전날이나 당일의 최종 점검·제출 준비로 해도 돼.
 - JSON 배열만 반환해. 다른 설명, 마크다운, 코드 블록 없이. 형식: [{"title":"...","dueDate":"YYYY-MM-DD","min":90,"note":"한 줄 설명(선택)"}] (min은 그 단계를 끝내는 데 드는 예상 작업 시간(분), 모르면 생략)${durationLearningBlock()}`;
   try {
-    const raw = await runAI({ system, text: '이 마감을 단계로 나눠줘.', maxTokens: 1200, title: '마감 쪼개기' });
+    const raw = await runAI({ system, text: '이 마감을 단계로 나눠줘.', maxTokens: 1200, title: '마감 쪼개기', hard: true });
     if (tok !== planToken) return;
     const steps = sanitizeSplitSteps(raw, it);
     if (!steps.length) throw new Error('AI가 쓸 수 있는 단계를 주지 못했습니다');
@@ -7603,7 +7678,7 @@ ${list}
 - 마감이 특정 날에 몰려 있거나 무리한 배분이면 warnings에 짧게 알려줘.
 - JSON 객체만 반환해. 다른 설명, 마크다운, 코드 블록 없이. 형식: {"summary":"두 문장 이내 요약","days":[{"date":"YYYY-MM-DD","tasks":[{"ref":1,"why":"짧은 이유"}]}],"warnings":["..."]}`;
   try {
-    const raw = await runAI({ system, text: '이번 주 계획 짜줘.', maxTokens: 1600, title: '이번 주 계획' });
+    const raw = await runAI({ system, text: '이번 주 계획 짜줘.', maxTokens: 1600, title: '이번 주 계획', hard: true });
     if (tok !== planToken) return;
     const plan = sanitizeWeekPlan(raw, pool, days);
     renderWeekPlan(plan, pool, days, tok);
@@ -7687,6 +7762,56 @@ function sanitizeTopics(raw) {
   }
   return out.slice(0, 3);
 }
+// AI용 주제 복사(v121, 사용자 요청): 다른 AI(채팅 앱 등)에 붙여 넣으면 바로 주제를 상세하게 구체화할 수 있게
+// 맥락·후보·할 일·출력 형식을 한 덩어리 지시문으로 만든다. 메모·키·이메일은 넣지 않는다.
+function buildTopicAiBrief(it, { candidates = [], chosen = '' } = {}) {
+  const today = todayISO();
+  const days = it.dueDate ? daysUntil(it.dueDate) : null;
+  const due = it.dueDate ? `${it.dueDate}${days != null ? (days >= 0 ? ` (D-${days})` : ` (마감 ${-days}일 지남)`) : ''}` : '(없음)';
+  const pick = cleanText(chosen, 150) || cleanText(it.topicSuggestion, 150);
+  const refs = referenceMaterials.length ? refsContext(1500) : '';
+  const L = [];
+  L.push('# 역할');
+  L.push('너는 공학 분야 대학생의 과제·보고서·논문 주제를 실제로 수행 가능한 연구 계획으로 구체화하는 연구 조교다. 아래 맥락을 모두 읽고 [할 일]을 수행하라.');
+  L.push('', '# 맥락');
+  L.push(`- 오늘: ${today}`);
+  L.push(`- 진로 방향: ${USER_DIRECTION.replace(/^이 사람은 /, '').replace(/있어\.$/, '있다.')}`);
+  L.push(`- 과제 유형: ${it.type || '기타'}`);
+  L.push(`- 과제 제목: ${it.title}`);
+  L.push(`- 마감일: ${due}`);
+  L.push(`- 분야(학생이 정함): ${cleanText(it.topicKeyword, 80) || '(정하지 않음)'}`);
+  if (keywordPresets.length) L.push(`- 평소 관심 분야: ${keywordPresets.slice(0, 12).join(', ')}`);
+  if (it.topicSuggestion && it.topicSuggestion !== pick) L.push(`- 이전에 정한 주제: ${it.topicSuggestion}`);
+  if (it.topicElaboration) L.push(`- 이전 구체화 메모:\n${String(it.topicElaboration).slice(0, 1500)}`);
+  if (candidates.length) {
+    L.push('', '# 주제 후보 (다른 AI가 추천)');
+    candidates.forEach((c, i) => L.push(`${i + 1}. ${c.topic}${c.why ? `\n   - 추천 이유: ${c.why}` : ''}`));
+  }
+  L.push('', '# 구체화할 주제');
+  L.push(pick ? pick : '(아직 고르지 않음: 위 후보 중 마감일과 분야에 가장 알맞은 것을 골라 이유를 두 줄로 설명한 뒤 진행)');
+  if (refs) L.push('', '# 학생이 등록한 참고 자료(원문 발췌)', refs);
+  L.push('', '# 할 일', '위 주제를 마감일까지 혼자 수행할 수 있는 수준으로 구체화하라. 아래 순서와 제목을 그대로 써라.');
+  L.push('1. 최종 주제 문장: 대상·방법·범위가 드러나는 한 문장 (필요하면 다듬은 이유 한 줄)');
+  L.push('2. 핵심 연구 질문 1개와 하위 질문 3개');
+  L.push('3. 배경과 필요성: 3~5문장, 이 분야에서 왜 중요한지');
+  L.push('4. 방법: 문헌 조사 범위, 실험·시뮬레이션·데이터 출처 중 실제로 가능한 것, 사용할 지표·분석 방법');
+  L.push('5. 예상 결과와 평가 기준');
+  L.push('6. 목차 초안 (보고서·발표면 슬라이드 구성)');
+  L.push(`7. 일정: 오늘(${today})부터 마감일까지 날짜가 붙은 단계 4~7개`);
+  L.push('8. 검색 키워드: 한국어 5개, 영어 5개, 찾아볼 자료 종류(리뷰 논문·표준·데이터시트 등)');
+  L.push('9. 위험 요소와 대안 2~3개');
+  L.push('', '# 조건');
+  L.push('- 한국어로 답하라. 전문 용어는 처음 나올 때 영어를 괄호로 함께 적어라.');
+  L.push('- 분야가 정해져 있으면 그 범위를 벗어나지 마라.');
+  L.push('- 확인하지 않은 논문 제목·저자·수치를 지어내지 마라. 모르면 검색 키워드로 안내하라.');
+  L.push('- 학부생이 마감일까지 할 수 있는 범위로 현실적으로 잡아라.');
+  return L.join('\n');
+}
+async function copyTopicBrief(it, opts, statusEl) {
+  const ok = await copyToClipboard(buildTopicAiBrief(it, opts));
+  if (statusEl) { statusEl.className = ok ? 'status' : 'status err'; statusEl.textContent = ok ? 'AI용 지시문을 복사했습니다. 다른 AI에 붙여 넣으면 바로 구체화합니다' : '복사하지 못했습니다'; }
+  showToast(ok ? 'AI용 지시문을 복사했습니다' : '복사하지 못했습니다');
+}
 function recommendTopicsWithAI(it) {
   const field = cleanText(it.topicKeyword, 80);
   const tok = openPlanModal('주제 추천', `"${it.title}" · ${it.type || '기타'}` + (field ? ` · 분야: ${field}` : ''), '제목·유형·분야·현재 주제·참고 자료 요약을 AI에 보냅니다. 메모와 키는 보내지 않습니다.');
@@ -7714,7 +7839,7 @@ ${refs}
 - 흔한 일반론이나 "~에 대한 연구"처럼 뭉뚱그린 표현은 피해.
 - JSON 배열만 반환해. 다른 설명, 마크다운, 코드 블록 없이. 형식: [{"topic":"...","why":"이 분야에서 이 주제가 좋은 이유 한 줄"}]`;
   try {
-    const raw = await runAI({ system, text: '주제를 추천해줘.', maxTokens: 900, title: '주제 추천' });
+    const raw = await runAI({ system, text: '주제를 추천해줘.', maxTokens: 900, title: '주제 추천', hard: true });
     if (tok !== planToken) return;
     const topics = sanitizeTopics(raw);
     if (!topics.length) throw new Error('AI가 쓸 수 있는 주제를 주지 못했습니다');
@@ -7754,6 +7879,7 @@ function renderTopicChoices(it, topics, tok) {
   };
   addPlanButton('이 주제로 정하기', 'btn-main', () => apply(false));
   addPlanButton('정하고 구체화까지', 'btn-ghost', () => apply(true));
+  addPlanButton('AI용 복사', 'btn-ghost', () => copyTopicBrief(it, { candidates: topics, chosen: edit.value }, planEl('planStatus')));
   addPlanButton('다시 추천', 'btn-ghost', () => runTopicRecommend(it, tok));
   addPlanButton('취소', 'btn-ghost', closePlanModal);
 }
