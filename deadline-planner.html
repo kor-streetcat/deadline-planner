@@ -2137,7 +2137,7 @@ let listSortDir = 1; // 1 오름차순, -1 내림차순
 const expandedIds = new Set(); // 표에서 상세가 펼쳐진 항목
 let peekId = null; // 오른쪽 상세 패널에 열려 있는 항목 id
 let theme = ''; // '' 자동 | 'light' | 'dark'
-const APP_VERSION = 'v118';
+const APP_VERSION = 'v119';
 window.plannerReadyPromise = new Promise(resolve => { window.__plannerResolve = resolve; });
 
 const EMPTY_SVGS = {
@@ -2650,11 +2650,25 @@ async function callGemini({ system, text, media, maxTokens, history, signal, sea
   // search: 구글 검색 도구를 붙인다(AI 비서). 키·모델이 검색을 못 쓰면(무료 등급 제한 등) 검색 없이 한 번 더 보낸다.
   let useSearch = !!search, searchSkipped = false;
 
-  const doFetch = () => fetch(
+  // v119: 서버가 답을 붙잡고 안 주면 끝없이 기다리던 것(오류도 기록도 안 남음) → 시간 제한. 큰 요청(자료 옮기기)은 길게
+  const limitMs = window.__aiTimeoutMs || ((maxTokens || 1000) >= 8000 ? 240000 : 90000);   // __aiTimeoutMs: 검사용
+  let timedOut = false;
+  const doFetch = async () => {
+    const ctl = new AbortController();
+    const onAbort = () => ctl.abort();
+    if (signal) { if (signal.aborted) ctl.abort(); else signal.addEventListener('abort', onAbort, { once: true }); }
+    const timer = setTimeout(() => { timedOut = true; ctl.abort(); }, limitMs);
+    try { return await rawFetch(ctl.signal); }
+    catch (e) {
+      if (timedOut && !(signal && signal.aborted)) throw new Error(`AI가 ${Math.round(limitMs / 1000)}초 동안 답하지 않아 요청을 끊었습니다. 잠시 뒤 다시 시도하면 됩니다`);
+      throw e;
+    } finally { clearTimeout(timer); if (signal) signal.removeEventListener('abort', onAbort); }
+  };
+  const rawFetch = (sig) => fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel)}:generateContent`,
     {
       method: 'POST',
-      signal,
+      signal: sig,
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: system }] },
@@ -2672,6 +2686,7 @@ async function callGemini({ system, text, media, maxTokens, history, signal, sea
   const netFetch = async () => {
     try { return await doFetch(); } catch (e) {
       if (e && e.name === 'AbortError') throw e;
+      if (timedOut) throw e;
       if (document.visibilityState === 'hidden') await new Promise(r => { const f = () => { if (document.visibilityState === 'visible') { document.removeEventListener('visibilitychange', f); r(); } }; document.addEventListener('visibilitychange', f); });
       await new Promise(r => setTimeout(r, 1500));
       try { return await doFetch(); } catch (e2) {
